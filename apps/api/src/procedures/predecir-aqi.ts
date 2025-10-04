@@ -19,18 +19,15 @@ export const predecirAqiProcedure = publicProcedure
     z.object({
       latitude: z.number().min(-90).max(90),
       longitude: z.number().min(-180).max(180),
-      parameter: z.enum(['NO2', 'O3', 'PM25']).optional(),
     })
   )
   .query(async ({ input, ctx }) => {
-    const { latitude, longitude, parameter } = input
+    const { latitude, longitude } = input
 
     // =====================================================
     // 1. BUSCAR ESTACIÓN MÁS CERCANA
     // =====================================================
-    console.log(
-      `📍 Buscando estación ${parameter || 'cualquier parámetro'} más cercana a (${latitude}, ${longitude})...`
-    )
+    console.log(`📍 Buscando estación más cercana a (${latitude}, ${longitude})...`)
 
     // Usar PostGIS ST_Distance para encontrar la estación más cercana
     // ST_Distance con geography devuelve metros
@@ -52,18 +49,15 @@ export const predecirAqiProcedure = publicProcedure
         `.as('distance'),
       })
       .from(aqStations)
-      .where(parameter ? sql`${aqStations.parameter} = ${parameter}` : sql`1=1`)
       .orderBy(sql`distance ASC`)
       .limit(1)
 
     if (!nearestStation || nearestStation.length === 0) {
-      throw new Error(
-        `No se encontró ninguna estación ${parameter ? `de ${parameter}` : ''} en la base de datos`
-      )
+      throw new Error('No se encontró ninguna estación en la base de datos')
     }
 
     const station = nearestStation[0]
-    console.log(`    Estación encontrada: ${station.provider} a ${station.distance?.toFixed(2)} km`)
+    console.log(`   ✓ Estación encontrada: ${station.provider} a ${station.distance?.toFixed(2)} km`)
 
     // =====================================================
     // 2. OBTENER DATOS ACTUALES DE AIRNOW
@@ -80,14 +74,7 @@ export const predecirAqiProcedure = publicProcedure
       longitude: station.longitude,
     })
 
-    // Filtrar por el parámetro solicitado (si está especificado)
-    const relevantData = parameter
-      ? currentAirQuality.filter((obs) => obs.ParameterName.toUpperCase().includes(parameter))
-      : currentAirQuality
-
-    console.log(
-      `    ${relevantData.length} observaciones ${parameter ? `de ${parameter}` : 'totales'} obtenidas`
-    )
+    console.log(`   ✓ ${currentAirQuality.length} observaciones obtenidas`)
 
     // =====================================================
     // 3. OBTENER DATOS METEOROLÓGICOS DE OPENMETEO
@@ -118,68 +105,110 @@ export const predecirAqiProcedure = publicProcedure
       throw new Error('No se pudo obtener el clima actual')
     }
 
-    console.log(`    Clima obtenido: ${weather.temperature}°C, viento ${weather.windSpeed} m/s`)
+    console.log(`   ✓ Clima obtenido: ${weather.temperature}°C, viento ${weather.windSpeed} m/s`)
 
     // =====================================================
-    // 4. GENERAR PREDICCIÓN (MOCK POR AHORA)
+    // 4. ORGANIZAR DATOS POR PARÁMETRO
     // =====================================================
-    // TODO: Integrar modelo de advección real
 
-    const currentValue = relevantData[0]?.AQI || 0
+    // Buscar datos para cada parámetro
+    const o3Data = currentAirQuality.find((obs) => obs.ParameterName.toUpperCase().includes('O3'))
+    const no2Data = currentAirQuality.find((obs) => obs.ParameterName.toUpperCase().includes('NO2'))
+    const pm25Data = currentAirQuality.find((obs) => obs.ParameterName.toUpperCase().includes('PM2.5'))
 
-    const forecast = {
+    // Helper para crear forecast mock
+    const createForecast = (currentValue: number) => ({
       t1h: currentValue,
       t2h: currentValue,
       t3h: currentValue,
-    }
+    })
 
     console.log(`✅ Predicción generada`)
 
     // =====================================================
-    // 5. RETORNAR RESULTADO
+    // 5. CALCULAR AQI GENERAL (EL PEOR DE TODOS)
+    // =====================================================
+    const allAqis = [o3Data?.AQI, no2Data?.AQI, pm25Data?.AQI].filter((aqi) => aqi != null) as number[]
+    const generalAqi = allAqis.length > 0 ? Math.max(...allAqis) : null
+    const worstParameter = generalAqi
+      ? currentAirQuality.find((obs) => obs.AQI === generalAqi)
+      : null
+
+    // =====================================================
+    // 6. RETORNAR RESULTADO
     // =====================================================
     return {
-      O3: {
-        station: {
-          id: station.id,
-          provider: station.provider,
-          latitude: station.latitude,
-          longitude: station.longitude,
-          parameter: station.parameter,
-          distanceKm: station.distance,
-        },
-        currentData: {
-          aqi: relevantData[0]?.AQI,
-          category: relevantData[0]?.Category?.Name,
-          dateObserved: relevantData[0]?.DateObserved,
-          parameterName: relevantData[0]?.ParameterName,
-        },
-        // Cuando no se especifica parámetro, devolver todos los disponibles
-        ...(parameter
-          ? {}
-          : {
-              allParameters: relevantData.map((obs) => ({
-                aqi: obs.AQI,
-                category: obs.Category?.Name,
-                dateObserved: obs.DateObserved,
-                parameterName: obs.ParameterName,
-              })),
-            }),
-        weather: {
-          temperature: weather.temperature,
-          windSpeed: weather.windSpeed,
-          windDirection: weather.windDirection,
-          relativeHumidity: weather.relativeHumidity,
-          precipitation: weather.precipitation,
-        },
-        forecast: {
-          parameter: parameter || relevantData[0]?.ParameterName,
-          horizons: [
-            { hoursAhead: 1, predictedAQI: forecast.t1h },
-            { hoursAhead: 2, predictedAQI: forecast.t2h },
-            { hoursAhead: 3, predictedAQI: forecast.t3h },
-          ],
-        },
+      station: {
+        id: station.id,
+        provider: station.provider,
+        latitude: station.latitude,
+        longitude: station.longitude,
+        distanceKm: station.distance,
       },
+      weather: {
+        temperature: weather.temperature,
+        windSpeed: weather.windSpeed,
+        windDirection: weather.windDirection,
+        relativeHumidity: weather.relativeHumidity,
+        precipitation: weather.precipitation,
+      },
+      general: generalAqi
+        ? {
+            aqi: generalAqi,
+            category: worstParameter?.Category?.Name,
+            dominantParameter: worstParameter?.ParameterName,
+          }
+        : null,
+      O3: o3Data
+        ? {
+            currentData: {
+              aqi: o3Data.AQI,
+              category: o3Data.Category?.Name,
+              dateObserved: o3Data.DateObserved,
+              parameterName: o3Data.ParameterName,
+            },
+            forecast: {
+              horizons: [
+                { hoursAhead: 1, predictedAQI: createForecast(o3Data.AQI).t1h },
+                { hoursAhead: 2, predictedAQI: createForecast(o3Data.AQI).t2h },
+                { hoursAhead: 3, predictedAQI: createForecast(o3Data.AQI).t3h },
+              ],
+            },
+          }
+        : null,
+      NO2: no2Data
+        ? {
+            currentData: {
+              aqi: no2Data.AQI,
+              category: no2Data.Category?.Name,
+              dateObserved: no2Data.DateObserved,
+              parameterName: no2Data.ParameterName,
+            },
+            forecast: {
+              horizons: [
+                { hoursAhead: 1, predictedAQI: createForecast(no2Data.AQI).t1h },
+                { hoursAhead: 2, predictedAQI: createForecast(no2Data.AQI).t2h },
+                { hoursAhead: 3, predictedAQI: createForecast(no2Data.AQI).t3h },
+              ],
+            },
+          }
+        : null,
+      PM25: pm25Data
+        ? {
+            currentData: {
+              aqi: pm25Data.AQI,
+              category: pm25Data.Category?.Name,
+              dateObserved: pm25Data.DateObserved,
+              parameterName: pm25Data.ParameterName,
+            },
+            forecast: {
+              horizons: [
+                { hoursAhead: 1, predictedAQI: createForecast(pm25Data.AQI).t1h },
+                { hoursAhead: 2, predictedAQI: createForecast(pm25Data.AQI).t2h },
+                { hoursAhead: 3, predictedAQI: createForecast(pm25Data.AQI).t3h },
+              ],
+            },
+          }
+        : null,
     }
   })
