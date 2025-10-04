@@ -530,7 +530,8 @@ export const CaliforniaMap = React.memo(function CaliforniaMap({
   showActiveFires = true,
   alerts = [],
   fires = [],
-  onStationClick
+  onStationClick,
+  onFireClick
 }: CaliforniaMapProps) {
   // Memoización de configuraciones para evitar re-renders innecesarios
   const currentMapType = useMemo(() => MAP_TYPES[mapType], [mapType])
@@ -573,7 +574,7 @@ export const CaliforniaMap = React.memo(function CaliforniaMap({
         {showMonitoringStations && <MonitoringStationsLayer onStationClick={onStationClick} />}
 
         {/* Active Fires Layer */}
-        {showActiveFires && fires.length > 0 && <ActiveFiresLayer fires={fires} />}
+        {showActiveFires && fires.length > 0 && <ActiveFiresLayer fires={fires} onFireClick={onFireClick} />}
 
         {/* Alert Markers Layer */}
         <AlertMarkers alerts={alerts} />

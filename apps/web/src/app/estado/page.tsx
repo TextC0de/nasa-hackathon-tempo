@@ -4,11 +4,12 @@ import { useState } from "react"
 import dynamic from "next/dynamic"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { useMonitoringStations, type GroupedStation } from "@/hooks/use-monitoring-stations"
-import { useActiveFires } from "@/hooks/use-active-fires"
+import { useActiveFires, type FireDataPoint } from "@/hooks/use-active-fires"
 import { useAlerts } from "@/hooks/use-alerts"
 import { DashboardHeader } from "./_components/dashboard-header"
 import { DashboardDialogs } from "./_components/dashboard-dialogs"
 import { StationWeatherDialog } from "./_components/station-weather-dialog"
+import { FireDialog } from "./_components/fire-dialog"
 import { getAQIColor, getAQILevel, getAQIDetails } from "./_components/aqi-utils"
 
 // Importar el componente del mapa dinámicamente para evitar problemas de SSR
@@ -36,6 +37,10 @@ export default function Dashboard() {
   // State para el Dialog de estación seleccionada
   const [selectedStation, setSelectedStation] = useState<GroupedStation | null>(null)
   const [stationDialogOpen, setStationDialogOpen] = useState(false)
+
+  // State para el Dialog de incendio seleccionado
+  const [selectedFire, setSelectedFire] = useState<FireDataPoint | null>(null)
+  const [fireDialogOpen, setFireDialogOpen] = useState(false)
 
   // Hook para obtener datos de estaciones de monitoreo
   const { stations, airQuality, isLoading, error, stats } = useMonitoringStations({
@@ -114,6 +119,13 @@ export default function Dashboard() {
     setStationDialogOpen(true)
   }
 
+  // Handler para click en incendio
+  const handleFireClick = (fire: FireDataPoint) => {
+    console.log('🔥 [DASHBOARD] Incendio seleccionado:', fire)
+    setSelectedFire(fire)
+    setFireDialogOpen(true)
+  }
+
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background text-foreground">
@@ -162,6 +174,7 @@ export default function Dashboard() {
                   alerts={getActiveAlerts()}
                   fires={fires}
                   onStationClick={handleStationClick}
+                  onFireClick={handleFireClick}
                 />
               </div>
             </main>
