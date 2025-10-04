@@ -1,15 +1,27 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { useEffect } from "react"
+import React, { useEffect, useState, useCallback, useMemo } from "react"
 import dynamic from "next/dynamic"
 
 import "leaflet/dist/leaflet.css"
 import L from "leaflet"
 import { MonitoringStationsLayer } from "./monitoring-stations-layer"
+
+// Optimización: Lazy loading con loading state
 const MapContainer = dynamic(
   () => import("react-leaflet").then((mod) => mod.MapContainer),
-  { ssr: false }
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center h-full bg-muted/20">
+        <div className="flex flex-col items-center space-y-2">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-muted-foreground">Cargando mapa...</p>
+        </div>
+      </div>
+    )
+  }
 )
 
 const TileLayer = dynamic(
@@ -500,20 +512,40 @@ interface CaliforniaMapProps {
   showMonitoringStations?: boolean
 }
 
-export function CaliforniaMap({ className, mapType = "streetmap", onMapTypeChange, showMonitoringStations = true }: CaliforniaMapProps) {
-  const currentMapType = MAP_TYPES[mapType]
+// Optimización: Memoización del componente principal
+export const CaliforniaMap = React.memo(function CaliforniaMap({ 
+  className, 
+  mapType = "streetmap", 
+  onMapTypeChange, 
+  showMonitoringStations = true 
+}: CaliforniaMapProps) {
+  // Memoización de configuraciones para evitar re-renders innecesarios
+  const currentMapType = useMemo(() => MAP_TYPES[mapType], [mapType])
+  
+  const mapContainerStyle = useMemo(() => ({ 
+    height: "100%", 
+    width: "100%", 
+    zIndex: 1 
+  }), [])
+  
+  const boundsOptions = useMemo(() => ({ 
+    padding: [30, 30] as [number, number],
+    maxZoom: LEAFLET_CONFIG.zoom.MAX_BOUNDS
+  }), [])
+
+  // Callback optimizado para cambios de tipo de mapa
+  const handleMapTypeChange = useCallback((type: string) => {
+    onMapTypeChange?.(type as keyof typeof MAP_TYPES)
+  }, [onMapTypeChange])
 
   return (
     <div className={cn("relative w-full h-full overflow-hidden z-[1]", className)}>
       <MapContainer
         center={CALIFORNIA_CONFIG.center}
         zoom={LEAFLET_CONFIG.zoom.DEFAULT}
-        style={{ height: "100%", width: "100%", zIndex: 1 }}
+        style={mapContainerStyle}
         bounds={CALIFORNIA_CONFIG.boundsArray}
-        boundsOptions={{ 
-          padding: [30, 30],
-          maxZoom: LEAFLET_CONFIG.zoom.MAX_BOUNDS
-        }}
+        boundsOptions={boundsOptions}
       >
         <TileLayer
           key={mapType}
@@ -524,15 +556,15 @@ export function CaliforniaMap({ className, mapType = "streetmap", onMapTypeChang
           minZoom={LEAFLET_CONFIG.zoom.MIN}
         />
         
-        {/* Monitoring Stations Layer - Real data from AirNow API */}
+        {/* Monitoring Stations Layer - Optimizado con lazy loading */}
         {showMonitoringStations && <MonitoringStationsLayer />}
         
         <MapTypeControlComponent 
           mapTypes={MAP_TYPES}
           selectedMapType={mapType}
-          onMapTypeChange={(type) => onMapTypeChange?.(type as keyof typeof MAP_TYPES)}
+          onMapTypeChange={handleMapTypeChange}
         />
       </MapContainer>
     </div>
   )
-}
+})

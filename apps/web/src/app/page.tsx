@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { 
   Menubar, 
   MenubarContent, 
@@ -109,19 +110,149 @@ export default function Dashboard() {
     return "Peligroso"
   }
 
+  // Función para obtener información detallada del AQI
+  const getAQIDetails = (aqi: number) => {
+    if (aqi <= 50) return {
+      emoji: "🟢",
+      category: "Bueno",
+      description: "Aire de calidad satisfactoria",
+      population: "Ninguna población afectada",
+      recommendation: "Disfruta de actividades al aire libre"
+    }
+    if (aqi <= 100) return {
+      emoji: "🟡",
+      category: "Moderado",
+      description: "Calidad aceptable",
+      population: "Pocos inusualmente sensibles",
+      recommendation: "Personas sensibles pueden experimentar síntomas leves"
+    }
+    if (aqi <= 150) return {
+      emoji: "🟠",
+      category: "Insalubre para grupos sensibles",
+      description: "Efectos en grupos sensibles",
+      population: "Niños, ancianos, asmáticos",
+      recommendation: "Grupos sensibles deben evitar actividades prolongadas al aire libre"
+    }
+    if (aqi <= 200) return {
+      emoji: "🔴",
+      category: "Insalubre",
+      description: "Efectos en población general",
+      population: "Todos pueden experimentar efectos",
+      recommendation: "Evita actividades al aire libre prolongadas"
+    }
+    if (aqi <= 300) return {
+      emoji: "🟣",
+      category: "Muy insalubre",
+      description: "Alerta de salud",
+      population: "Efectos serios más probables",
+      recommendation: "Evita todas las actividades al aire libre"
+    }
+    return {
+      emoji: "🟤",
+      category: "Peligroso",
+      description: "Emergencia de salud",
+      population: "Toda la población afectada",
+      recommendation: "Permanece en interiores con aire filtrado"
+    }
+  }
+
+  // Componente para métricas móviles - Optimizado para reutilización
+  const MobileMetrics = () => (
+    <div className="lg:hidden flex items-center space-x-1 sm:space-x-2 min-w-0">
+      {/* Estado de conexión móvil */}
+      <div className="flex items-center space-x-1">
+        {isLoading ? (
+          <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4 animate-spin text-blue-500" />
+        ) : error ? (
+          <WifiOff className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
+        ) : (
+          <Wifi className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
+        )}
+      </div>
+      
+      {/* Badges compactos */}
+      <div className="flex items-center space-x-1">
+        {stats && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge variant="outline" className="text-xs px-1 py-0 cursor-help">
+                {stats.active}/{stats.total}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-xs">
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Map className="h-4 w-4 text-blue-500" />
+                  <div>
+                    <div className="font-semibold text-sm">Estado de Estaciones</div>
+                    <div className="text-xs text-muted-foreground">Monitoreo en tiempo real</div>
+                  </div>
+                </div>
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between">
+                    <span>Estaciones activas:</span>
+                    <span className="font-medium text-green-600">{stats.active}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Total detectadas:</span>
+                    <span className="font-medium">{stats.total}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Inactivas:</span>
+                    <span className="font-medium text-orange-600">{stats.total - stats.active}</span>
+                  </div>
+                </div>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        )}
+        
+        {stats && stats.avgAQI && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge variant="outline" className={`text-xs px-1 py-0 cursor-help ${getAQIColor(Math.round(stats.avgAQI))}`}>
+                {Math.round(stats.avgAQI)}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-xs">
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <span className="text-lg">{getAQIDetails(Math.round(stats.avgAQI)).emoji}</span>
+                  <div>
+                    <div className="font-semibold text-sm">AQI Promedio: {Math.round(stats.avgAQI)}</div>
+                    <div className="text-xs text-muted-foreground">Basado en {stats.active} estaciones activas</div>
+                  </div>
+                </div>
+                <div className="space-y-1 text-xs">
+                  <div><strong>Categoría:</strong> {getAQIDetails(Math.round(stats.avgAQI)).category}</div>
+                  <div><strong>Descripción:</strong> {getAQIDetails(Math.round(stats.avgAQI)).description}</div>
+                  <div><strong>Población afectada:</strong> {getAQIDetails(Math.round(stats.avgAQI)).population}</div>
+                  <div className="pt-1 border-t border-border">
+                    <strong>Recomendación:</strong> {getAQIDetails(Math.round(stats.avgAQI)).recommendation}
+                  </div>
+                </div>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </div>
+    </div>
+  )
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <TooltipProvider>
+      <div className="min-h-screen bg-background text-foreground">
       <div className="flex h-screen">
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Header con métricas en tiempo real */}
-          <header className="bg-background border-b border-border px-3 py-2 sm:px-4 sm:py-3 relative z-[10000]">
-            <div className="flex items-center justify-between">
+          {/* Header con métricas en tiempo real - Responsive */}
+          <header className="bg-background border-b border-border px-2 py-2 sm:px-4 sm:py-3 relative z-[10000]">
+            <div className="flex items-center justify-between gap-2">
               {/* Logo y métricas principales */}
-              <div className="flex items-center space-x-4 sm:space-x-6">
+              <div className="flex items-center space-x-2 sm:space-x-4 lg:space-x-6 min-w-0 flex-1">
                 {/* Logo */}
-                <div className="flex items-center space-x-2 sm:space-x-3">
-                  <div className="relative h-6 w-6 sm:h-8 sm:w-8 flex-shrink-0">
+                <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3 flex-shrink-0">
+                  <div className="relative h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8">
                     <Image
                       src="/atmos.svg"
                       alt="AtmOS Logo"
@@ -131,11 +262,11 @@ export default function Dashboard() {
                       priority
                     />
                   </div>
-                  <span className="text-base font-semibold text-foreground sm:text-lg">AtmOS</span>
+                  <span className="text-sm font-semibold text-foreground sm:text-base lg:text-lg whitespace-nowrap">AtmOS</span>
                 </div>
 
-                {/* Métricas en tiempo real */}
-                <div className="hidden md:flex items-center space-x-4">
+                {/* Métricas en tiempo real - Desktop */}
+                <div className="hidden lg:flex items-center space-x-4">
                   {/* Estado de conexión */}
                   <div className="flex items-center space-x-2">
                     {isLoading ? (
@@ -148,29 +279,94 @@ export default function Dashboard() {
                     <span className="text-xs text-muted-foreground">
                       {isLoading ? "Conectando..." : error ? "Sin conexión" : "Conectado"}
                     </span>
-        </div>
+                  </div>
 
                   {/* Estaciones activas */}
                   {stats && (
-                    <div className="flex items-center space-x-2">
-                      <Map className="h-4 w-4 text-blue-500" />
-                      <span className="text-xs text-muted-foreground">
-                        {stats.active}/{stats.total} estaciones
-                      </span>
-                    </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center space-x-2 cursor-help">
+                          <Map className="h-4 w-4 text-blue-500" />
+                          <span className="text-xs text-muted-foreground">
+                            {stats.active}/{stats.total} estaciones
+                          </span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-xs">
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Map className="h-4 w-4 text-blue-500" />
+                            <div>
+                              <div className="font-semibold text-sm">
+                                Estado de Estaciones
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                Monitoreo en tiempo real
+                              </div>
+                            </div>
+                          </div>
+                          <div className="space-y-1 text-xs">
+                            <div className="flex justify-between">
+                              <span>Estaciones activas:</span>
+                              <span className="font-medium text-green-600">{stats.active}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Total detectadas:</span>
+                              <span className="font-medium">{stats.total}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Inactivas:</span>
+                              <span className="font-medium text-orange-600">{stats.total - stats.active}</span>
+                            </div>
+                            <div className="pt-1 border-t border-border">
+                              <div className="text-xs text-muted-foreground">
+                                Las estaciones activas proporcionan datos actualizados de calidad del aire
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
                   )}
 
                   {/* AQI promedio */}
                   {stats && stats.avgAQI && (
-                    <div className="flex items-center space-x-2">
-                      <Activity className="h-4 w-4 text-orange-500" />
-                      <span className={`text-xs font-medium ${getAQIColor(Math.round(stats.avgAQI))}`}>
-                        AQI: {Math.round(stats.avgAQI)}
-                      </span>
-                      <Badge variant="outline" className="text-xs">
-                        {getAQILevel(Math.round(stats.avgAQI))}
-                      </Badge>
-                    </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center space-x-2 cursor-help">
+                          <Activity className="h-4 w-4 text-orange-500" />
+                          <span className={`text-xs font-medium ${getAQIColor(Math.round(stats.avgAQI))}`}>
+                            AQI: {Math.round(stats.avgAQI)}
+                          </span>
+                          <Badge variant="outline" className="text-xs">
+                            {getAQILevel(Math.round(stats.avgAQI))}
+                          </Badge>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-xs">
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-lg">{getAQIDetails(Math.round(stats.avgAQI)).emoji}</span>
+                            <div>
+                              <div className="font-semibold text-sm">
+                                AQI Promedio: {Math.round(stats.avgAQI)}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                Basado en {stats.active} estaciones activas
+                              </div>
+                            </div>
+                          </div>
+                          <div className="space-y-1 text-xs">
+                            <div><strong>Categoría:</strong> {getAQIDetails(Math.round(stats.avgAQI)).category}</div>
+                            <div><strong>Descripción:</strong> {getAQIDetails(Math.round(stats.avgAQI)).description}</div>
+                            <div><strong>Población afectada:</strong> {getAQIDetails(Math.round(stats.avgAQI)).population}</div>
+                            <div className="pt-1 border-t border-border">
+                              <strong>Recomendación:</strong> {getAQIDetails(Math.round(stats.avgAQI)).recommendation}
+                            </div>
+                          </div>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
                   )}
 
                   {/* Última actualización */}
@@ -186,98 +382,117 @@ export default function Dashboard() {
             </div>
               </div>
 
-              {/* Métricas móviles */}
-              <div className="md:hidden flex items-center space-x-2">
-                {stats && (
-                  <Badge variant="outline" className="text-xs">
-                    {stats.active} estaciones
-                  </Badge>
-                )}
-                {stats && stats.avgAQI && (
-                  <Badge variant="outline" className={`text-xs ${getAQIColor(Math.round(stats.avgAQI))}`}>
-                    AQI: {Math.round(stats.avgAQI)}
-                  </Badge>
-                )}
+              {/* Métricas móviles - Componente optimizado */}
+              <MobileMetrics />
+
+              {/* Menubar con controles organizados - Responsive */}
+              <div className="ml-auto flex-shrink-0">
+                <Menubar className="border-0 bg-transparent shadow-none">
+                  {/* Menú Vista */}
+                  <MenubarMenu>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <MenubarTrigger className="flex items-center gap-1 sm:gap-2 cursor-help px-1 sm:px-2">
+                          <Globe className="h-3 w-3 sm:h-4 sm:w-4" />
+                          <span className="hidden sm:inline text-xs sm:text-sm">Vista</span>
+                        </MenubarTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p>Opciones de visualización del mapa</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <MenubarContent>
+                      <MenubarItem onClick={() => setOpenDialog("location")}>
+                        <MapPin className="mr-2 h-4 w-4" />
+                        <span>Ubicación Actual</span>
+                      </MenubarItem>
+                      <MenubarItem onClick={() => setOpenDialog("layers")}>
+                        <Layers className="mr-2 h-4 w-4" />
+                        <span>Controles de Capas</span>
+                      </MenubarItem>
+                      <MenubarSeparator />
+                      <MenubarItem onClick={() => setOpenDialog("legend")}>
+                        <BarChart3 className="mr-2 h-4 w-4" />
+                        <span>Leyenda de Calidad del Aire</span>
+                      </MenubarItem>
+                    </MenubarContent>
+                  </MenubarMenu>
+
+                  {/* Menú Datos */}
+                  <MenubarMenu>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <MenubarTrigger className="flex items-center gap-1 sm:gap-2 cursor-help px-1 sm:px-2">
+                          <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
+                          <span className="hidden sm:inline text-xs sm:text-sm">Datos</span>
+                        </MenubarTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p>Análisis y métricas de calidad del aire</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <MenubarContent>
+                      <MenubarItem onClick={() => setOpenDialog("historical")}>
+                        <Calendar className="mr-2 h-4 w-4" />
+                        <span>Datos Históricos</span>
+                      </MenubarItem>
+                      <MenubarItem onClick={() => setOpenDialog("metrics")}>
+                        <BarChart3 className="mr-2 h-4 w-4" />
+                        <span>Métricas en Tiempo Real</span>
+                      </MenubarItem>
+                    </MenubarContent>
+                  </MenubarMenu>
+
+                  {/* Menú Alertas */}
+                  <MenubarMenu>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <MenubarTrigger className="flex items-center gap-1 sm:gap-2 cursor-help px-1 sm:px-2">
+                          <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4" />
+                          <span className="hidden sm:inline text-xs sm:text-sm">Alertas</span>
+                        </MenubarTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p>Alertas y notificaciones de salud</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <MenubarContent>
+                      <MenubarItem onClick={() => setOpenDialog("alerts")}>
+                        <AlertTriangle className="mr-2 h-4 w-4" />
+                        <span>Alertas de Exposición</span>
+                      </MenubarItem>
+                    </MenubarContent>
+                  </MenubarMenu>
+
+                  {/* Menú Configuración */}
+                  <MenubarMenu>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <MenubarTrigger className="flex items-center gap-1 sm:gap-2 cursor-help px-1 sm:px-2">
+                          <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
+                          <span className="hidden sm:inline text-xs sm:text-sm">Config</span>
+                        </MenubarTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p>Configuración y preferencias</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <MenubarContent>
+                      <MenubarItem onClick={() => setOpenDialog("layers")}>
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Configuración del Mapa</span>
+                      </MenubarItem>
+                      <MenubarItem onClick={() => setOpenDialog("preferences")}>
+                        <Menu className="mr-2 h-4 w-4" />
+                        <span>Preferencias</span>
+                      </MenubarItem>
+                    </MenubarContent>
+                  </MenubarMenu>
+                </Menubar>
               </div>
-
-              {/* Menubar con controles organizados */}
-              <Menubar className="border-0 bg-transparent shadow-none">
-                {/* Menú Vista */}
-                <MenubarMenu>
-                  <MenubarTrigger className="flex items-center gap-2">
-                    <Globe className="h-4 w-4" />
-                    <span className="hidden sm:inline">Vista</span>
-                  </MenubarTrigger>
-                  <MenubarContent>
-                    <MenubarItem onClick={() => setOpenDialog("location")}>
-                      <MapPin className="mr-2 h-4 w-4" />
-                      <span>Ubicación Actual</span>
-                    </MenubarItem>
-                    <MenubarItem onClick={() => setOpenDialog("layers")}>
-                      <Layers className="mr-2 h-4 w-4" />
-                      <span>Controles de Capas</span>
-                    </MenubarItem>
-                    <MenubarSeparator />
-                    <MenubarItem onClick={() => setOpenDialog("legend")}>
-                      <BarChart3 className="mr-2 h-4 w-4" />
-                      <span>Leyenda de Calidad del Aire</span>
-                    </MenubarItem>
-                  </MenubarContent>
-                </MenubarMenu>
-
-                {/* Menú Datos */}
-                <MenubarMenu>
-                  <MenubarTrigger className="flex items-center gap-2">
-                    <BarChart3 className="h-4 w-4" />
-                    <span className="hidden sm:inline">Datos</span>
-                  </MenubarTrigger>
-                  <MenubarContent>
-                    <MenubarItem onClick={() => setOpenDialog("historical")}>
-                      <Calendar className="mr-2 h-4 w-4" />
-                      <span>Datos Históricos</span>
-                    </MenubarItem>
-                    <MenubarItem onClick={() => setOpenDialog("metrics")}>
-                      <BarChart3 className="mr-2 h-4 w-4" />
-                      <span>Métricas en Tiempo Real</span>
-                    </MenubarItem>
-                  </MenubarContent>
-                </MenubarMenu>
-
-                {/* Menú Alertas */}
-                <MenubarMenu>
-                  <MenubarTrigger className="flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4" />
-                    <span className="hidden sm:inline">Alertas</span>
-                  </MenubarTrigger>
-                  <MenubarContent>
-                    <MenubarItem onClick={() => setOpenDialog("alerts")}>
-                      <AlertTriangle className="mr-2 h-4 w-4" />
-                      <span>Alertas de Exposición</span>
-                    </MenubarItem>
-                  </MenubarContent>
-                </MenubarMenu>
-
-                {/* Menú Configuración */}
-                <MenubarMenu>
-                  <MenubarTrigger className="flex items-center gap-2">
-                    <Settings className="h-4 w-4" />
-                    <span className="hidden sm:inline">Config</span>
-                  </MenubarTrigger>
-                  <MenubarContent>
-                    <MenubarItem onClick={() => setOpenDialog("layers")}>
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Configuración del Mapa</span>
-                    </MenubarItem>
-                    <MenubarItem onClick={() => setOpenDialog("preferences")}>
-                      <Menu className="mr-2 h-4 w-4" />
-                      <span>Preferencias</span>
-                    </MenubarItem>
-                  </MenubarContent>
-                </MenubarMenu>
-              </Menubar>
               
-              {/* Botones de acción rápida */}
-              <div className="flex items-center gap-1 sm:gap-2">
+              {/* Botones de acción rápida - Responsive */}
+              <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                 {/* Ubicación actual */}
                 <Dialog open={openDialog === "location"} onOpenChange={(open) => !open && setOpenDialog(null)}>
                   <DialogContent className="max-w-sm z-[10001] mx-4">
@@ -599,5 +814,6 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
+    </TooltipProvider>
   )
 }

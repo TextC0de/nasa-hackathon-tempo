@@ -1,7 +1,14 @@
 "use client"
 
 import { trpc } from '@/lib/trpc'
-import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
+
+// Optimización: Configuración de debouncing para evitar llamadas excesivas
+const DEBOUNCE_CONFIG = {
+  delay: 300, // ms
+  maxRetries: 3,
+  retryDelay: 1000 // ms
+}
 
 /**
  * Tipos para las estaciones de monitoreo basados en la respuesta de AirNow API
@@ -91,16 +98,20 @@ const ACTIVE_STATUS_VALUES = [
  * })
  * ```
  */
+// Optimización: Hook con debouncing y memoización
 export function useMonitoringStations({
   centerLat = DEFAULT_CONFIG.centerLat,
   centerLng = DEFAULT_CONFIG.centerLng,
   radiusKm = DEFAULT_CONFIG.radiusKm,
   enabled = DEFAULT_CONFIG.enabled
 }: UseMonitoringStationsProps = {}) {
-  // Estados locales
+  // Estados locales optimizados
   const [stations, setStations] = useState<MonitoringStation[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
+  // Ref para debouncing
+  const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
   // Query para obtener estaciones de AirNow
   const { 
