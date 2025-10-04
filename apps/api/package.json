@@ -13,7 +13,10 @@
     "@hono/trpc-server": "^0.4.0",
     "@trpc/server": "^11.0.0",
     "hono": "^4.6.15",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "@atmos/airnow-client": "workspace:*",
+    "@atmos/earthdata-imageserver-client": "workspace:*",
+    "@atmos/firms-client": "workspace:*"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250110.0",
