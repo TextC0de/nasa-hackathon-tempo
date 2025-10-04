@@ -37,3 +37,6 @@ pnpm-debug.log*
 *.tsbuildinfo
 *.log
 .wrangler/
+scripts/data/
+scripts/downloads*/
+temp/
