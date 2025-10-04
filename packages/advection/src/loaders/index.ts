@@ -6,3 +6,4 @@ export * from './epa-loader';
 export * from './firms-loader';
 export * from './openmeteo-loader';
 export * from './tempo-loader';
+export * from './tempo-netcdf-loader';

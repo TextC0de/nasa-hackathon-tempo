@@ -23,6 +23,7 @@ import type {
   AirNowHistoricalOptions,
   BoundingBox,
   MonitoringSite,
+  MonitoringDataOptions,
 } from './types';
 
 /**
@@ -320,7 +321,7 @@ export class AirNowClient {
    * Obtener estaciones de monitoreo en un área geográfica
    *
    * @param bbox - Bounding box (área rectangular)
-   * @param options - Opciones de consulta
+   * @param options - Opciones de consulta con fechas y parámetros
    * @returns Lista de estaciones de monitoreo en el área
    *
    * @example
@@ -330,30 +331,49 @@ export class AirNowClient {
    *   minLatitude: 33.5,
    *   maxLongitude: -117.5,
    *   maxLatitude: 34.5
+   * }, {
+   *   startDate: '2025-10-04T16',
+   *   endDate: '2025-10-04T17',
+   *   parameters: 'PM25'
    * });
    * console.log(`Encontradas ${sites.length} estaciones`);
    * ```
    */
   async getMonitoringSites(
     bbox: BoundingBox,
-    options: AirNowQueryOptions = {}
+    options: MonitoringDataOptions
   ): Promise<MonitoringSite[]> {
-    const { format = 'application/json' } = options;
+    const {
+      format = 'application/json',
+      startDate,
+      endDate,
+      parameters,
+      dataType = 'A',
+      verbose = 1,
+      monitorType = 2,
+      includerawconcentrations = 1,
+    } = options;
 
     const params = new URLSearchParams({
+      startDate,
+      endDate,
+      parameters,
+      BBOX: `${bbox.minLongitude},${bbox.minLatitude},${bbox.maxLongitude},${bbox.maxLatitude}`,
+      dataType,
       format,
-      bbox: `${bbox.minLongitude},${bbox.minLatitude},${bbox.maxLongitude},${bbox.maxLatitude}`,
+      verbose: verbose.toString(),
+      monitorType: monitorType.toString(),
+      includerawconcentrations: includerawconcentrations.toString(),
       API_KEY: this.apiKey,
     });
 
-    const url = `${this.baseUrl}/aq/observation/latLong/current/?${params}`;
+    const url = `${this.baseUrl}/aq/data/?${params}`;
     console.log("URL:", url);
-    // https://www.airnowapi.org/aq/data/?startDate=2025-10-04T16&endDate=2025-10-04T17&parameters=PM25&BBOX=-124.205070,28.716781,-75.337882,45.419415&dataType=A&format=application/json&verbose=1&monitorType=2&includerawconcentrations=1&API_KEY=A09EAF06-910B-4426-A2A8-8DC2D82641C6
 
     const response = await fetch(url);
-console.log("sdjfpdsfjpofdsjposafd")
+    console.log("sdjfpdsfjpofdsjposafd")
     if (!response.ok) {
-      
+
     console.log("pre json");
     const data = await response.json();
     console.log("data json");
@@ -361,7 +381,6 @@ console.log("sdjfpdsfjpofdsjposafd")
       console.log(response.statusText);
       throw new Error(`AirNow API error: ${response.status} ${response.statusText}`);
     }
-    //console.log(await response.text())
 
     console.log("pre json");
     const data = await response.json();

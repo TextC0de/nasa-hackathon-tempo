@@ -155,6 +155,26 @@ export interface MonitoringSite {
 }
 
 /**
+ * Opciones para obtener datos de monitoreo
+ */
+export interface MonitoringDataOptions extends AirNowQueryOptions {
+  /** Fecha/hora de inicio (YYYY-MM-DDTHH) */
+  startDate: string;
+  /** Fecha/hora de fin (YYYY-MM-DDTHH) */
+  endDate: string;
+  /** Parámetros a consultar (e.g., 'PM25', 'O3', 'NO2') */
+  parameters: string;
+  /** Tipo de datos: 'A' (observaciones) o 'B' (promedios) */
+  dataType?: 'A' | 'B';
+  /** Modo verbose (0 o 1) */
+  verbose?: 0 | 1;
+  /** Tipo de monitor (1, 2, o ambos) */
+  monitorType?: 1 | 2;
+  /** Incluir concentraciones raw (0 o 1) */
+  includerawconcentrations?: 0 | 1;
+}
+
+/**
  * Credenciales AirNow API
  */
 export interface AirNowCredentials {

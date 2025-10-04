@@ -43,6 +43,7 @@ export type {
   AirNowCredentials,
   BoundingBox,
   MonitoringSite,
+  MonitoringDataOptions,
 } from './types';
 
 // Re-export enum for convenience
