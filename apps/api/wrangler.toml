@@ -1,6 +1,7 @@
 name = "atmos-api"
 main = "src/index.ts"
 compatibility_date = "2025-01-10"
+compatibility_flags = ["nodejs_compat"]
 
 [observability]
 enabled = true
