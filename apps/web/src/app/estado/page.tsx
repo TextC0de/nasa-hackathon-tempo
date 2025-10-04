@@ -189,6 +189,13 @@ export default function Dashboard() {
           getAQIColor={getAQIColor}
           getAQICategory={getAQIDetails}
         />
+
+        {/* Dialog de Incendio */}
+        <FireDialog
+          fire={selectedFire}
+          open={fireDialogOpen}
+          onOpenChange={setFireDialogOpen}
+        />
       </div>
     </TooltipProvider>
   )
