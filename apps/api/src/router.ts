@@ -89,23 +89,33 @@ export const appRouter = router({
       try {
         const stations = await airnowClient.getMonitoringSites(
           {
-            minLongitude: -118.5,
-            minLatitude: 33.5,
-            maxLongitude: -117.5,
-            maxLatitude: 34.5,
+            minLongitude: longitud - lngOffset,
+            minLatitude: latitud - latOffset,
+            maxLongitude: longitud + lngOffset,
+            maxLatitude: latitud + latOffset,
           },
           {
             startDate: '2025-10-04T16',
             endDate: '2025-10-04T17',
-            parameters: 'PM25',
+            parameters: 'NO2,PM25,O3,PM10,SO2,CO',
           }
         )
-
         return stations
       } catch (error) {
         console.error('Error al obtener estaciones de AirNow:', error)
       }
     }),
+
+   /* obtenerDatosMeteorologicos: publicProcedure
+    .input(
+      z.object({
+        latitud: z.number().min(0).max(90),
+        longitud: z.number().min(-180).max(180),
+      })
+    )
+    .query(async ({ input }) => {
+      const { latitud, longitud } = input
+      const */
 })
 
 export type AppRouter = typeof appRouter
