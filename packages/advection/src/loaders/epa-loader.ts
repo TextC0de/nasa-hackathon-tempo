@@ -270,7 +270,9 @@ export async function loadEPADataStreaming(
       // Filter by parameter
       if (options?.parameter) {
         const paramName = row['Parameter Name'];
-        if (!paramName.includes(options.parameter)) {
+        // Support both "PM25" and "PM2.5" formats
+        const searchParam = options.parameter.replace('PM25', 'PM2.5');
+        if (!paramName.includes(searchParam)) {
           return;
         }
       }

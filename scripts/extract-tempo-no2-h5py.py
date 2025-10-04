@@ -17,14 +17,14 @@ def extract_no2_at_point(nc_file: str, target_lat: float, target_lon: float, rad
     """Extract NO2 column density using h5py"""
     try:
         with h5py.File(nc_file, 'r') as f:
-            # List all datasets
-            def print_structure(name, obj):
-                if isinstance(obj, h5py.Dataset):
-                    print(f"  Dataset: {name}, Shape: {obj.shape}, Dtype: {obj.dtype}")
-
-            print("File structure:")
-            f.visititems(print_structure)
-            print()
+            # List all datasets (for debugging - comment out in production)
+            # def print_structure(name, obj):
+            #     if isinstance(obj, h5py.Dataset):
+            #         print(f"  Dataset: {name}, Shape: {obj.shape}, Dtype: {obj.dtype}", file=sys.stderr)
+            #
+            # print("File structure:", file=sys.stderr)
+            # f.visititems(print_structure)
+            # print(file=sys.stderr)
 
             # Try to find lat/lon and NO2 data
             # Common structures in TEMPO files:
@@ -59,7 +59,6 @@ def extract_no2_at_point(nc_file: str, target_lat: float, target_lon: float, rad
             for path in possible_lat_paths:
                 if path in f:
                     lat_data = f[path][:]
-                    print(f"Found latitude at: {path}")
                     break
 
             # Find lon dataset
@@ -67,7 +66,6 @@ def extract_no2_at_point(nc_file: str, target_lat: float, target_lon: float, rad
             for path in possible_lon_paths:
                 if path in f:
                     lon_data = f[path][:]
-                    print(f"Found longitude at: {path}")
                     break
 
             # Find NO2 dataset
@@ -77,7 +75,6 @@ def extract_no2_at_point(nc_file: str, target_lat: float, target_lon: float, rad
                 if path in f:
                     no2_data = f[path][:]
                     no2_path = path
-                    print(f"Found NO2 at: {path}")
                     break
 
             if lat_data is None or lon_data is None:
@@ -91,11 +88,6 @@ def extract_no2_at_point(nc_file: str, target_lat: float, target_lon: float, rad
                     "error": "Could not find NO2 dataset",
                     "datasets": list(f.keys())
                 }
-
-            print(f"\nData shapes:")
-            print(f"  lat: {lat_data.shape}")
-            print(f"  lon: {lon_data.shape}")
-            print(f"  NO2: {no2_data.shape}")
 
             # Handle different shapes
             if len(no2_data.shape) > 2:

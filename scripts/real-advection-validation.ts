@@ -105,7 +105,7 @@ function generateRealPrediction(
   fires: Fire[],
   factors: AdvectionFactors,
   tempoDir: string
-): number {
+): { value: number; usedTEMPO: boolean; no2Column: number } {
   // Intentar cargar datos TEMPO reales
   let no2Column = 2e15; // Fallback: valor típico urbano
   let usedTEMPO = false;
@@ -141,7 +141,11 @@ function generateRealPrediction(
     0 // Predicción para el momento actual (nowcast)
   );
 
-  return forecast.value;
+  return {
+    value: forecast.value,
+    usedTEMPO,
+    no2Column
+  };
 }
 
 /**
@@ -765,6 +769,8 @@ async function main() {
   let matched = 0;
   let weatherNotFound = 0;
   let totalFiresFound = 0;
+  let tempoDataUsed = 0;
+  let tempoDataFallback = 0;
 
   for (let i = 0; i < epaSample.length; i++) {
     const epa = epaSample[i];
@@ -791,8 +797,16 @@ async function main() {
     totalFiresFound += firesNearby.length;
 
     // Generar predicción con TEMPO real
-    const predicted = generateRealPrediction(epa, weather, firesNearby, DEFAULT_FACTORS, TEMPO_DIR);
+    const prediction = generateRealPrediction(epa, weather, firesNearby, DEFAULT_FACTORS, TEMPO_DIR);
+    const predicted = prediction.value;
     const actual = epa.value;
+
+    // Track TEMPO usage
+    if (prediction.usedTEMPO) {
+      tempoDataUsed++;
+    } else {
+      tempoDataFallback++;
+    }
 
     samples.push({
       predicted,
@@ -848,12 +862,14 @@ async function main() {
       console.log(`      Fecha: ${epa.timestamp.toISOString().substring(0, 16)}`);
       console.log(`      PM2.5 real: ${actual.toFixed(1)} µg/m³`);
       console.log(`      PM2.5 predicho: ${predicted.toFixed(1)} µg/m³`);
+      console.log(`      TEMPO: ${prediction.usedTEMPO ? `${colors.green}REAL${colors.reset} (NO2=${(prediction.no2Column).toExponential(2)})` : `${colors.yellow}FALLBACK${colors.reset} (estimado)`}`);
       console.log(`      Condiciones: PBL=${weather.pbl_height}m, Viento=${(weather.wind_speed * 3.6).toFixed(1)} km/h`);
       console.log(`      Incendios cercanos: ${firesNearby.length}\n`);
     }
   }
 
   console.log(`\n   ${colors.green}✓${colors.reset} ${matched} puntos con datos completos (EPA + Weather + Fires)`);
+  console.log(`   ${colors.cyan}📡${colors.reset} ${tempoDataUsed} con TEMPO REAL, ${tempoDataFallback} con fallback (${(tempoDataUsed/(tempoDataUsed+tempoDataFallback)*100).toFixed(1)}% cobertura)`);
   console.log(`   ${colors.yellow}⚠${colors.reset} ${weatherNotFound} puntos descartados (sin dato meteorológico cercano)`);
   console.log(`   ${colors.cyan}🔥${colors.reset} ${totalFiresFound} incendios totales encontrados en los puntos validados`);
 
