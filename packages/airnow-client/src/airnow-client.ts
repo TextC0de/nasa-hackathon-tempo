@@ -346,13 +346,28 @@ export class AirNowClient {
       API_KEY: this.apiKey,
     });
 
-    const response = await fetch(`${this.baseUrl}/aq/data/?${params}`);
+    const url = `${this.baseUrl}/aq/observation/latLong/current/?${params}`;
+    console.log("URL:", url);
+    // https://www.airnowapi.org/aq/data/?startDate=2025-10-04T16&endDate=2025-10-04T17&parameters=PM25&BBOX=-124.205070,28.716781,-75.337882,45.419415&dataType=A&format=application/json&verbose=1&monitorType=2&includerawconcentrations=1&API_KEY=A09EAF06-910B-4426-A2A8-8DC2D82641C6
 
+    const response = await fetch(url);
+console.log("sdjfpdsfjpofdsjposafd")
     if (!response.ok) {
+      
+    console.log("pre json");
+    const data = await response.json();
+    console.log("data json");
+    console.log(data);
+      console.log(response.statusText);
       throw new Error(`AirNow API error: ${response.status} ${response.statusText}`);
     }
+    //console.log(await response.text())
 
-    return await response.json();
+    console.log("pre json");
+    const data = await response.json();
+    console.log("data json");
+    console.log(data);
+    return data;
   }
 
   // ============================================================================
