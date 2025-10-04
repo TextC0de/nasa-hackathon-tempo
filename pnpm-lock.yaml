@@ -42,6 +42,9 @@ importers:
       '@atmos/firms-client':
         specifier: workspace:*
         version: link:../../packages/firms-client
+      '@atmos/openmeteo-client':
+        specifier: workspace:*
+        version: link:../../packages/openmeteo-client
       '@hono/trpc-server':
         specifier: ^0.4.0
         version: 0.4.0(@trpc/server@11.6.0(typescript@5.9.3))(hono@4.9.9)
