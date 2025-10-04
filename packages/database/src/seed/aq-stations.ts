@@ -1,6 +1,5 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { db } from '../index';
 import { aqStations } from '../schema/aq-stations';
 
 interface StationCSVRow {
@@ -32,7 +31,7 @@ function parseCSV(content: string): Record<string, string>[] {
   return records;
 }
 
-async function seedAqStations() {
+export async function seedAqStations() {
   const CSV_PATH = path.join(__dirname, 'aq-stations.csv');
 
   console.log('Reading CSV file...');
@@ -41,7 +40,7 @@ async function seedAqStations() {
 
   console.log(`Found ${records.length} stations to seed`);
 
-  // Preparar datos para inserción
+  // Preparar datos para inserciï¿½n
   const stations = records.map(record => ({
     provider: record.provider,
     latitude: parseFloat(record.latitude),
@@ -61,12 +60,3 @@ async function seedAqStations() {
 
   console.log('Seeding completed!');
 }
-
-seedAqStations()
-  .catch((error) => {
-    console.error('Error seeding AQ stations:', error);
-    process.exit(1);
-  })
-  .finally(() => {
-    process.exit(0);
-  });

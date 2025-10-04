@@ -18,7 +18,9 @@
     "calibrate:advection": "tsx scripts/calibrate-advection-factors.ts",
     "calibrate:no2": "tsx scripts/calibrate-no2-simple.ts",
     "db:gen": "pnpm --filter database db:gen",
+    "db:seed": "pnpm --filter database db:seed",
     "db:studio": "pnpm --filter database db:studio",
+    "db:migrate": "pnpm --filter database db:migrate",
     "db:start": "docker-compose up -d postgres",
     "db:stop": "docker-compose stop postgres",
     "db:restart": "docker-compose restart postgres"
@@ -34,6 +36,7 @@
   },
   "dependencies": {
     "date-fns": "^4.1.0",
+    "dotenv": "^17.2.3",
     "drizzle-kit": "^0.31.5",
     "drizzle-orm": "^0.44.6",
     "netcdfjs": "^3.0.0"

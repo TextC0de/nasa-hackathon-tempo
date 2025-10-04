@@ -17,6 +17,7 @@
     "dev": "tsc --watch",
     "lint": "eslint \"src/**/*.ts\"",
     "typecheck": "tsc --noEmit",
+    "db:seed": "tsx src/seed/index.ts",
     "db:gen": "drizzle-kit generate",
     "db:migrate": "tsx ./migrate.ts",
     "db:studio": "drizzle-kit studio"
