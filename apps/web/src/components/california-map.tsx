@@ -7,6 +7,8 @@ import dynamic from "next/dynamic"
 import "leaflet/dist/leaflet.css"
 import L from "leaflet"
 import { MonitoringStationsLayer } from "./monitoring-stations-layer"
+import { AlertMarkers } from "./alert-markers"
+import { Alert as AlertType } from '@/hooks/use-alerts'
 
 // Optimización: Lazy loading con loading state
 const MapContainer = dynamic(
@@ -510,6 +512,7 @@ interface CaliforniaMapProps {
   mapType?: keyof typeof MAP_TYPES
   onMapTypeChange?: (mapType: keyof typeof MAP_TYPES) => void
   showMonitoringStations?: boolean
+  alerts?: AlertType[]
 }
 
 // Optimización: Memoización del componente principal
@@ -517,7 +520,8 @@ export const CaliforniaMap = React.memo(function CaliforniaMap({
   className, 
   mapType = "streetmap", 
   onMapTypeChange, 
-  showMonitoringStations = true 
+  showMonitoringStations = true,
+  alerts = []
 }: CaliforniaMapProps) {
   // Memoización de configuraciones para evitar re-renders innecesarios
   const currentMapType = useMemo(() => MAP_TYPES[mapType], [mapType])
@@ -558,6 +562,9 @@ export const CaliforniaMap = React.memo(function CaliforniaMap({
         
         {/* Monitoring Stations Layer - Optimizado con lazy loading */}
         {showMonitoringStations && <MonitoringStationsLayer />}
+        
+        {/* Alert Markers Layer */}
+        <AlertMarkers alerts={alerts} />
         
         <MapTypeControlComponent 
           mapTypes={MAP_TYPES}
