@@ -37,6 +37,10 @@ import {
   Map
 } from "lucide-react"
 import { useMonitoringStations } from "@/hooks/use-monitoring-stations"
+import { useAlerts } from "@/hooks/use-alerts"
+import { AlertForm } from "@/components/alert-form"
+import { ActiveAlerts } from "@/components/active-alerts"
+import { AlertMarkers } from "@/components/alert-markers"
 
 // Importar el componente del mapa dinámicamente para evitar problemas de SSR
 const CaliforniaMap = dynamic(() => import("@/components/california-map").then(mod => ({ default: mod.CaliforniaMap })), {
@@ -81,6 +85,7 @@ export default function Dashboard() {
   const [mapType, setMapType] = useState<MapType>("streetmap")
   const [openDialog, setOpenDialog] = useState<string | null>(null)
   const [showMonitoringStations, setShowMonitoringStations] = useState(true)
+  const [isSubmittingAlert, setIsSubmittingAlert] = useState(false)
 
   // Hook para obtener datos de estaciones de monitoreo
   const { stations, airQuality, isLoading, error, stats } = useMonitoringStations({
@@ -89,6 +94,55 @@ export default function Dashboard() {
     radiusKm: 200,
     enabled: true
   })
+
+  // Hook para manejar alertas
+  const { 
+    alerts, 
+    addAlert, 
+    updateAlertStatus, 
+    removeAlert, 
+    getActiveAlerts 
+  } = useAlerts()
+
+  // Funciones para manejar alertas
+  const handleSubmitAlert = async (alertData: any) => {
+    setIsSubmittingAlert(true)
+    
+    try {
+      // Simular envío de alerta
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      // Agregar coordenadas de ejemplo si no se proporcionaron
+      const alertWithCoords = {
+        ...alertData,
+        coordinates: alertData.coordinates || {
+          lat: 36.7783 + (Math.random() - 0.5) * 0.1, // Coordenadas aleatorias cerca de California
+          lng: -119.4179 + (Math.random() - 0.5) * 0.1
+        }
+      }
+      
+      addAlert(alertWithCoords)
+      
+      // Cerrar diálogo
+      setOpenDialog(null)
+      
+      // Mostrar mensaje de éxito
+      alert("¡Alerta enviada exitosamente! Se ha agregado al mapa.")
+      
+    } catch (error) {
+      alert("Error al enviar la alerta. Por favor intenta nuevamente.")
+    } finally {
+      setIsSubmittingAlert(false)
+    }
+  }
+
+  const handleResolveAlert = (alertId: string) => {
+    updateAlertStatus(alertId, 'resolved')
+  }
+
+  const handleDismissAlert = (alertId: string) => {
+    updateAlertStatus(alertId, 'dismissed')
+  }
 
   // Función para obtener el color del AQI
   const getAQIColor = (aqi: number) => {
@@ -608,32 +662,47 @@ export default function Dashboard() {
 
                 {/* Alertas */}
                 <Dialog open={openDialog === "alerts"} onOpenChange={(open) => !open && setOpenDialog(null)}>
-                  <DialogContent className="max-w-sm sm:max-w-2xl z-[10001] mx-4">
+                  <DialogContent className="max-w-md sm:max-w-lg z-[10001] mx-4">
                     <DialogHeader>
-                      <DialogTitle className="text-sm sm:text-base">Alertas de Exposición</DialogTitle>
+                      <DialogTitle className="text-sm sm:text-base flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 text-orange-500" />
+                        Sistema de Alertas
+                      </DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-3 sm:space-y-4">
-                      <Card className="border-yellow-200 bg-yellow-50">
+                    <div className="space-y-4">
+                      {/* Formulario de nueva alerta */}
+                      <Card className="border-blue-200 bg-blue-50">
                         <CardHeader className="pb-3">
-                          <CardTitle className="text-yellow-800 text-sm">Advertencia de Calidad del Aire</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <CardDescription className="text-yellow-700 text-sm">
-                            Nivel moderado detectado en el área norte
+                          <CardTitle className="text-blue-800 text-sm">Crear Nueva Alerta</CardTitle>
+                          <CardDescription className="text-blue-700 text-xs">
+                            Reporta problemas de calidad del aire o estaciones que no funcionan
                           </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <AlertForm 
+                            onSubmit={handleSubmitAlert}
+                            isLoading={isSubmittingAlert}
+                          />
                         </CardContent>
                       </Card>
-                      <Card className="border-green-200 bg-green-50">
+
+                      {/* Alertas activas */}
+                      <Card className="border-orange-200 bg-orange-50">
                         <CardHeader className="pb-3">
-                          <CardTitle className="text-green-800 text-sm">Condiciones Normales</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <CardDescription className="text-green-700 text-sm">
-                            Todas las áreas dentro de parámetros seguros
+                          <CardTitle className="text-orange-800 text-sm">Alertas Activas</CardTitle>
+                          <CardDescription className="text-orange-700 text-xs">
+                            {getActiveAlerts().length} alerta(s) pendiente(s)
                           </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <ActiveAlerts 
+                            alerts={getActiveAlerts()}
+                            onResolveAlert={handleResolveAlert}
+                            onDismissAlert={handleDismissAlert}
+                          />
                         </CardContent>
                       </Card>
-            </div>
+                    </div>
                   </DialogContent>
                 </Dialog>
 
@@ -808,6 +877,7 @@ export default function Dashboard() {
                 mapType={mapType} 
                 onMapTypeChange={(type) => setMapType(type as MapType)}
                 showMonitoringStations={showMonitoringStations}
+                alerts={getActiveAlerts()}
               />
             </div>
           </main>
