@@ -4,6 +4,7 @@ import { FIRMSClient } from '@atmos/firms-client'
 import { SEDACService } from '@atmos/earthdata-imageserver-client'
 import { AirNowClient } from '@atmos/airnow-client'
 import { OpenMeteoClient, HourlyVariable } from '@atmos/openmeteo-client'
+import { predecirAqiProcedure } from './procedures/predecir-aqi'
 
 export const appRouter = router({
   hello: publicProcedure.input(z.object({ name: z.string().optional() })).query(({ input }) => {
@@ -152,7 +153,10 @@ export const appRouter = router({
         console.error('Error al obtener datos meteorológicos:', error)
         throw new Error(`No se pudieron obtener los datos meteorológicos: ${error instanceof Error ? error.message : 'Error desconocido'}`)
       }
-    })
+    }),
+
+  // Nuevo procedure: Predecir AQI usando DB + AirNow + OpenMeteo
+  predecirAqi: predecirAqiProcedure,
 
 })
 

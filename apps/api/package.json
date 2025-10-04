@@ -15,6 +15,7 @@
     "hono": "^4.6.15",
     "zod": "^3.23.8",
     "@atmos/airnow-client": "workspace:*",
+    "@atmos/database": "workspace:*",
     "@atmos/earthdata-imageserver-client": "workspace:*",
     "@atmos/firms-client": "workspace:*",
     "@atmos/openmeteo-client": "workspace:*"

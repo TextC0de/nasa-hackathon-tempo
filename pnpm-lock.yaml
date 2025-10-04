@@ -23,6 +23,9 @@ importers:
       netcdfjs:
         specifier: ^3.0.0
         version: 3.0.0
+      postgres:
+        specifier: ^3.4.7
+        version: 3.4.7
     devDependencies:
       prettier:
         specifier: ^3.2.5
@@ -39,6 +42,9 @@ importers:
       '@atmos/airnow-client':
         specifier: workspace:*
         version: link:../../packages/airnow-client
+      '@atmos/database':
+        specifier: workspace:*
+        version: link:../../packages/database
       '@atmos/earthdata-imageserver-client':
         specifier: workspace:*
         version: link:../../packages/earthdata-imageserver-client

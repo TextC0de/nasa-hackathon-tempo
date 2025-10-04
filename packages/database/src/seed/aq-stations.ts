@@ -3,6 +3,7 @@ import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+import { sql } from 'drizzle-orm';
 import { aqStations } from '../schema/aq-stations';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -46,13 +47,19 @@ export async function seedAqStations(db: PostgresJsDatabase) {
 
   console.log(`Found ${records.length} stations to seed`);
 
-  // Preparar datos para inserci�n
-  const stations = records.map(record => ({
-    provider: record.provider,
-    latitude: parseFloat(record.latitude),
-    longitude: parseFloat(record.longitude),
-    parameter: record.parameter,
-  }));
+  // Preparar datos para inserción con PostGIS geometry
+  const stations = records.map(record => {
+    const lat = parseFloat(record.latitude);
+    const lon = parseFloat(record.longitude);
+
+    return {
+      provider: record.provider,
+      // PostGIS ST_MakePoint(longitude, latitude) con SRID 4326 (WGS84)
+      // NOTA: PostGIS usa (lon, lat), no (lat, lon)
+      location: sql`ST_SetSRID(ST_MakePoint(${lon}, ${lat}), 4326)`,
+      parameter: record.parameter as 'o2' | 'ozone' | 'pm2.5',
+    };
+  });
 
   console.log('Inserting stations into database...');
 

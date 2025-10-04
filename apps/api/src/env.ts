@@ -26,6 +26,13 @@ const envSchema = z.object({
    * Get it from: https://firms.modaps.eosdis.nasa.gov/api/
    */
   FIRMS_API_KEY: z.string().min(1, 'FIRMS_API_KEY is required'),
+
+  /**
+   * PostgreSQL Database URL
+   * Required for accessing air quality stations and forecast data
+   * Format: postgresql://user:password@host:port/database
+   */
+  DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
 })
 
 export type Env = z.infer<typeof envSchema>

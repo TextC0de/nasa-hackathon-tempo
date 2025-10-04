@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS postgis;
+--> statement-breakpoint
 CREATE TABLE "airnow_forecasts" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"date_forecast" date NOT NULL,
@@ -88,6 +90,16 @@ CREATE TABLE "firms_fire_points" (
 	"deleted_at" timestamp with time zone
 );
 --> statement-breakpoint
+CREATE TABLE "aq_stations" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"provider" varchar(50) NOT NULL,
+	"location" geometry(Point, 4326) NOT NULL,
+	"parameter" varchar(20) NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"deleted_at" timestamp with time zone
+);
+--> statement-breakpoint
 CREATE INDEX "airnow_fc_forecast_date_idx" ON "airnow_forecasts" USING btree ("date_forecast");--> statement-breakpoint
 CREATE INDEX "airnow_fc_issue_date_idx" ON "airnow_forecasts" USING btree ("date_issue");--> statement-breakpoint
 CREATE INDEX "airnow_fc_spatial_idx" ON "airnow_forecasts" USING btree ("latitude","longitude");--> statement-breakpoint
@@ -106,4 +118,8 @@ CREATE INDEX "firms_spatial_idx" ON "firms_fire_points" USING btree ("latitude",
 CREATE INDEX "firms_temporal_idx" ON "firms_fire_points" USING btree ("acq_date","acq_time");--> statement-breakpoint
 CREATE INDEX "firms_date_source_idx" ON "firms_fire_points" USING btree ("acq_date","satellite");--> statement-breakpoint
 CREATE INDEX "firms_confidence_idx" ON "firms_fire_points" USING btree ("confidence");--> statement-breakpoint
-CREATE INDEX "firms_frp_idx" ON "firms_fire_points" USING btree ("frp");
+CREATE INDEX "firms_frp_idx" ON "firms_fire_points" USING btree ("frp");--> statement-breakpoint
+CREATE INDEX "aq_stations_location_idx" ON "aq_stations" USING gist ("location");--> statement-breakpoint
+CREATE INDEX "aq_stations_provider_idx" ON "aq_stations" USING btree ("provider");--> statement-breakpoint
+CREATE INDEX "aq_stations_parameter_idx" ON "aq_stations" USING btree ("parameter");--> statement-breakpoint
+CREATE INDEX "aq_stations_provider_param_idx" ON "aq_stations" USING btree ("provider","parameter");

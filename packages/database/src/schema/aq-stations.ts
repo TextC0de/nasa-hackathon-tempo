@@ -1,5 +1,12 @@
-import { pgTable, serial, doublePrecision, varchar, index } from 'drizzle-orm/pg-core'
+import { pgTable, serial, varchar, index, customType } from 'drizzle-orm/pg-core'
 import { createTimestampColumns } from '../shared/base'
+
+// PostGIS geometry type para almacenar puntos geográficos
+const geometry = customType<{ data: { type: 'Point', coordinates: [number, number] }, driverData: string }>({
+  dataType() {
+    return 'geometry(Point, 4326)'
+  },
+})
 
 /**
  * Air Quality Stations
@@ -16,9 +23,8 @@ export const aqStations = pgTable(
     // Proveedor de datos
     provider: varchar('provider', { length: 50 }).notNull(), // 'airnow', 'epa', etc.
 
-    // Geolocalización
-    latitude: doublePrecision('latitude').notNull(),
-    longitude: doublePrecision('longitude').notNull(),
+    // Geolocalización - PostGIS geometry point
+    location: geometry('location').notNull(),
 
     // Parámetro medido
     parameter: varchar('parameter', { length: 20, enum: ['o2', 'ozone', 'pm2.5'] }).notNull(), // 'ozone', 'no2', 'pm2.5', etc.
@@ -27,8 +33,9 @@ export const aqStations = pgTable(
     ...createTimestampColumns(),
   },
   (table) => ({
-    // Índice espacial para búsquedas por ubicación
-    spatialIdx: index('aq_stations_spatial_idx').on(table.latitude, table.longitude),
+    // Índice espacial PostGIS GIST para búsquedas por ubicación
+    // NOTA: En SQL raw sería: CREATE INDEX aq_stations_location_idx ON aq_stations USING GIST (location);
+    spatialIdx: index('aq_stations_location_idx').using('gist', table.location),
 
     // Índice por proveedor
     providerIdx: index('aq_stations_provider_idx').on(table.provider),

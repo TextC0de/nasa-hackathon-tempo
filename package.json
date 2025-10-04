@@ -23,7 +23,7 @@
     "db:migrate": "pnpm --filter database db:migrate",
     "db:start": "docker-compose up -d postgres",
     "db:stop": "docker-compose stop postgres",
-    "db:restart": "docker-compose restart postgres"
+    "db:restart": "docker-compose down -v && docker-compose up -d postgres"
   },
   "devDependencies": {
     "prettier": "^3.2.5",
@@ -39,6 +39,7 @@
     "dotenv": "^17.2.3",
     "drizzle-kit": "^0.31.5",
     "drizzle-orm": "^0.44.6",
-    "netcdfjs": "^3.0.0"
+    "netcdfjs": "^3.0.0",
+    "postgres": "^3.4.7"
   }
 }

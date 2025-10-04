@@ -1,6 +1,6 @@
 {
-  "id": "546158b3-2261-482f-ad2c-e754d6f33f4f",
-  "prevId": "bf9741fb-8d59-47e9-9810-17c6c05a6ecd",
+  "id": "90b73c13-521a-40a9-af6c-d1be1e2d9e72",
+  "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -918,15 +918,9 @@
           "primaryKey": false,
           "notNull": true
         },
-        "latitude": {
-          "name": "latitude",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "longitude": {
-          "name": "longitude",
-          "type": "double precision",
+        "location": {
+          "name": "location",
+          "type": "geometry(Point, 4326)",
           "primaryKey": false,
           "notNull": true
         },
@@ -958,17 +952,11 @@
         }
       },
       "indexes": {
-        "aq_stations_spatial_idx": {
-          "name": "aq_stations_spatial_idx",
+        "aq_stations_location_idx": {
+          "name": "aq_stations_location_idx",
           "columns": [
             {
-              "expression": "latitude",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "longitude",
+              "expression": "location",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -976,7 +964,7 @@
           ],
           "isUnique": false,
           "concurrently": false,
-          "method": "btree",
+          "method": "gist",
           "with": {}
         },
         "aq_stations_provider_idx": {
