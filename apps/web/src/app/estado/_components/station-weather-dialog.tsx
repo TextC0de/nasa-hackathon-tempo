@@ -132,7 +132,7 @@ export function StationWeatherDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto z-[10001]">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto z-[10001]">
         {/* Header */}
         <DialogHeader>
           <div className="space-y-3">
