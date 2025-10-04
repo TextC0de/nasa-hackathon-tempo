@@ -9,8 +9,8 @@
     "lint": {
       "dependsOn": ["^lint"]
     },
-    "typecheck": {
-      "dependsOn": ["^typecheck"]
+    "type-check": {
+      "dependsOn": ["^type-check"]
     },
     "dev": {
       "cache": false,

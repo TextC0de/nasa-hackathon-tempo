@@ -1,0 +1,45 @@
+{
+  "name": "@atmos/openmeteo-client",
+  "version": "0.1.0",
+  "description": "Cliente TypeScript para Open-Meteo API - Historical and forecast weather data para advection modeling",
+  "keywords": [
+    "open-meteo",
+    "weather",
+    "wind",
+    "temperature",
+    "precipitation",
+    "boundary-layer-height",
+    "atmospheric",
+    "meteorology",
+    "advection",
+    "forecast"
+  ],
+  "author": "nasa-tempo",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

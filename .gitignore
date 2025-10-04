@@ -36,3 +36,7 @@ pnpm-debug.log*
 # Typescript
 *.tsbuildinfo
 *.log
+.wrangler/
+scripts/data/
+scripts/downloads*/
+temp/
