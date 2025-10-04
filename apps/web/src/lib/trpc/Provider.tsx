@@ -19,7 +19,7 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
     trpc.createClient({
       links: [
         httpLink({
-          url: `${env.NEXT_PUBLIC_API_HOST}/trpc`,
+          url: `http://localhost:8787/trpc`,
         }),
       ],
     })
