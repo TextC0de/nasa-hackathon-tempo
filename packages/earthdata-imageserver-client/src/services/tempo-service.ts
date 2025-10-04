@@ -250,7 +250,7 @@ export class TEMPOService {
       ? null
       : typeof result.value === 'string'
         ? parseFloat(result.value)
-        : result.value;
+        : result.value; 
 
     if (value === null) {
       throw new NoDataError(
