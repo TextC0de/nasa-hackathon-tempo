@@ -120,3 +120,75 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Leaflet z-index fixes - Lower z-index for map controls */
+.leaflet-control-container {
+  z-index: 100 !important;
+}
+
+.leaflet-control {
+  z-index: 100 !important;
+}
+
+.leaflet-control-zoom {
+  z-index: 100 !important;
+}
+
+.leaflet-control-attribution {
+  z-index: 100 !important;
+}
+
+.leaflet-control-map-type {
+  z-index: 100 !important;
+}
+
+.leaflet-map-pane {
+  z-index: 1 !important;
+}
+
+.leaflet-tile-pane {
+  z-index: 1 !important;
+}
+
+/* Ensure dialogs and UI elements appear above Leaflet */
+[data-radix-portal] {
+  z-index: 10001 !important;
+}
+
+/* Custom map controls should be above Leaflet */
+.map-controls {
+  z-index: 1000 !important;
+}
+
+/* Enhanced Marker Styles */
+.custom-marker {
+  transition: transform 0.2s ease;
+}
+
+.custom-marker:hover {
+  transform: scale(1.1);
+}
+
+.air-quality-marker {
+  transition: transform 0.2s ease;
+}
+
+.air-quality-marker:hover {
+  transform: scale(1.1);
+}
+
+/* Leaflet Popup Custom Styles */
+.leaflet-popup-content-wrapper {
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.leaflet-popup-content {
+  margin: 12px !important;
+  line-height: 1.4 !important;
+}
+
+.leaflet-popup-tip {
+  background: white !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
