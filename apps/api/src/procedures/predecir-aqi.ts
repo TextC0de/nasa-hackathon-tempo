@@ -150,46 +150,67 @@ export const predecirAqiProcedure = publicProcedure
       ratio: null,
     }
 
+    // Obtener el último timestamp disponible para cada contaminante
     try {
-      // O3 TEMPO
+      console.log(`   🔍 Obteniendo último timestamp disponible de O3...`)
+      const o3Extent = await tempoService.getTemporalExtent('O3')
+      const o3Timestamp = o3Extent.end // Usar el último tiempo disponible
+
+      const hourDiff = Math.round((now.getTime() - o3Timestamp.getTime()) / (60 * 60 * 1000))
+      console.log(`   📅 Usando O3 TEMPO de: ${o3Timestamp.toISOString()} (${hourDiff}h atrás)`)
+
       const [o3Station, o3User] = await Promise.all([
         tempoService.getO3AtPoint({
           location: { latitude: station.latitude, longitude: station.longitude },
-          timestamp: now,
+          timestamp: o3Timestamp,
         }).catch(() => null),
         tempoService.getO3AtPoint({
           location: { latitude, longitude },
-          timestamp: now,
+          timestamp: o3Timestamp,
         }).catch(() => null),
       ])
 
       o3Tempo.station = o3Station?.value ?? null
       o3Tempo.user = o3User?.value ?? null
 
-      console.log(`   ✓ O3 TEMPO - Estación: ${o3Tempo.station}, Usuario: ${o3Tempo.user}`)
-    } catch (error) {
-      console.log(`   ⚠ Error obteniendo O3 TEMPO: ${error}`)
+      if (o3Tempo.station || o3Tempo.user) {
+        console.log(`   ✓ O3 TEMPO - Estación: ${o3Tempo.station ? o3Tempo.station.toExponential(2) : 'N/A'}, Usuario: ${o3Tempo.user ? o3Tempo.user.toExponential(2) : 'N/A'}`)
+      } else {
+        console.log(`   ⚠ O3 TEMPO - Sin datos en las ubicaciones consultadas`)
+      }
+    } catch (err) {
+      console.log(`   ⚠ O3 TEMPO - Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
 
     try {
-      // NO2 TEMPO
+      console.log(`   🔍 Obteniendo último timestamp disponible de NO2...`)
+      const no2Extent = await tempoService.getTemporalExtent('NO2')
+      const no2Timestamp = no2Extent.end // Usar el último tiempo disponible
+
+      const hourDiff = Math.round((now.getTime() - no2Timestamp.getTime()) / (60 * 60 * 1000))
+      console.log(`   📅 Usando NO2 TEMPO de: ${no2Timestamp.toISOString()} (${hourDiff}h atrás)`)
+
       const [no2Station, no2User] = await Promise.all([
         tempoService.getNO2AtPoint({
           location: { latitude: station.latitude, longitude: station.longitude },
-          timestamp: now,
+          timestamp: no2Timestamp,
         }).catch(() => null),
         tempoService.getNO2AtPoint({
           location: { latitude, longitude },
-          timestamp: now,
+          timestamp: no2Timestamp,
         }).catch(() => null),
       ])
 
       no2Tempo.station = no2Station?.value ?? null
       no2Tempo.user = no2User?.value ?? null
 
-      console.log(`   ✓ NO2 TEMPO - Estación: ${no2Tempo.station}, Usuario: ${no2Tempo.user}`)
-    } catch (error) {
-      console.log(`   ⚠ Error obteniendo NO2 TEMPO: ${error}`)
+      if (no2Tempo.station || no2Tempo.user) {
+        console.log(`   ✓ NO2 TEMPO - Estación: ${no2Tempo.station ? no2Tempo.station.toExponential(2) : 'N/A'}, Usuario: ${no2Tempo.user ? no2Tempo.user.toExponential(2) : 'N/A'}`)
+      } else {
+        console.log(`   ⚠ NO2 TEMPO - Sin datos en las ubicaciones consultadas`)
+      }
+    } catch (err) {
+      console.log(`   ⚠ NO2 TEMPO - Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
 
     // =====================================================
@@ -228,12 +249,19 @@ export const predecirAqiProcedure = publicProcedure
     // =====================================================
 
     // Buscar datos para cada parámetro (MonitoringSite usa 'Parameter' no 'ParameterName')
-    const o3Data = currentAirQuality.find((obs) => obs.Parameter.toUpperCase().includes('O3'))
+    // AirNow puede devolver "OZONE" o "O3", "NO2", "PM2.5" o "PM25"
+    const o3Data = currentAirQuality.find((obs) => {
+      const param = obs.Parameter.toUpperCase()
+      return param.includes('O3') || param.includes('OZONE')
+    })
     const no2Data = currentAirQuality.find((obs) => obs.Parameter.toUpperCase().includes('NO2'))
-    const pm25Data = currentAirQuality.find((obs) => obs.Parameter.toUpperCase().includes('PM2.5'))
+    const pm25Data = currentAirQuality.find((obs) => {
+      const param = obs.Parameter.toUpperCase()
+      return param.includes('PM2.5') || param.includes('PM25')
+    })
 
     console.log(`   🔍 Búsqueda de parámetros:`)
-    console.log(`      - O3 encontrado: ${o3Data ? 'Sí (' + o3Data.Parameter + ')' : 'No'}`)
+    console.log(`      - O3/OZONE encontrado: ${o3Data ? 'Sí (' + o3Data.Parameter + ')' : 'No'}`)
     console.log(`      - NO2 encontrado: ${no2Data ? 'Sí (' + no2Data.Parameter + ')' : 'No'}`)
     console.log(`      - PM2.5 encontrado: ${pm25Data ? 'Sí (' + pm25Data.Parameter + ')' : 'No'}`)
 

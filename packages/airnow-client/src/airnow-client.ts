@@ -368,23 +368,14 @@ export class AirNowClient {
     });
 
     const url = `${this.baseUrl}/aq/data/?${params}`;
-    console.log("URL:", url);
 
     const response = await fetch(url);
     if (!response.ok) {
-
-    console.log("pre json");
-    const data = await response.json();
-    console.log("data json");
-    console.log(data);
-      console.log(response.statusText);
+      const data = await response.json();
       throw new Error(`AirNow API error: ${response.status} ${response.statusText}`);
     }
 
-    console.log("pre json");
     const data = await response.json();
-    console.log("data json");
-    console.log(data);
     return data;
   }
 

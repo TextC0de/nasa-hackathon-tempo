@@ -41,6 +41,33 @@ export interface MonitoringStation {
 }
 
 /**
+ * Medición de un parámetro específico
+ */
+export interface ParameterMeasurement {
+  Parameter: string
+  AQI: number
+  RawConcentration: number
+  Unit: string
+  UTC: string
+}
+
+/**
+ * Estación agrupada con todos sus parámetros
+ */
+export interface GroupedStation {
+  Latitude: number
+  Longitude: number
+  SiteName: string
+  AgencyName: string
+  FullAQSCode: string
+  Status: string
+  measurements: ParameterMeasurement[]
+  worstAQI: number // El peor AQI de todos los parámetros
+  worstParameter: string // El parámetro con peor AQI
+  lastUpdate: string // UTC del dato más reciente
+}
+
+/**
  * Props para el hook de estaciones de monitoreo
  */
 export interface UseMonitoringStationsProps {
@@ -107,6 +134,7 @@ export function useMonitoringStations({
 }: UseMonitoringStationsProps = {}) {
   // Estados locales optimizados
   const [stations, setStations] = useState<MonitoringStation[]>([])
+  const [groupedStations, setGroupedStations] = useState<GroupedStation[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
@@ -157,14 +185,170 @@ export function useMonitoringStations({
     }
   }, [refetchStations, refetchAirQuality])
 
-  // Efecto para manejar datos de estaciones
+// Efecto para manejar datos de estaciones
   useEffect(() => {
     if (airnowStations) {
       try {
-        setStations(airnowStations as unknown as MonitoringStation[])
+        const stationsData = airnowStations as unknown as MonitoringStation[]
+
+        console.log('🔄 [HOOK] === DATOS RECIBIDOS DEL SERVIDOR ===')
+        console.log(`📊 [HOOK] Total de estaciones: ${stationsData.length}`)
+
+        if (stationsData.length > 0) {
+          // Análisis de timestamps y códigos AQS
+          console.log('⏰ [HOOK] Análisis de timestamps en duplicados:')
+          const timestampAnalysis = new Map<string, MonitoringStation[]>()
+
+          stationsData.slice(0, 10).forEach(station => {
+            const key = `${station.SiteName}-${station.Parameter}`
+            if (!timestampAnalysis.has(key)) {
+              timestampAnalysis.set(key, [])
+            }
+            timestampAnalysis.get(key)!.push(station)
+          })
+
+          timestampAnalysis.forEach((stations, key) => {
+            if (stations.length > 1) {
+              console.warn(`  🔁 ${key}:`)
+              stations.forEach(s => {
+                console.warn(`    UTC: ${s.UTC}, AQI: ${s.AQI}, AQS: ${s.FullAQSCode}`)
+              })
+            }
+          })
+
+// AGRUPACIÓN: Agrupar mediciones por ubicación física
+          console.log('🏢 [HOOK] Agrupando mediciones por estación...')
+
+          const stationGroups = new Map<string, GroupedStation>()
+
+          stationsData.forEach(station => {
+            // Clave única por ubicación física (coordenadas + nombre)
+            const locationKey = `${station.Latitude.toFixed(6)}-${station.Longitude.toFixed(6)}-${station.SiteName}`
+
+            if (!stationGroups.has(locationKey)) {
+              // Nueva estación física
+              stationGroups.set(locationKey, {
+                Latitude: station.Latitude,
+                Longitude: station.Longitude,
+                SiteName: station.SiteName,
+                AgencyName: station.AgencyName,
+                FullAQSCode: station.FullAQSCode,
+                Status: station.Status,
+                measurements: [],
+                worstAQI: -Infinity,
+                worstParameter: '',
+                lastUpdate: station.UTC
+              })
+            }
+
+            const group = stationGroups.get(locationKey)!
+
+            // Agregar medición de este parámetro (solo si es más reciente)
+            const existingMeasurement = group.measurements.find(m => m.Parameter === station.Parameter)
+
+            if (!existingMeasurement) {
+              // Primer dato de este parámetro
+              group.measurements.push({
+                Parameter: station.Parameter,
+                AQI: station.AQI,
+                RawConcentration: station.RawConcentration,
+                Unit: station.Unit,
+                UTC: station.UTC
+              })
+            } else {
+              // Ya existe medición de este parámetro, tomar la más reciente
+              const existingTime = new Date(existingMeasurement.UTC).getTime()
+              const currentTime = new Date(station.UTC).getTime()
+
+              if (!isNaN(currentTime) && currentTime > existingTime) {
+                // Reemplazar con dato más reciente
+                Object.assign(existingMeasurement, {
+                  AQI: station.AQI,
+                  RawConcentration: station.RawConcentration,
+                  Unit: station.Unit,
+                  UTC: station.UTC
+                })
+              }
+            }
+
+            // Actualizar el peor AQI (ignorar valores negativos = sin datos)
+            group.measurements.forEach(m => {
+              if (m.AQI > 0 && m.AQI > group.worstAQI) {
+                group.worstAQI = m.AQI
+                group.worstParameter = m.Parameter
+              }
+            })
+
+            // Actualizar última actualización
+            const groupTime = new Date(group.lastUpdate).getTime()
+            const stationTime = new Date(station.UTC).getTime()
+            if (!isNaN(stationTime) && stationTime > groupTime) {
+              group.lastUpdate = station.UTC
+            }
+          })
+
+          const grouped = Array.from(stationGroups.values())
+
+          console.log(`✨ [HOOK] Agrupación completada:`)
+          console.log(`   Mediciones totales: ${stationsData.length}`)
+          console.log(`   Estaciones físicas: ${grouped.length}`)
+          console.log(`   Reducción: ${((1 - grouped.length / stationsData.length) * 100).toFixed(1)}%`)
+
+          // Análisis de parámetros por estación
+          const paramsPerStation = grouped.map(s => s.measurements.length)
+          const avgParams = paramsPerStation.reduce((a, b) => a + b, 0) / grouped.length
+
+          console.log(`📊 [HOOK] Parámetros por estación:`)
+          console.log(`   Promedio: ${avgParams.toFixed(1)} parámetros/estación`)
+          console.log(`   Máximo: ${Math.max(...paramsPerStation)} parámetros`)
+          console.log(`   Mínimo: ${Math.min(...paramsPerStation)} parámetros`)
+
+          // Mostrar ejemplos
+          console.log('📋 [HOOK] Primeras 3 estaciones agrupadas:')
+          grouped.slice(0, 3).forEach((station, idx) => {
+            console.log(`  ${idx + 1}. ${station.SiteName}:`, {
+              coords: [station.Latitude, station.Longitude],
+              measurements: station.measurements.length,
+              parameters: station.measurements.map(m => `${m.Parameter}(${m.AQI})`).join(', '),
+              worstAQI: station.worstAQI,
+              worstParameter: station.worstParameter
+            })
+          })
+
+          // Mantener compatibilidad con stations (flat)
+          const flatStations = grouped.flatMap(group =>
+            group.measurements.map(m => ({
+              ...group,
+              Parameter: m.Parameter,
+              AQI: m.AQI,
+              RawConcentration: m.RawConcentration,
+              Unit: m.Unit,
+              UTC: m.UTC,
+              // Campos adicionales para compatibilidad
+              Category: 0,
+              ParameterCode: '',
+              MonitorType: '',
+              Qualifier: '',
+              SiteType: '',
+              EPARegion: '',
+              Latitude_Band: '',
+              Longitude_Band: '',
+              GMT_Offset: 0,
+              ParameterName: m.Parameter,
+              DateOfLastChange: m.UTC,
+              IntlAQSCode: group.FullAQSCode
+            } as MonitoringStation))
+          )
+
+          setStations(flatStations)
+          setGroupedStations(grouped)
+        } else {
+          setStations([])
+        }
+
         setError(null)
       } catch (error) {
-        console.error('Error al procesar datos de estaciones:', error)
+        console.error('❌ [HOOK] Error al procesar datos de estaciones:', error)
         setError('Error al procesar datos de estaciones')
       }
     }
@@ -221,8 +405,9 @@ export function useMonitoringStations({
     }
   }, [stations])
 
-  return {
-    stations,
+return {
+    stations, // Flat list (compatibilidad)
+    groupedStations, // Estaciones agrupadas por ubicación
     airQuality,
     isLoading,
     error,

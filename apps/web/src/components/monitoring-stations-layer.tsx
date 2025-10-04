@@ -6,7 +6,7 @@ import L from 'leaflet'
 import 'leaflet.markercluster'
 import 'leaflet.markercluster/dist/MarkerCluster.css'
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
-import { useMonitoringStations, type MonitoringStation } from '@/hooks/use-monitoring-stations'
+import { useMonitoringStations, type MonitoringStation, type GroupedStation } from '@/hooks/use-monitoring-stations'
 import { 
   Activity, 
   AlertTriangle, 
@@ -359,87 +359,121 @@ function validateAQI(aqi: number, concentration: number): string {
 }
 
 /**
- * Crea el contenido HTML para el popup de una estación
- * 
- * @param station - Datos de la estación de monitoreo
+ * Crea el contenido HTML para el popup de una estación agrupada
+ *
+ * @param station - Estación agrupada con todos sus parámetros
  * @returns HTML string para el popup
  */
-function createPopupContent(station: MonitoringStation): string {
-  const aqiColor = getAQIColor(station.AQI)
-  const aqiCategory = getAQICategory(station.AQI)
-  const formattedDate = formatDate(station.UTC)
-  const formattedConcentration = formatConcentration(station.RawConcentration, station.Unit)
+function createGroupedPopupContent(station: GroupedStation): string {
+  const worstAqiColor = getAQIColor(station.worstAQI)
+  const worstAqiCategory = getAQICategory(station.worstAQI)
+  const formattedDate = formatDate(station.lastUpdate)
   const formattedStatus = formatStatus(station.Status)
-  const validatedAQI = validateAQI(station.AQI, station.RawConcentration)
-  
-  // Determinar color del estado basado en datos válidos
-  const isDataValid = station.RawConcentration > 0 && !ERROR_VALUES.includes(station.RawConcentration as any)
-  const statusColor = isDataValid ? 'text-green-600' : 'text-orange-600'
-  
+
+  // Ordenar mediciones por AQI descendente
+  const sortedMeasurements = [...station.measurements].sort((a, b) => b.AQI - a.AQI)
+
+  // Generar filas de la tabla de parámetros
+  const measurementRows = sortedMeasurements.map(m => {
+    const aqiColor = getAQIColor(m.AQI)
+    const { emoji, category } = getAQICategory(m.AQI)
+    const concentration = formatConcentration(m.RawConcentration, m.Unit)
+    const isValid = m.AQI > 0 && m.AQI <= 500
+
+    return `
+      <tr class="border-b border-gray-100 hover:bg-gray-50">
+        <td class="py-2 px-2 font-medium text-gray-900">${m.Parameter}</td>
+        <td class="py-2 px-2 text-center">
+          <span class="inline-flex items-center gap-1 font-bold" style="color: ${aqiColor}">
+            ${isValid ? emoji : '⚪'} ${isValid ? m.AQI : 'N/A'}
+          </span>
+        </td>
+        <td class="py-2 px-2 text-xs text-gray-600">${isValid ? category : 'Sin datos'}</td>
+        <td class="py-2 px-2 text-xs text-gray-600 text-right">${concentration}</td>
+      </tr>
+    `
+  }).join('')
+
   return `
-    <div class="station-popup min-w-[280px] max-w-[320px]">
-      <div class="bg-white rounded-lg shadow-lg p-4 border border-gray-200">
+    <div class="station-popup min-w-[380px] max-w-[450px]">
+      <div class="bg-white rounded-lg shadow-lg border border-gray-200">
         <!-- Header -->
-        <div class="flex items-center gap-3 mb-3">
-          <div class="w-5 h-5 rounded-full flex-shrink-0" style="background-color: ${aqiColor}"></div>
-          <div class="flex-1 min-w-0">
-            <h3 class="font-semibold text-sm text-gray-900 truncate">${station.SiteName}</h3>
-            <p class="text-xs text-gray-500 truncate">${station.AgencyName}</p>
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-t-lg">
+          <div class="flex items-center gap-3">
+            <div class="w-6 h-6 rounded-full flex-shrink-0 ring-2 ring-white" style="background-color: ${worstAqiColor}"></div>
+            <div class="flex-1 min-w-0 text-white">
+              <h3 class="font-bold text-base truncate">${station.SiteName}</h3>
+              <p class="text-xs opacity-90 truncate">${station.AgencyName}</p>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold text-white">${station.worstAQI > 0 ? station.worstAQI : 'N/A'}</div>
+              <div class="text-xs opacity-90">AQI</div>
+            </div>
           </div>
         </div>
-        
+
         <!-- Content -->
-        <div class="space-y-2 text-xs">
-          <div class="flex justify-between">
-            <span class="text-gray-600">Parámetro:</span>
-            <span class="font-medium text-gray-900">${station.Parameter}</span>
-          </div>
-          
-          <div class="flex justify-between">
-            <span class="text-gray-600">AQI:</span>
-            <span class="font-bold ${validatedAQI === 'Dato no disponible' ? 'text-gray-500' : 'text-gray-900'}">
-              ${validatedAQI === 'Dato no disponible' ? validatedAQI : `${aqiCategory.emoji} ${validatedAQI}`}
-            </span>
-          </div>
-          
-          <div class="flex justify-between">
-            <span class="text-gray-600">Categoría:</span>
-            <span class="font-medium ${validatedAQI === 'Dato no disponible' ? 'text-gray-500' : 'text-gray-900'}">
-              ${validatedAQI === 'Dato no disponible' ? 'N/A' : aqiCategory.category}
-            </span>
-          </div>
-          
-          <div class="flex justify-between">
-            <span class="text-gray-600">Concentración:</span>
-            <span class="font-medium ${formattedConcentration === 'Dato no disponible' ? 'text-gray-500' : 'text-gray-900'}">
-              ${formattedConcentration}
-            </span>
-          </div>
-          
-          <div class="flex justify-between">
-            <span class="text-gray-600">Estado:</span>
-            <span class="font-medium ${statusColor}">
-              ${formattedStatus}
-            </span>
-          </div>
-          
-          <div class="flex justify-between">
-            <span class="text-gray-600">Última actualización:</span>
-            <span class="font-medium text-gray-900">${formattedDate}</span>
-          </div>
-          
-          <div class="pt-2 border-t border-gray-200">
-            <div class="text-xs text-gray-500">
-              <strong>Coordenadas:</strong> ${station.Latitude.toFixed(4)}°, ${station.Longitude.toFixed(4)}°
-            </div>
-            <div class="text-xs text-gray-500">
-              <strong>Código AQS:</strong> ${station.FullAQSCode}
-            </div>
-            ${!isDataValid ? `
-              <div class="text-xs text-orange-600 mt-1">
-                <strong>⚠️ Nota:</strong> Datos de concentración no disponibles
+        <div class="p-4">
+          <!-- Overall Status -->
+          <div class="mb-3 p-3 rounded-lg" style="background-color: ${worstAqiColor}15; border-left: 4px solid ${worstAqiColor}">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-xs text-gray-600 mb-1">Estado General</div>
+                <div class="font-semibold" style="color: ${worstAqiColor}">
+                  ${worstAqiCategory.emoji} ${worstAqiCategory.category}
+                </div>
               </div>
-            ` : ''}
+              <div class="text-right">
+                <div class="text-xs text-gray-600 mb-1">Peor Parámetro</div>
+                <div class="font-semibold text-gray-900">${station.worstParameter || 'N/A'}</div>
+              </div>
+            </div>
+            <div class="mt-2 text-xs text-gray-600 italic">${worstAqiCategory.description}</div>
+          </div>
+
+          <!-- Parameters Table -->
+          <div class="mb-3">
+            <div class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+              </svg>
+              Parámetros Monitoreados (${station.measurements.length})
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs">
+                <thead class="bg-gray-50">
+                  <tr class="border-b border-gray-200">
+                    <th class="py-2 px-2 text-left font-semibold text-gray-700">Parámetro</th>
+                    <th class="py-2 px-2 text-center font-semibold text-gray-700">AQI</th>
+                    <th class="py-2 px-2 text-left font-semibold text-gray-700">Categoría</th>
+                    <th class="py-2 px-2 text-right font-semibold text-gray-700">Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${measurementRows}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Footer Info -->
+          <div class="pt-3 border-t border-gray-200 space-y-1">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-gray-600">Estado:</span>
+              <span class="font-medium text-green-600">${formattedStatus}</span>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-gray-600">Última actualización:</span>
+              <span class="font-medium text-gray-900">${formattedDate}</span>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-gray-600">Coordenadas:</span>
+              <span class="font-mono text-gray-900">${station.Latitude.toFixed(4)}°, ${station.Longitude.toFixed(4)}°</span>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-gray-600">Código AQS:</span>
+              <span class="font-mono text-gray-900">${station.FullAQSCode}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -459,24 +493,62 @@ function createPopupContent(station: MonitoringStation): string {
 // Optimización: Componente memoizado con clustering
 export const MonitoringStationsLayer = React.memo(function MonitoringStationsLayer() {
   const map = useMap()
-  
-  // Hook para obtener datos de estaciones
-  const { stations, isLoading, error } = useMonitoringStations(CALIFORNIA_CONFIG)
+
+  // Hook para obtener datos de estaciones (usar groupedStations)
+  const { groupedStations, isLoading, error } = useMonitoringStations(CALIFORNIA_CONFIG)
 
   // Estado para clustering
   const [clusterGroup, setClusterGroup] = useState<L.MarkerClusterGroup | null>(null)
 
-  // Memoizar estaciones válidas (con coordenadas) - Optimizado
+// Memoizar estaciones válidas (con coordenadas) - Optimizado
   const validStations = useMemo(() => {
-    return stations.filter(station => 
-      station.Latitude && 
-      station.Longitude && 
-      !isNaN(station.Latitude) && 
+    console.log('🔍 [LAYER] === VALIDANDO ESTACIONES AGRUPADAS ===')
+    console.log(`📊 [LAYER] Total de estaciones físicas: ${groupedStations.length}`)
+
+    const valid = groupedStations.filter(station =>
+      station.Latitude &&
+      station.Longitude &&
+      !isNaN(station.Latitude) &&
       !isNaN(station.Longitude) &&
       station.Latitude >= -90 && station.Latitude <= 90 &&
-      station.Longitude >= -180 && station.Longitude <= 180
+      station.Longitude >= -180 && station.Longitude <= 180 &&
+      station.measurements.length > 0 // Al menos un parámetro
     )
-  }, [stations])
+
+    const invalid = groupedStations.length - valid.length
+    console.log(`✅ [LAYER] Estaciones válidas: ${valid.length}`)
+    if (invalid > 0) {
+      console.warn(`⚠️  [LAYER] Estaciones inválidas: ${invalid}`)
+    }
+
+    if (valid.length > 0) {
+      // Estadísticas de parámetros
+      const totalMeasurements = valid.reduce((sum, s) => sum + s.measurements.length, 0)
+      const avgMeasurements = totalMeasurements / valid.length
+
+      console.log(`📊 [LAYER] Estadísticas:`)
+      console.log(`   Total mediciones: ${totalMeasurements}`)
+      console.log(`   Promedio por estación: ${avgMeasurements.toFixed(1)} parámetros`)
+
+      // Mostrar rango de coordenadas
+      const lats = valid.map(s => s.Latitude)
+      const lngs = valid.map(s => s.Longitude)
+      console.log('📐 [LAYER] Rango de coordenadas:', {
+        lat: { min: Math.min(...lats).toFixed(4), max: Math.max(...lats).toFixed(4) },
+        lng: { min: Math.min(...lngs).toFixed(4), max: Math.max(...lngs).toFixed(4) }
+      })
+
+      // Distribución de AQI
+      const aqiRanges = {
+        good: valid.filter(s => s.worstAQI <= 50).length,
+        moderate: valid.filter(s => s.worstAQI > 50 && s.worstAQI <= 100).length,
+        unhealthy: valid.filter(s => s.worstAQI > 100).length
+      }
+      console.log('🎨 [LAYER] Distribución de calidad del aire:', aqiRanges)
+    }
+
+    return valid
+  }, [groupedStations])
 
   // Memoizar límites del mapa para optimizar ajuste de vista
   const mapBounds = useMemo(() => {
@@ -488,13 +560,24 @@ export const MonitoringStationsLayer = React.memo(function MonitoringStationsLay
     return bounds
   }, [validStations])
 
-  // Callback optimizado para manejar marcadores - Evita bucle infinito
+// Callback optimizado para manejar marcadores - Evita bucle infinito
   const handleMarkers = useCallback(() => {
-    if (!map || isLoading || validStations.length === 0) return
-    
+    if (!map || isLoading || validStations.length === 0) {
+      console.log('⏸️  [LAYER] Renderizado detenido:', {
+        hasMap: !!map,
+        isLoading,
+        validStationsCount: validStations.length
+      })
+      return
+    }
+
+    console.log('🎨 [LAYER] === INICIANDO RENDERIZADO DE MARCADORES ===')
+    console.log(`📍 [LAYER] Creando ${validStations.length} marcadores...`)
+
     try {
       // Limpiar cluster group existente
       if (clusterGroup) {
+        console.log('🧹 [LAYER] Limpiando cluster group anterior')
         map.removeLayer(clusterGroup)
         setClusterGroup(null)
       }
@@ -509,38 +592,61 @@ export const MonitoringStationsLayer = React.memo(function MonitoringStationsLay
         chunkedLoading: CLUSTERING_CONFIG.chunkedLoading
       })
 
-      // Agregar marcadores al cluster group
-      validStations.forEach((station) => {
-        const marker = L.marker(
-          [station.Latitude!, station.Longitude!],
-          {
-            icon: createStationIcon(station.AQI, station.Status === 'Active')
-          }
-        )
-        
-        // Crear contenido del popup
-        const popupContent = createPopupContent(station)
+// Agregar marcadores al cluster group (UNO POR UBICACIÓN FÍSICA)
+      let markersCreated = 0
+      validStations.forEach((station, idx) => {
+        const coords: [number, number] = [station.Latitude!, station.Longitude!]
+
+        if (idx < 3) {
+          console.log(`  ✏️  Marcador ${idx + 1}:`, {
+            name: station.SiteName,
+            coords,
+            worstAQI: station.worstAQI,
+            worstParameter: station.worstParameter,
+            measurements: station.measurements.length
+          })
+        }
+
+        // Usar el peor AQI para el color del marcador
+        const marker = L.marker(coords, {
+          icon: createStationIcon(station.worstAQI > 0 ? station.worstAQI : 0, station.Status === 'Active')
+        })
+
+        // Crear contenido del popup con TODOS los parámetros
+        const popupContent = createGroupedPopupContent(station)
         marker.bindPopup(popupContent, {
-          maxWidth: 350,
+          maxWidth: 500,
           className: 'station-popup-container',
           closeButton: true,
           autoClose: true,
           keepInView: true
         })
-        
+
         newClusterGroup.addLayer(marker)
+        markersCreated++
       })
+
+      console.log(`✅ [LAYER] ${markersCreated} marcadores creados exitosamente`)
 
       // Agregar cluster group al mapa
       map.addLayer(newClusterGroup)
       setClusterGroup(newClusterGroup)
-      
+      console.log('🗺️  [LAYER] Cluster group agregado al mapa')
+
       // Ajustar vista del mapa para mostrar todas las estaciones
       if (mapBounds) {
+        console.log('📏 [LAYER] Ajustando vista del mapa a bounds:', {
+          north: mapBounds.getNorth().toFixed(4),
+          south: mapBounds.getSouth().toFixed(4),
+          east: mapBounds.getEast().toFixed(4),
+          west: mapBounds.getWest().toFixed(4)
+        })
         map.fitBounds(mapBounds.pad(0.1))
       }
+
+      console.log('🎉 [LAYER] === RENDERIZADO COMPLETADO ===')
     } catch (error) {
-      console.error('Error manejando marcadores:', error)
+      console.error('❌ [LAYER] Error manejando marcadores:', error)
     }
   }, [map, validStations, isLoading, mapBounds])
 
