@@ -436,12 +436,23 @@ export function StationWeatherDialog({
                 {/* Scrollable hourly forecast */}
                 <div className="max-h-96 overflow-y-auto space-y-2">
                   {forecastData.weather_data.hourly.time?.map((time, idx) => {
-                    const temp = forecastData.weather_data.hourly.temperature_2m?.[idx]
-                    const precipitation = forecastData.weather_data.hourly.precipitation?.[idx]
-                    const windSpeed = forecastData.weather_data.hourly.windspeed_10m?.[idx]
-                    const weatherCode = forecastData.weather_data.hourly.weather_code?.[idx]
-                    const humidity = forecastData.weather_data.hourly.relative_humidity_2m?.[idx]
-                    const cloudCover = forecastData.weather_data.hourly.cloud_cover?.[idx]
+                    const hourlyData = forecastData.weather_data.hourly
+                    if (!hourlyData) return null
+
+                    const temp = hourlyData.temperature_2m?.[idx]
+                    const precipitation = hourlyData.precipitation?.[idx]
+                    const windSpeed = hourlyData.windspeed_10m?.[idx]
+                    const weatherCode = hourlyData.weather_code?.[idx]
+                    const humidity = hourlyData.relative_humidity_2m?.[idx]
+                    const cloudCover = hourlyData.cloud_cover?.[idx]
+
+                    // Convertir a número si es necesario
+                    const tempNum = typeof temp === 'number' ? temp : (typeof temp === 'string' ? parseFloat(temp) : null)
+                    const precipNum = typeof precipitation === 'number' ? precipitation : (typeof precipitation === 'string' ? parseFloat(precipitation) : null)
+                    const windNum = typeof windSpeed === 'number' ? windSpeed : (typeof windSpeed === 'string' ? parseFloat(windSpeed) : null)
+                    const weatherCodeNum = typeof weatherCode === 'number' ? weatherCode : (typeof weatherCode === 'string' ? parseInt(weatherCode) : null)
+                    const humidityNum = typeof humidity === 'number' ? humidity : (typeof humidity === 'string' ? parseFloat(humidity) : null)
+                    const cloudNum = typeof cloudCover === 'number' ? cloudCover : (typeof cloudCover === 'string' ? parseFloat(cloudCover) : null)
 
                     const forecastDate = new Date(time)
                     const isNow = idx === 0
@@ -464,40 +475,40 @@ export function StationWeatherDialog({
                               })}
                             </div>
                             <div className="text-xs text-gray-600 mt-1">
-                              {getWeatherDescription(weatherCode ?? null)}
+                              {getWeatherDescription(weatherCodeNum)}
                             </div>
                           </div>
 
                           {/* Temperature */}
                           <div className="text-center mx-4">
                             <div className="text-2xl font-bold text-gray-900">
-                              {temp !== null && temp !== undefined ? `${temp.toFixed(1)}°` : 'N/A'}
+                              {tempNum !== null ? `${tempNum.toFixed(1)}°` : 'N/A'}
                             </div>
-                            {humidity !== null && humidity !== undefined && (
+                            {humidityNum !== null && (
                               <div className="text-xs text-gray-600">
-                                {humidity}% hum.
+                                {humidityNum.toFixed(0)}% hum.
                               </div>
                             )}
                           </div>
 
                           {/* Weather details */}
                           <div className="flex flex-col items-end gap-1">
-                            {precipitation !== null && precipitation !== undefined && precipitation > 0 && (
+                            {precipNum !== null && precipNum > 0 && (
                               <div className="flex items-center gap-1 text-xs text-blue-600">
                                 <Droplets className="h-3 w-3" />
-                                {precipitation.toFixed(1)} mm
+                                {precipNum.toFixed(1)} mm
                               </div>
                             )}
-                            {windSpeed !== null && windSpeed !== undefined && (
+                            {windNum !== null && (
                               <div className="flex items-center gap-1 text-xs text-gray-600">
                                 <Wind className="h-3 w-3" />
-                                {windSpeed.toFixed(1)} m/s
+                                {windNum.toFixed(1)} m/s
                               </div>
                             )}
-                            {cloudCover !== null && cloudCover !== undefined && (
+                            {cloudNum !== null && (
                               <div className="flex items-center gap-1 text-xs text-gray-600">
                                 <Cloud className="h-3 w-3" />
-                                {cloudCover}%
+                                {cloudNum.toFixed(0)}%
                               </div>
                             )}
                           </div>

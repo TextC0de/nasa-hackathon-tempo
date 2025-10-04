@@ -18,7 +18,7 @@ export const appRouter = router({
   obtenerFuegoActivoenArea: obtenerFuegoActivoenAreaProcedure,
   obtenerCalidadDelAire: obtenerCalidadDelAireProcedure,
   obtenerEstacionesAirNow: obtenerEstacionesAirNowProcedure,
-  obtenerPrediccionMeteorologicaProcedure: obtenerPrediccionMeteorologicaProcedure,
+  obtenerPrediccionMeteorologica: obtenerPrediccionMeteorologicaProcedure,
   obtenerClimaActual: obtenerClimaActualProcedure,
   predecirAqi: predecirAqiProcedure,
   obtenerAlturaDelTerreno: obtenerAlturaDelTerrenoProcedure,

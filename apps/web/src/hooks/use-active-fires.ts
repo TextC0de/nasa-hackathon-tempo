@@ -40,8 +40,10 @@ export interface FireDataPoint {
   /** Tipo de detección (día/noche) */
   daynight: 'D' | 'N'
 
-  // Campos adicionales
-  [key: string]: string | number
+  // Campos adicionales específicos del sensor
+  scan?: string | number
+  track?: string | number
+  instrument?: string
 }
 
 /**

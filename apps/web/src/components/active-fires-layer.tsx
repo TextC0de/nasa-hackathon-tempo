@@ -86,6 +86,26 @@ const FIRE_MARKER_CONFIG = {
 } as const
 
 /**
+ * Obtiene la temperatura de brillo correcta según el sensor
+ * VIIRS usa bright_ti4, MODIS usa brightness
+ */
+const getBrightness = (fire: FireDataPoint): number => {
+  // Intentar bright_ti4 primero (VIIRS)
+  if (fire.bright_ti4 !== undefined) {
+    const value = typeof fire.bright_ti4 === 'string' ? parseFloat(fire.bright_ti4) : fire.bright_ti4
+    if (!isNaN(value)) return value
+  }
+
+  // Luego brightness (MODIS)
+  if (fire.brightness !== undefined && !isNaN(fire.brightness)) {
+    return fire.brightness
+  }
+
+  // Valor por defecto
+  return 300
+}
+
+/**
  * Normaliza el nivel de confianza de diferentes sensores a un formato estándar
  */
 const normalizeConfidence = (confidence: number | string): {
@@ -184,7 +204,6 @@ const getFireIntensity = (frp: number): {
 const createFireIcon = (fire: FireDataPoint): L.DivIcon => {
   const color = getFireColor(fire.frp)
   const intensity = getFireIntensity(fire.frp)
-  const confidence = normalizeConfidence(fire.confidence)
 
   // Tamaño basado en FRP
   const baseSize = FIRE_MARKER_CONFIG.size
@@ -326,6 +345,7 @@ const createFirePopupContent = (fire: FireDataPoint): string => {
   const formattedDate = formatFireDateTime(fire.acq_date, fire.acq_time)
   const timeAgo = getTimeAgo(fire.acq_date, fire.acq_time)
   const isDayDetection = fire.daynight === 'D'
+  const brightness = getBrightness(fire)
 
   return `
     <div class="fire-popup min-w-[420px] max-w-[480px]">
@@ -400,7 +420,7 @@ const createFirePopupContent = (fire: FireDataPoint): string => {
                   <div class="font-medium">Temperatura de Brillo</div>
                   <div class="text-[10px] italic">Calor detectado por el satélite</div>
                 </div>
-                <div class="font-bold text-gray-900">${fire.brightness.toFixed(1)} K (${(fire.brightness - 273.15).toFixed(1)}°C)</div>
+                <div class="font-bold text-gray-900">${brightness.toFixed(1)} K (${(brightness - 273.15).toFixed(1)}°C)</div>
               </div>
 
               <!-- Confianza -->
