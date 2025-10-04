@@ -631,7 +631,7 @@ export function CaliforniaMap({ className, mapType = "streetmap", onMapTypeChang
   const currentMapType = MAP_TYPES[mapType]
 
   return (
-    <div className={cn("relative w-full h-full rounded-lg overflow-hidden", className)}>
+    <div className={cn("relative w-full h-full overflow-hidden", className)}>
       <MapContainer
         center={CALIFORNIA_CONFIG.center}
         zoom={LEAFLET_CONFIG.zoom.DEFAULT}
