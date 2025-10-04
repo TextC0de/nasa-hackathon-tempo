@@ -75,8 +75,9 @@ export const predecirAqiProcedure = publicProcedure
 
     // Obtener hora actual para el rango de tiempo
     const now = new Date()
+    const endTime = new Date(now.getTime() + 60 * 60 * 1000) // +1 hora
     const startDate = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}T${String(now.getUTCHours()).padStart(2, '0')}`
-    const endDate = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}T${String(now.getUTCHours() + 1).padStart(2, '0')}`
+    const endDate = `${endTime.getUTCFullYear()}-${String(endTime.getUTCMonth() + 1).padStart(2, '0')}-${String(endTime.getUTCDate()).padStart(2, '0')}T${String(endTime.getUTCHours()).padStart(2, '0')}`
 
     // Obtener datos de monitoring sites (incluye Value, Unit, RawConcentration, etc.)
     const currentAirQuality = await airNowClient.getMonitoringSites(

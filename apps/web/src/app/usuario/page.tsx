@@ -87,7 +87,7 @@ type MapType = "streetmap" | "topographic" | "hybrid" | "physical"
 
 export default function UsuarioPage() {
   // Estado por defecto: Los Ángeles, California
-  const [currentLocation, setCurrentLocation] = useState(CALIFORNIA_LOCATIONS[0])
+  const [currentLocation, setCurrentLocation] = useState<{ name: string; lat: number; lng: number }>(CALIFORNIA_LOCATIONS[0])
   const [searchLat, setSearchLat] = useState<number>(CALIFORNIA_LOCATIONS[0].lat)
   const [searchLng, setSearchLng] = useState<number>(CALIFORNIA_LOCATIONS[0].lng)
 
@@ -744,48 +744,148 @@ export default function UsuarioPage() {
 
         {/* Condiciones Meteorológicas */}
         <Dialog open={openDialog === "weather"} onOpenChange={(open) => !open && setOpenDialog(null)}>
-          <DialogContent className="max-w-md z-[10001] mx-4">
+          <DialogContent className="max-w-2xl z-[10001] mx-4 max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Cloud className="h-5 w-5" />
-                Condiciones Meteorológicas
+                Condiciones Meteorológicas Completas
               </DialogTitle>
             </DialogHeader>
-            {prediction && (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-center gap-2">
-                      <Thermometer className="h-4 w-4 text-orange-500" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Temperatura</p>
-                        <p className="font-medium">{prediction.weather.temperature}°C</p>
+            {weatherLoading && (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            )}
+            {weatherData && (
+              <div className="space-y-4">
+                {/* Condiciones actuales desde predecirAqi */}
+                {prediction?.weather && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Condiciones Actuales</CardTitle>
+                      <CardDescription>Datos en tiempo real de la estación más cercana</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex items-center gap-2">
+                          <Thermometer className="h-4 w-4 text-orange-500" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">Temperatura</p>
+                            <p className="font-medium">{prediction.weather.temperature}°C</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Wind className="h-4 w-4 text-blue-500" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">Viento</p>
+                            <p className="font-medium">{prediction.weather.windSpeed} m/s</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Droplets className="h-4 w-4 text-blue-600" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">Humedad</p>
+                            <p className="font-medium">{prediction.weather.relativeHumidity}%</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Cloud className="h-4 w-4 text-gray-500" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">Precipitación</p>
+                            <p className="font-medium">{prediction.weather.precipitation} mm</p>
+                          </div>
+                        </div>
                       </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Info del pronóstico */}
+                <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+                  <CardContent className="pt-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Cloud className="h-4 w-4 text-blue-600" />
+                      <p className="font-semibold text-sm">Pronóstico Extendido - OpenMeteo</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Wind className="h-4 w-4 text-blue-500" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Viento</p>
-                        <p className="font-medium">{prediction.weather.windSpeed} m/s</p>
+                    <div className="text-xs">
+                      <p className="text-muted-foreground">
+                        Ubicación: {weatherData.location.latitude.toFixed(4)}, {weatherData.location.longitude.toFixed(4)}
+                      </p>
+                      <p className="text-muted-foreground">
+                        Días de pronóstico: {weatherData.forecast_days}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Datos meteorológicos detallados */}
+                {weatherData.weather_data && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Parámetros Meteorológicos Avanzados</CardTitle>
+                      <CardDescription>Variables críticas para modelado de calidad del aire</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Velocidad del viento (10m)</p>
+                          <p className="font-medium">
+                            {weatherData.weather_data.hourly?.wind_speed_10m?.[0] ?? 'N/A'} km/h
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Dirección del viento (10m)</p>
+                          <p className="font-medium">
+                            {weatherData.weather_data.hourly?.wind_direction_10m?.[0] ?? 'N/A'}°
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Altura capa límite</p>
+                          <p className="font-medium">
+                            {weatherData.weather_data.hourly?.boundary_layer_height?.[0] ?? 'N/A'} m
+                          </p>
+                          <p className="text-xs text-muted-foreground italic">
+                            Crítico para conversión columna-superficie
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Temperatura (2m)</p>
+                          <p className="font-medium">
+                            {weatherData.weather_data.hourly?.temperature_2m?.[0] ?? 'N/A'}°C
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Precipitación</p>
+                          <p className="font-medium">
+                            {weatherData.weather_data.hourly?.precipitation?.[0] ?? 'N/A'} mm
+                          </p>
+                          <p className="text-xs text-muted-foreground italic">
+                            Washout de contaminantes
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Humedad relativa (2m)</p>
+                          <p className="font-medium">
+                            {weatherData.weather_data.hourly?.relative_humidity_2m?.[0] ?? 'N/A'}%
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Presión superficial</p>
+                          <p className="font-medium">
+                            {weatherData.weather_data.hourly?.surface_pressure?.[0] ?? 'N/A'} hPa
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Cobertura de nubes</p>
+                          <p className="font-medium">
+                            {weatherData.weather_data.hourly?.cloud_cover?.[0] ?? 'N/A'}%
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Droplets className="h-4 w-4 text-blue-600" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Humedad</p>
-                        <p className="font-medium">{prediction.weather.relativeHumidity}%</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Cloud className="h-4 w-4 text-gray-500" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Precipitación</p>
-                        <p className="font-medium">{prediction.weather.precipitation} mm</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             )}
           </DialogContent>
         </Dialog>
@@ -796,7 +896,7 @@ export default function UsuarioPage() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Activity className="h-5 w-5" />
-                Análisis de Contaminantes
+                Análisis de Contaminantes AirNow
               </DialogTitle>
             </DialogHeader>
             {prediction && (
@@ -923,6 +1023,147 @@ export default function UsuarioPage() {
                     </CardContent>
                   </Card>
                 )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Datos TEMPO Satelitales */}
+        <Dialog open={openDialog === "tempo"} onOpenChange={(open) => !open && setOpenDialog(null)}>
+          <DialogContent className="max-w-3xl z-[10001] mx-4 max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Datos TEMPO - Satélite NASA
+              </DialogTitle>
+            </DialogHeader>
+            {tempoLoading && (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            )}
+            {tempoData && (
+              <div className="space-y-4">
+                {/* Info del satélite */}
+                <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+                  <CardContent className="pt-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Activity className="h-4 w-4 text-blue-600" />
+                      <p className="font-semibold text-sm">{tempoData.satellite} - {tempoData.data_source}</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{tempoData.notes}</p>
+                    <div className="mt-2 text-xs">
+                      <p className="text-muted-foreground">
+                        Timestamp: {new Date(tempoData.timestamp).toLocaleString('es-ES')}
+                      </p>
+                      <p className="text-muted-foreground italic">{tempoData.timestamp_info}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* NO2 */}
+                {tempoData.data.NO2 && !('error' in tempoData.data.NO2) && 'description' in tempoData.data.NO2 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center justify-between">
+                        <span>Dióxido de Nitrógeno (NO2)</span>
+                        <Badge variant="outline" className="text-xs">
+                          {tempoData.data.NO2.nivel}
+                        </Badge>
+                      </CardTitle>
+                      <CardDescription>{tempoData.data.NO2.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Valor (columnar)</p>
+                          <p className="font-medium text-sm">{tempoData.data.NO2.value_formatted}</p>
+                          <p className="text-xs text-muted-foreground">{tempoData.data.NO2.unit}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Clasificación</p>
+                          <p className="font-medium">{tempoData.data.NO2.nivel}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* O3 */}
+                {tempoData.data.O3 && !('error' in tempoData.data.O3) && 'description' in tempoData.data.O3 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center justify-between">
+                        <span>Ozono (O3)</span>
+                        <Badge variant="outline" className="text-xs">
+                          {tempoData.data.O3.nivel}
+                        </Badge>
+                      </CardTitle>
+                      <CardDescription>{tempoData.data.O3.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Valor (columnar)</p>
+                          <p className="font-medium">{tempoData.data.O3.value?.toFixed(2)}</p>
+                          <p className="text-xs text-muted-foreground">{tempoData.data.O3.unit}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Clasificación</p>
+                          <p className="font-medium">{tempoData.data.O3.nivel}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* HCHO */}
+                {tempoData.data.HCHO && !('error' in tempoData.data.HCHO) && 'description' in tempoData.data.HCHO && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center justify-between">
+                        <span>Formaldehído (HCHO)</span>
+                        <Badge variant="outline" className="text-xs">
+                          {tempoData.data.HCHO.nivel}
+                        </Badge>
+                      </CardTitle>
+                      <CardDescription>{tempoData.data.HCHO.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Valor (columnar)</p>
+                          <p className="font-medium text-sm">{tempoData.data.HCHO.value_formatted}</p>
+                          <p className="text-xs text-muted-foreground">{tempoData.data.HCHO.unit}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">En DU</p>
+                          <p className="font-medium">{tempoData.data.HCHO.value_DU} DU</p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-sm text-muted-foreground">Clasificación</p>
+                          <p className="font-medium">{tempoData.data.HCHO.nivel}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Ubicación */}
+                <Card className="bg-muted/50">
+                  <CardContent className="pt-4">
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Latitud</p>
+                        <p className="font-medium">{tempoData.location.latitude.toFixed(4)}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Longitud</p>
+                        <p className="font-medium">{tempoData.location.longitude.toFixed(4)}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             )}
           </DialogContent>
