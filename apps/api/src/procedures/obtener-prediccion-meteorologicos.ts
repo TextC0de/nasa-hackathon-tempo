@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { publicProcedure } from '../trpc'
 import { OpenMeteoClient, HourlyVariable } from '@atmos/openmeteo-client'
 
-export const obtenerDatosMeteorologicosProcedure = publicProcedure
+export const obtenerPrediccionMeteorologicaProcedure = publicProcedure
   .input(
     z.object({
       latitud: z.number().min(-90).max(90),

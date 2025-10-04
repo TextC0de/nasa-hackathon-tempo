@@ -6,7 +6,7 @@ import { createUserProcedure } from './procedures/create-user'
 import { obtenerFuegoActivoenAreaProcedure } from './procedures/obtener-fuego-activo-en-area'
 import { obtenerCalidadDelAireProcedure } from './procedures/obtener-calidad-del-aire'
 import { obtenerEstacionesAirNowProcedure } from './procedures/obtener-estaciones-airnow'
-import { obtenerDatosMeteorologicosProcedure } from './procedures/obtener-datos-meteorologicos'
+import { obtenerPrediccionMeteorologicaProcedure } from './procedures/obtener-prediccion-meteorologicos'
 import { obtenerAlturaDelTerrenoProcedure } from './procedures/obtener-altura-del-terreno'
 import { obtenerDatosTEMPOProcedure } from './procedures/obtener-datos-tempo'
 
@@ -17,7 +17,7 @@ export const appRouter = router({
   obtenerFuegoActivoenArea: obtenerFuegoActivoenAreaProcedure,
   obtenerCalidadDelAire: obtenerCalidadDelAireProcedure,
   obtenerEstacionesAirNow: obtenerEstacionesAirNowProcedure,
-  obtenerDatosMeteorologicos: obtenerDatosMeteorologicosProcedure,
+  obtenerPrediccionMeteorologicaProcedure: obtenerPrediccionMeteorologicaProcedure,
   predecirAqi: predecirAqiProcedure,
   obtenerAlturaDelTerreno: obtenerAlturaDelTerrenoProcedure,
   obtenerDatosTEMPO: obtenerDatosTEMPOProcedure,
