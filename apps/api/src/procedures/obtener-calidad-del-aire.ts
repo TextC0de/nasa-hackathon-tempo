@@ -1,6 +1,5 @@
 import { z } from 'zod'
 import { publicProcedure } from '../trpc'
-import { SEDACService } from '@atmos/earthdata-imageserver-client'
 import { AirNowClient } from '@atmos/airnow-client'
 
 export const obtenerCalidadDelAireProcedure = publicProcedure
@@ -13,11 +12,6 @@ export const obtenerCalidadDelAireProcedure = publicProcedure
   )
   .query(async ({ input }) => {
     const { latitud, longitud, radiusKm } = input
-
-    const bbox = SEDACService.createBBoxFromRadius(
-      { latitude: latitud, longitude: longitud },
-      radiusKm
-    )
 
     const airnowClient = new AirNowClient({ apiKey: 'A09EAF06-910B-4426-A2A8-8DC2D82641C6' })
     const observations = await airnowClient.getCurrentObservationsByLocation(
