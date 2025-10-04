@@ -375,70 +375,8 @@ const MapTypeControlComponent = dynamic(
   { ssr: false }
 )
 
-// Enhanced Markers Component
-const EnhancedMarkersComponent = dynamic(
-  () => import("react-leaflet").then((mod) => {
-    const { useMap } = mod
-    
-    return function EnhancedMarkersComponent() {
-      const map = useMap()
-      
-      useEffect(() => {
-        const markers: L.Marker[] = []
-        
-        CALIFORNIA_LOCATIONS.forEach(location => {
-          const icon = location.type === 'monitoring' 
-            ? MARKER_CONFIG.createAirQualityIcon(location.aqi)
-            : MARKER_CONFIG.createCustomIcon('#3b82f6', 30)
-          
-          const marker = L.marker(location.position, { icon })
-            .bindPopup(`
-              <div style="min-width: 200px; font-family: system-ui;">
-                <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px; color: #1f2937;">
-                  ${location.name}
-                </div>
-                <div style="margin-bottom: 6px;">
-                  <span style="color: #6b7280; font-size: 12px;">Tipo:</span>
-                  <span style="margin-left: 4px; font-size: 12px; color: #374151;">
-                    ${location.type === 'city' ? '🏙️ Ciudad' : 
-                      location.type === 'capital' ? '🏛️ Capital' : 
-                      '📡 Estación de Monitoreo'}
-                  </span>
-                </div>
-                <div style="margin-bottom: 6px;">
-                  <span style="color: #6b7280; font-size: 12px;">Población:</span>
-                  <span style="margin-left: 4px; font-size: 12px; color: #374151;">${location.population}</span>
-                </div>
-                <div style="margin-bottom: 6px;">
-                  <span style="color: #6b7280; font-size: 12px;">ICA:</span>
-                  <span style="margin-left: 4px; font-size: 12px; color: #374151; font-weight: bold;">${location.aqi}</span>
-                </div>
-                <div style="margin-bottom: 6px;">
-                  <span style="color: #6b7280; font-size: 12px;">Coordenadas:</span>
-                  <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">
-                    ${location.position[0].toFixed(4)}°, ${location.position[1].toFixed(4)}°
-                  </div>
-                </div>
-                <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
-                  <span style="font-size: 12px; color: #6b7280;">${location.description}</span>
-                </div>
-              </div>
-            `)
-          
-          marker.addTo(map)
-          markers.push(marker)
-        })
-        
-        return () => {
-          markers.forEach(marker => map.removeLayer(marker))
-        }
-      }, [map])
-      
-      return null
-    }
-  }),
-  { ssr: false }
-)
+// Enhanced Markers Component - Removed example data
+// Now only real monitoring stations from AirNow API are shown
 
 // California Map Configuration - Clean and Centralized
 const CALIFORNIA_CONFIG = {
@@ -552,72 +490,8 @@ const MARKER_CONFIG = {
   }
 }
 
-// California Locations Data - Enhanced with Real Data
-const CALIFORNIA_LOCATIONS = [
-  {
-    id: 'los-angeles',
-    name: 'Los Ángeles',
-    position: [34.0522, -118.2437] as [number, number],
-    type: 'city',
-    aqi: 85,
-    population: '3.9M',
-    description: 'Ciudad principal de California'
-  },
-  {
-    id: 'san-francisco',
-    name: 'San Francisco',
-    position: [37.7749, -122.4194] as [number, number],
-    type: 'city',
-    aqi: 65,
-    population: '873K',
-    description: 'Centro tecnológico y cultural'
-  },
-  {
-    id: 'san-diego',
-    name: 'San Diego',
-    position: [32.7157, -117.1611] as [number, number],
-    type: 'city',
-    aqi: 72,
-    population: '1.4M',
-    description: 'Ciudad costera del sur'
-  },
-  {
-    id: 'sacramento',
-    name: 'Sacramento',
-    position: [38.5816, -121.4944] as [number, number],
-    type: 'capital',
-    aqi: 78,
-    population: '525K',
-    description: 'Capital del estado'
-  },
-  {
-    id: 'fresno',
-    name: 'Fresno',
-    position: [36.7378, -119.7871] as [number, number],
-    type: 'city',
-    aqi: 95,
-    population: '542K',
-    description: 'Centro agrícola del valle'
-  },
-  {
-    id: 'monitoring-station-1',
-    name: 'Estación de Monitoreo Norte',
-    position: [39.7392, -121.8403] as [number, number],
-    type: 'monitoring',
-    aqi: 45,
-    population: 'N/A',
-    description: 'Estación de calidad del aire'
-  },
-  {
-    id: 'monitoring-station-2',
-    name: 'Estación de Monitoreo Sur',
-    position: [33.6846, -117.8265] as [number, number],
-    type: 'monitoring',
-    aqi: 88,
-    population: 'N/A',
-    description: 'Estación de calidad del aire'
-  }
-]
+// California Locations Data - Removed example data
+// Real monitoring stations are now provided by AirNow API through MonitoringStationsLayer
 
 interface CaliforniaMapProps {
   className?: string
@@ -650,10 +524,7 @@ export function CaliforniaMap({ className, mapType = "streetmap", onMapTypeChang
           minZoom={LEAFLET_CONFIG.zoom.MIN}
         />
         
-        {/* Enhanced Markers */}
-        <EnhancedMarkersComponent />
-        
-        {/* Monitoring Stations Layer */}
+        {/* Monitoring Stations Layer - Real data from AirNow API */}
         {showMonitoringStations && <MonitoringStationsLayer />}
         
         <MapTypeControlComponent 

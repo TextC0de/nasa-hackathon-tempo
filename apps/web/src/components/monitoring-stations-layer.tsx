@@ -1,52 +1,76 @@
 "use client"
 
-import { useEffect } from 'react'
+import { useEffect, useMemo, useCallback } from 'react'
 import { useMap } from 'react-leaflet'
 import L from 'leaflet'
-import { useMonitoringStations } from '@/hooks/use-monitoring-stations'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { MapPin, Activity, Clock, Building } from 'lucide-react'
+import { useMonitoringStations, type MonitoringStation } from '@/hooks/use-monitoring-stations'
 
-// Función para determinar el color del marcador basado en el parámetro
+/**
+ * Configuración de colores para diferentes parámetros de calidad del aire
+ * Basado en estándares EPA y convenciones internacionales
+ */
+const PARAMETER_COLORS = {
+  'PM2.5': '#ef4444', // Red - Partículas finas
+  'PM25': '#ef4444', // Red - Alias para PM2.5
+  'PM10': '#f97316', // Orange - Partículas gruesas
+  'O3': '#f59e0b', // Amber - Ozono
+  'NO2': '#3b82f6', // Blue - Dióxido de nitrógeno
+  'CO': '#6b7280', // Gray - Monóxido de carbono
+  'SO2': '#8b5cf6', // Purple - Dióxido de azufre
+  'PB': '#7c2d12', // Maroon - Plomo
+  'DEFAULT': '#10b981' // Green - Parámetro desconocido
+} as const
+
+/**
+ * Configuración de marcadores para estaciones de monitoreo
+ */
+const MARKER_CONFIG = {
+  size: 20,
+  borderWidth: 2,
+  shadowBlur: 4,
+  shadowOpacity: 0.3,
+  inactiveOpacity: 0.6
+} as const
+
+/**
+ * Obtiene el color del marcador basado en el parámetro de calidad del aire
+ * 
+ * @param parameter - Parámetro de calidad del aire (PM2.5, O3, NO2, etc.)
+ * @returns Color hexadecimal para el marcador
+ */
 function getMarkerColor(parameter: string): string {
-  switch (parameter.toUpperCase()) {
-    case 'PM2.5':
-    case 'PM25':
-      return '#ef4444' // Red
-    case 'O3':
-      return '#f59e0b' // Amber
-    case 'NO2':
-      return '#3b82f6' // Blue
-    case 'CO':
-      return '#6b7280' // Gray
-    case 'SO2':
-      return '#8b5cf6' // Purple
-    default:
-      return '#10b981' // Green
-  }
+  const normalizedParam = parameter.toUpperCase()
+  return PARAMETER_COLORS[normalizedParam as keyof typeof PARAMETER_COLORS] || PARAMETER_COLORS.DEFAULT
 }
 
-// Función para obtener el icono del marcador
+/**
+ * Crea un icono personalizado para estaciones de monitoreo
+ * 
+ * @param parameter - Parámetro de calidad del aire
+ * @param isActive - Si la estación está activa
+ * @returns Icono de Leaflet para el marcador
+ */
 function createStationIcon(parameter: string, isActive: boolean = true): L.DivIcon {
   const color = getMarkerColor(parameter)
-  const opacity = isActive ? 1 : 0.6
+  const opacity = isActive ? 1 : MARKER_CONFIG.inactiveOpacity
   
   return L.divIcon({
     html: `
       <div class="station-marker" style="
         background-color: ${color};
-        width: 20px;
-        height: 20px;
+        width: ${MARKER_CONFIG.size}px;
+        height: ${MARKER_CONFIG.size}px;
         border-radius: 50%;
-        border: 2px solid white;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        border: ${MARKER_CONFIG.borderWidth}px solid white;
+        box-shadow: 0 2px ${MARKER_CONFIG.shadowBlur}px rgba(0,0,0,${MARKER_CONFIG.shadowOpacity});
         display: flex;
         align-items: center;
         justify-content: center;
         opacity: ${opacity};
         position: relative;
-      ">
+        cursor: pointer;
+        transition: transform 0.2s ease;
+      " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
         <div style="
           width: 8px;
           height: 8px;
@@ -56,165 +80,238 @@ function createStationIcon(parameter: string, isActive: boolean = true): L.DivIc
       </div>
     `,
     className: 'custom-station-marker',
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-    popupAnchor: [0, -10]
+    iconSize: [MARKER_CONFIG.size, MARKER_CONFIG.size],
+    iconAnchor: [MARKER_CONFIG.size / 2, MARKER_CONFIG.size / 2],
+    popupAnchor: [0, -MARKER_CONFIG.size / 2]
   })
 }
 
-// Componente para el contenido del popup
-function StationPopup({ station }: { station: any }) {
-  const formatDate = (dateString: string) => {
-    try {
-      return new Date(dateString).toLocaleString('es-ES', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    } catch {
+/**
+ * Formatea una fecha UTC a formato local español
+ * 
+ * @param dateString - Fecha en formato string UTC
+ * @returns Fecha formateada o mensaje de error
+ */
+function formatDate(dateString: string): string {
+  try {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) {
       return 'Fecha no disponible'
     }
+    
+    return date.toLocaleString('es-ES', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'America/Los_Angeles' // Zona horaria de California
+    })
+  } catch {
+    return 'Fecha no disponible'
   }
-
-  return (
-    <div className="station-popup min-w-[250px]">
-      <Card className="border-0 shadow-lg">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <MapPin className="h-4 w-4" />
-            Estación {station.StationID}
-          </CardTitle>
-          <CardDescription className="text-xs">
-            {station.AgencyName}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-0 space-y-2">
-          <div className="flex items-center gap-2">
-            <Activity className="h-3 w-3 text-muted-foreground" />
-            <Badge 
-              variant="secondary" 
-              className="text-xs"
-              style={{ backgroundColor: getMarkerColor(station.ParameterName) + '20' }}
-            >
-              {station.ParameterName}
-            </Badge>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Building className="h-3 w-3 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">
-              {station.FullAQSID}
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Clock className="h-3 w-3 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">
-              {formatDate(station.UTCDateTimeReported)}
-            </span>
-          </div>
-          
-          <div className="pt-2 border-t">
-            <div className="text-xs text-muted-foreground">
-              <strong>Estado:</strong> {station.Status}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              <strong>Coordenadas:</strong> {station.Latitude.toFixed(4)}, {station.Longitude.toFixed(4)}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  )
 }
 
-// Componente principal para mostrar estaciones en el mapa
+/**
+ * Crea el contenido HTML para el popup de una estación
+ * 
+ * @param station - Datos de la estación de monitoreo
+ * @returns HTML string para el popup
+ */
+function createPopupContent(station: MonitoringStation): string {
+  const color = getMarkerColor(station.Parameter)
+  const formattedDate = formatDate(station.UTC)
+  
+  return `
+    <div class="station-popup min-w-[280px] max-w-[320px]">
+      <div class="bg-white rounded-lg shadow-lg p-4 border border-gray-200">
+        <!-- Header -->
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-5 h-5 rounded-full flex-shrink-0" style="background-color: ${color}"></div>
+          <div class="flex-1 min-w-0">
+            <h3 class="font-semibold text-sm text-gray-900 truncate">${station.SiteName}</h3>
+            <p class="text-xs text-gray-500 truncate">${station.AgencyName}</p>
+          </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="space-y-2 text-xs">
+          <div class="flex justify-between">
+            <span class="text-gray-600">Parámetro:</span>
+            <span class="font-medium text-gray-900">${station.Parameter}</span>
+          </div>
+          
+          <div class="flex justify-between">
+            <span class="text-gray-600">AQI:</span>
+            <span class="font-bold text-gray-900">${station.AQI}</span>
+          </div>
+          
+          <div class="flex justify-between">
+            <span class="text-gray-600">Concentración:</span>
+            <span class="font-medium text-gray-900">${station.RawConcentration} ${station.Unit}</span>
+          </div>
+          
+          <div class="flex justify-between">
+            <span class="text-gray-600">Estado:</span>
+            <span class="font-medium ${station.Status === 'Active' ? 'text-green-600' : 'text-red-600'}">
+              ${station.Status}
+            </span>
+          </div>
+          
+          <div class="flex justify-between">
+            <span class="text-gray-600">Última actualización:</span>
+            <span class="font-medium text-gray-900">${formattedDate}</span>
+          </div>
+          
+          <div class="pt-2 border-t border-gray-200">
+            <div class="text-xs text-gray-500">
+              <strong>Coordenadas:</strong> ${station.Latitude.toFixed(4)}°, ${station.Longitude.toFixed(4)}°
+            </div>
+            <div class="text-xs text-gray-500">
+              <strong>Código AQS:</strong> ${station.FullAQSCode}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `
+}
+
+/**
+ * Componente para mostrar estaciones de monitoreo AirNow en el mapa
+ * 
+ * Este componente:
+ * - Obtiene datos de estaciones usando el hook useMonitoringStations
+ * - Renderiza marcadores personalizados en el mapa
+ * - Muestra popups informativos al hacer clic
+ * - Ajusta automáticamente la vista para mostrar todas las estaciones
+ */
 export function MonitoringStationsLayer() {
   const map = useMap()
+  
+  // Hook para obtener datos de estaciones
   const { stations, isLoading, error } = useMonitoringStations({
-    centerLat: 36.7783, // Centro de California
+    centerLat: 36.7783, // Centro geográfico de California
     centerLng: -119.4179,
-    radiusKm: 200, // Radio más amplio para California
+    radiusKm: 200, // Radio amplio para cubrir todo el estado
     enabled: true
   })
 
+  // Debug: Log de información de estaciones
   useEffect(() => {
-    if (!map || !stations) return
+    if (stations.length > 0) {
+      console.log('=== DEBUG MONITORING STATIONS ===')
+      console.log('Total estaciones recibidas:', stations.length)
+      console.log('Primeras 3 estaciones:', stations.slice(0, 3).map(s => ({
+        SiteName: s.SiteName,
+        Status: s.Status,
+        Parameter: s.Parameter,
+        AQI: s.AQI,
+        Latitude: s.Latitude,
+        Longitude: s.Longitude
+      })))
+      
+      const statusCounts = stations.reduce((acc, station) => {
+        acc[station.Status] = (acc[station.Status] || 0) + 1
+        return acc
+      }, {} as Record<string, number>)
+      console.log('Conteo por Status:', statusCounts)
+      console.log('================================')
+    }
+  }, [stations])
 
-    // Limpiar marcadores existentes
+  // Memoizar estaciones válidas (con coordenadas)
+  const validStations = useMemo(() => {
+    return stations.filter(station => 
+      station.Latitude && 
+      station.Longitude && 
+      !isNaN(station.Latitude) && 
+      !isNaN(station.Longitude)
+    )
+  }, [stations])
+
+  // Callback para limpiar marcadores existentes
+  const clearExistingMarkers = useCallback(() => {
     map.eachLayer((layer) => {
       if (layer instanceof L.Marker && (layer as any).options?.className === 'custom-station-marker') {
         map.removeLayer(layer)
       }
     })
+  }, [map])
 
-    // Agregar nuevos marcadores
-    stations.forEach((station) => {
-      if (station.Latitude && station.Longitude) {
-        const marker = L.marker(
-          [station.Latitude, station.Longitude],
-          {
-            icon: createStationIcon(station.Parameter, station.Status === 'Active')
-          }
-        )
+  // Callback para agregar marcadores al mapa
+  const addMarkersToMap = useCallback(() => {
+    const markers: L.Marker[] = []
+    
+    validStations.forEach((station) => {
+      const marker = L.marker(
+        [station.Latitude, station.Longitude],
+        {
+          icon: createStationIcon(station.Parameter, station.Status === 'Active')
+        }
+      )
 
-        // Crear popup con información de la estación
-        const popupContent = `
-          <div class="station-popup min-w-[250px]">
-            <div class="bg-white rounded-lg shadow-lg p-4">
-              <div class="flex items-center gap-2 mb-2">
-                <div class="w-4 h-4 rounded-full" style="background-color: ${getMarkerColor(station.Parameter)}"></div>
-                <h3 class="font-semibold text-sm">${station.SiteName}</h3>
-              </div>
-              <div class="text-xs text-gray-600 space-y-1">
-                <div><strong>Agencia:</strong> ${station.AgencyName}</div>
-                <div><strong>Parámetro:</strong> ${station.Parameter}</div>
-                <div><strong>AQI:</strong> ${station.AQI}</div>
-                <div><strong>Concentración:</strong> ${station.RawConcentration} ${station.Unit}</div>
-                <div><strong>Estado:</strong> ${station.Status}</div>
-                <div><strong>Coordenadas:</strong> ${station.Latitude.toFixed(4)}, ${station.Longitude.toFixed(4)}</div>
-                <div><strong>Última actualización:</strong> ${new Date(station.UTC).toLocaleString('es-ES')}</div>
-              </div>
-            </div>
-          </div>
-        `
+      // Crear popup con información detallada
+      marker.bindPopup(createPopupContent(station), {
+        maxWidth: 350,
+        className: 'station-popup-container',
+        closeButton: true,
+        autoClose: true,
+        keepInView: true
+      })
 
-        marker.bindPopup(popupContent, {
-          maxWidth: 300,
-          className: 'station-popup-container'
-        })
-
-        marker.addTo(map)
-      }
+      marker.addTo(map)
+      markers.push(marker)
     })
 
-    // Ajustar vista para mostrar todas las estaciones si hay estaciones
-    if (stations.length > 0) {
-      const markers = stations
-        .filter(station => station.Latitude && station.Longitude)
-        .map(station => L.marker([station.Latitude, station.Longitude]))
-      
-      if (markers.length > 0) {
+    return markers
+  }, [map, validStations])
+
+  // Callback para ajustar vista del mapa
+  const adjustMapView = useCallback((markers: L.Marker[]) => {
+    if (markers.length > 1) {
+      try {
         const group = (L as any).featureGroup(markers)
-        if (stations.length > 1) {
-          map.fitBounds(group.getBounds().pad(0.1))
-        }
+        const bounds = group.getBounds()
+        map.fitBounds(bounds.pad(0.1), {
+          maxZoom: 10, // Limitar zoom máximo para mantener contexto
+          animate: true,
+          duration: 1
+        })
+      } catch (error) {
+        console.warn('Error ajustando vista del mapa:', error)
       }
     }
+  }, [map])
 
-  }, [map, stations])
+  // Efecto principal para manejar marcadores
+  useEffect(() => {
+    if (!map || isLoading) return
 
-  // Mostrar estado de carga o error
-  if (isLoading) {
-    return null // El mapa mostrará su propio estado de carga
-  }
+    // Limpiar marcadores existentes
+    clearExistingMarkers()
 
-  if (error) {
-    console.error('Error cargando estaciones:', error)
-    return null
-  }
+    // Agregar nuevos marcadores
+    const markers = addMarkersToMap()
 
-  return null // Este componente no renderiza nada visible, solo agrega marcadores al mapa
+    // Ajustar vista si hay estaciones
+    if (markers.length > 0) {
+      adjustMapView(markers)
+    }
+
+    // Cleanup function
+    return () => {
+      clearExistingMarkers()
+    }
+  }, [map, validStations, isLoading, clearExistingMarkers, addMarkersToMap, adjustMapView])
+
+  // Manejo de errores
+  useEffect(() => {
+    if (error) {
+      console.error('Error cargando estaciones de monitoreo:', error)
+    }
+  }, [error])
+
+  // Este componente no renderiza nada visible, solo agrega marcadores al mapa
+  return null
 }
