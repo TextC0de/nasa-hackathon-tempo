@@ -1,6 +1,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { aqStations } from '../schema/aq-stations';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 interface StationCSVRow {
   provider: string;
@@ -31,7 +37,7 @@ function parseCSV(content: string): Record<string, string>[] {
   return records;
 }
 
-export async function seedAqStations() {
+export async function seedAqStations(db: PostgresJsDatabase) {
   const CSV_PATH = path.join(__dirname, 'aq-stations.csv');
 
   console.log('Reading CSV file...');
@@ -50,8 +56,8 @@ export async function seedAqStations() {
 
   console.log('Inserting stations into database...');
 
-  // Insertar en lotes de 1000
-  const BATCH_SIZE = 1000;
+  // Insertar en lotes de 100 (PostgreSQL tiene límite de ~65535 parámetros)
+  const BATCH_SIZE = 100;
   for (let i = 0; i < stations.length; i += BATCH_SIZE) {
     const batch = stations.slice(i, i + BATCH_SIZE);
     await db.insert(aqStations).values(batch);
