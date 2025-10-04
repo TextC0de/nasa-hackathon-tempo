@@ -130,28 +130,32 @@ export interface BoundingBox {
  * Información de estación de monitoreo
  */
 export interface MonitoringSite {
-  /** ID de la estación AirNow */
-  StationID: string;
-  /** ID del sistema AQS */
-  AQSID: string;
-  /** Nombre completo del sitio */
-  FullAQSID: string;
-  /** Nombre del parámetro medido */
-  ParameterName: string;
   /** Latitud de la estación */
   Latitude: number;
   /** Longitud de la estación */
   Longitude: number;
-  /** Fecha y hora UTC del reporte */
-  UTCDateTimeReported: string;
-  /** Estado de la estación (e.g., 'Active') */
-  Status: string;
-  /** ID de la agencia responsable */
-  AgencyID: string;
-  /** Nombre de la agencia */
+  /** Timestamp UTC de la medición (YYYY-MM-DDTHH:mm) */
+  UTC: string;
+  /** Nombre del parámetro (PM2.5, O3, NO2, etc.) */
+  Parameter: string;
+  /** Unidad de medición (UG/M3, PPB, etc.) */
+  Unit: string;
+  /** Valor de la medición */
+  Value: number;
+  /** Concentración raw (-999.0 si no disponible) */
+  RawConcentration: number;
+  /** Valor AQI calculado */
+  AQI: number;
+  /** Categoría AQI (1-6) */
+  Category: number;
+  /** Nombre del sitio */
+  SiteName: string;
+  /** Nombre de la agencia responsable */
   AgencyName: string;
-  /** Código de país (e.g., 'US') */
-  AQMA: string;
+  /** Código AQS completo */
+  FullAQSCode: string;
+  /** Código AQS internacional */
+  IntlAQSCode: string;
 }
 
 /**
