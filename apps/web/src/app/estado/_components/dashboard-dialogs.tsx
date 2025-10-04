@@ -47,6 +47,8 @@ interface DashboardDialogsProps {
   setOpenDialog: (dialog: string | null) => void
   showMonitoringStations: boolean
   setShowMonitoringStations: (show: boolean) => void
+  showActiveFires: boolean
+  setShowActiveFires: (show: boolean) => void
   isLoading: boolean
   error: any
   stats: {
@@ -55,6 +57,12 @@ interface DashboardDialogsProps {
     avgAQI?: number
     parameters: number
     agencies: number
+  } | null
+  fireStats?: {
+    totalFires: number
+    averageFRP: number
+    maxFRP: number
+    highConfidenceFires: number
   } | null
   getAQIColor: (aqi: number) => string
   getAQILevel: (aqi: number) => string
@@ -70,9 +78,12 @@ export function DashboardDialogs({
   setOpenDialog,
   showMonitoringStations,
   setShowMonitoringStations,
+  showActiveFires,
+  setShowActiveFires,
   isLoading,
   error,
   stats,
+  fireStats,
   getAQIColor,
   getAQILevel,
   handleSubmitAlert,
@@ -114,31 +125,41 @@ export function DashboardDialogs({
                 <CardTitle className="text-sm">Exterior</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {EXTERIOR_LAYERS.map((layer) => (
-                  <div key={layer.id} className="flex items-center space-x-2">
-                    <Checkbox id={layer.id} defaultChecked />
-                    <label
-                      htmlFor={layer.id}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {layer.label}
-                    </label>
-                  </div>
-                ))}
-
-                {/* Estaciones de Monitoreo */}
                 <div className="flex items-center space-x-2">
                   <Checkbox
-                    id="monitoring-stations"
+                    id="air-stations"
                     checked={showMonitoringStations}
-                    onCheckedChange={(checked) => setShowMonitoringStations(checked as boolean)}
+                    onCheckedChange={(checked) => setShowMonitoringStations(!!checked)}
                   />
                   <label
-                    htmlFor="monitoring-stations"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    htmlFor="air-stations"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                   >
-                    Estaciones de Monitoreo AirNow
+                    Estaciones de calidad del aire
                   </label>
+                  {stats && (
+                    <Badge variant="secondary" className="ml-auto text-xs">
+                      {stats.active}
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="fires"
+                    checked={showActiveFires}
+                    onCheckedChange={(checked) => setShowActiveFires(!!checked)}
+                  />
+                  <label
+                    htmlFor="fires"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    🔥 Incendios activos
+                  </label>
+                  {fireStats && fireStats.totalFires > 0 && (
+                    <Badge variant="destructive" className="ml-auto text-xs">
+                      {fireStats.totalFires}
+                    </Badge>
+                  )}
                 </div>
               </CardContent>
             </Card>

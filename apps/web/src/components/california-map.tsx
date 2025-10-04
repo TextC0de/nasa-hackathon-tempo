@@ -8,7 +8,9 @@ import "leaflet/dist/leaflet.css"
 import L from "leaflet"
 import { MonitoringStationsLayer } from "./monitoring-stations-layer"
 import { AlertMarkers } from "./alert-markers"
+import { ActiveFiresLayer } from "./active-fires-layer"
 import { Alert as AlertType } from '@/hooks/use-alerts'
+import { type FireDataPoint } from '@/hooks/use-active-fires'
 
 // Optimización: Lazy loading con loading state
 const MapContainer = dynamic(
@@ -512,16 +514,22 @@ interface CaliforniaMapProps {
   mapType?: keyof typeof MAP_TYPES
   onMapTypeChange?: (mapType: keyof typeof MAP_TYPES) => void
   showMonitoringStations?: boolean
+  showActiveFires?: boolean
   alerts?: AlertType[]
+  fires?: FireDataPoint[]
+  onStationClick?: (station: any) => void
 }
 
 // Optimización: Memoización del componente principal
-export const CaliforniaMap = React.memo(function CaliforniaMap({ 
-  className, 
-  mapType = "streetmap", 
-  onMapTypeChange, 
+export const CaliforniaMap = React.memo(function CaliforniaMap({
+  className,
+  mapType = "streetmap",
+  onMapTypeChange,
   showMonitoringStations = true,
-  alerts = []
+  showActiveFires = true,
+  alerts = [],
+  fires = [],
+  onStationClick
 }: CaliforniaMapProps) {
   // Memoización de configuraciones para evitar re-renders innecesarios
   const currentMapType = useMemo(() => MAP_TYPES[mapType], [mapType])
@@ -561,8 +569,11 @@ export const CaliforniaMap = React.memo(function CaliforniaMap({
         />
         
         {/* Monitoring Stations Layer - Optimizado con lazy loading */}
-        {showMonitoringStations && <MonitoringStationsLayer />}
-        
+        {showMonitoringStations && <MonitoringStationsLayer onStationClick={onStationClick} />}
+
+        {/* Active Fires Layer */}
+        {showActiveFires && fires.length > 0 && <ActiveFiresLayer fires={fires} />}
+
         {/* Alert Markers Layer */}
         <AlertMarkers alerts={alerts} />
         

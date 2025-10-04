@@ -7,6 +7,7 @@ import 'leaflet.markercluster'
 import 'leaflet.markercluster/dist/MarkerCluster.css'
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import { useMonitoringStations, type MonitoringStation, type GroupedStation } from '@/hooks/use-monitoring-stations'
+export type { GroupedStation }
 import { 
   Activity, 
   AlertTriangle, 
@@ -491,7 +492,13 @@ function createGroupedPopupContent(station: GroupedStation): string {
  * - Ajusta automáticamente la vista para mostrar todas las estaciones
  */
 // Optimización: Componente memoizado con clustering
-export const MonitoringStationsLayer = React.memo(function MonitoringStationsLayer() {
+interface MonitoringStationsLayerProps {
+  onStationClick?: (station: GroupedStation) => void
+}
+
+export const MonitoringStationsLayer = React.memo(function MonitoringStationsLayer({
+  onStationClick
+}: MonitoringStationsLayerProps) {
   const map = useMap()
 
   // Hook para obtener datos de estaciones (usar groupedStations)
@@ -612,15 +619,23 @@ export const MonitoringStationsLayer = React.memo(function MonitoringStationsLay
           icon: createStationIcon(station.worstAQI > 0 ? station.worstAQI : 0, station.Status === 'Active')
         })
 
-        // Crear contenido del popup con TODOS los parámetros
-        const popupContent = createGroupedPopupContent(station)
-        marker.bindPopup(popupContent, {
-          maxWidth: 500,
-          className: 'station-popup-container',
-          closeButton: true,
-          autoClose: true,
-          keepInView: true
-        })
+        // OPCIÓN 1: Si hay callback, usar onClick para abrir Dialog
+        if (onStationClick) {
+          marker.on('click', () => {
+            console.log('🖱️ [LAYER] Click en estación:', station.SiteName)
+            onStationClick(station)
+          })
+        } else {
+          // OPCIÓN 2: Fallback al popup tradicional si no hay callback
+          const popupContent = createGroupedPopupContent(station)
+          marker.bindPopup(popupContent, {
+            maxWidth: 500,
+            className: 'station-popup-container',
+            closeButton: true,
+            autoClose: true,
+            keepInView: true
+          })
+        }
 
         newClusterGroup.addLayer(marker)
         markersCreated++

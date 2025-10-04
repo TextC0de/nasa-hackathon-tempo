@@ -3,10 +3,12 @@
 import { useState } from "react"
 import dynamic from "next/dynamic"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { useMonitoringStations } from "@/hooks/use-monitoring-stations"
+import { useMonitoringStations, type GroupedStation } from "@/hooks/use-monitoring-stations"
+import { useActiveFires } from "@/hooks/use-active-fires"
 import { useAlerts } from "@/hooks/use-alerts"
 import { DashboardHeader } from "./_components/dashboard-header"
 import { DashboardDialogs } from "./_components/dashboard-dialogs"
+import { StationWeatherDialog } from "./_components/station-weather-dialog"
 import { getAQIColor, getAQILevel, getAQIDetails } from "./_components/aqi-utils"
 
 // Importar el componente del mapa dinámicamente para evitar problemas de SSR
@@ -28,10 +30,28 @@ export default function Dashboard() {
   const [mapType, setMapType] = useState<MapType>("streetmap")
   const [openDialog, setOpenDialog] = useState<string | null>(null)
   const [showMonitoringStations, setShowMonitoringStations] = useState(true)
+  const [showActiveFires, setShowActiveFires] = useState(true)
   const [isSubmittingAlert, setIsSubmittingAlert] = useState(false)
+
+  // State para el Dialog de estación seleccionada
+  const [selectedStation, setSelectedStation] = useState<GroupedStation | null>(null)
+  const [stationDialogOpen, setStationDialogOpen] = useState(false)
 
   // Hook para obtener datos de estaciones de monitoreo
   const { stations, airQuality, isLoading, error, stats } = useMonitoringStations({
+    centerLat: 36.7783, // Centro de California
+    centerLng: -119.4179,
+    radiusKm: 200,
+    enabled: true
+  })
+
+  // Hook para obtener datos de incendios activos
+  const {
+    fires,
+    statistics: fireStats,
+    isLoading: firesLoading,
+    error: firesError
+  } = useActiveFires({
     centerLat: 36.7783, // Centro de California
     centerLng: -119.4179,
     radiusKm: 200,
@@ -87,6 +107,13 @@ export default function Dashboard() {
     updateAlertStatus(alertId, 'dismissed')
   }
 
+  // Handler para click en estación
+  const handleStationClick = (station: GroupedStation) => {
+    console.log('📍 [DASHBOARD] Estación seleccionada:', station.SiteName)
+    setSelectedStation(station)
+    setStationDialogOpen(true)
+  }
+
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background text-foreground">
@@ -108,9 +135,12 @@ export default function Dashboard() {
               setOpenDialog={setOpenDialog}
               showMonitoringStations={showMonitoringStations}
               setShowMonitoringStations={setShowMonitoringStations}
+              showActiveFires={showActiveFires}
+              setShowActiveFires={setShowActiveFires}
               isLoading={isLoading}
               error={error}
               stats={stats}
+              fireStats={fireStats}
               getAQIColor={getAQIColor}
               getAQILevel={getAQILevel}
               handleSubmitAlert={handleSubmitAlert}
@@ -128,12 +158,24 @@ export default function Dashboard() {
                   mapType={mapType}
                   onMapTypeChange={(type) => setMapType(type as MapType)}
                   showMonitoringStations={showMonitoringStations}
+                  showActiveFires={showActiveFires}
                   alerts={getActiveAlerts()}
+                  fires={fires}
+                  onStationClick={handleStationClick}
                 />
               </div>
             </main>
           </div>
         </div>
+
+        {/* Dialog de Estación con Clima */}
+        <StationWeatherDialog
+          station={selectedStation}
+          open={stationDialogOpen}
+          onOpenChange={setStationDialogOpen}
+          getAQIColor={getAQIColor}
+          getAQICategory={getAQIDetails}
+        />
       </div>
     </TooltipProvider>
   )
