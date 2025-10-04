@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { SidebarTabs } from "@/components/sidebar-tabs"
 
 interface SidebarProps {
@@ -32,14 +33,11 @@ export function Sidebar({ className, onClose }: SidebarProps) {
       {/* Logo */}
       <div className="flex h-16 shrink-0 items-center justify-between px-6">
         <div className="flex items-center space-x-3">
-          {/* Logo SVG - usando el archivo atmos.svg */}
-          <div className="flex h-8 w-8 items-center justify-center">
-            <img 
-              src="/atmos.svg" 
-              alt="AtmOS Logo" 
-              className="h-8 w-8"
-            />
-          </div>
+          {/* Logo usando Avatar de shadcn/ui */}
+          <Avatar className="h-8 w-8">
+            <AvatarImage src="/atmos.svg" alt="AtmOS Logo" />
+            <AvatarFallback className="text-xs font-semibold">AT</AvatarFallback>
+          </Avatar>
           <span className="text-lg font-semibold text-sidebar-foreground">AtmOS</span>
         </div>
         
@@ -60,23 +58,22 @@ export function Sidebar({ className, onClose }: SidebarProps) {
       
       {/* Navigation */}
       <nav className="px-3 py-4">
-        <ul role="list" className="flex flex-col gap-y-2">
+        <div className="flex flex-col gap-y-2">
           {navigation.map((item) => (
-            <li key={item.name}>
-              <Button
-                variant={item.current ? "secondary" : "ghost"}
-                className="w-full justify-start gap-x-3 p-3 h-auto"
-                onClick={onClose} // Close sidebar when navigating on mobile
-                asChild
-              >
-                <a href={item.href}>
-                  <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-                  {item.name}
-                </a>
-              </Button>
-            </li>
+            <Button
+              key={item.name}
+              variant={item.current ? "secondary" : "ghost"}
+              className="w-full justify-start gap-x-3 p-3 h-auto"
+              onClick={onClose} // Close sidebar when navigating on mobile
+              asChild
+            >
+              <a href={item.href}>
+                <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                {item.name}
+              </a>
+            </Button>
           ))}
-        </ul>
+        </div>
       </nav>
 
       <Separator className="mx-3" />

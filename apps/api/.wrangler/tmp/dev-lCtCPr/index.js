@@ -8630,6 +8630,1605 @@ var t = initTRPC.context().create();
 var router = t.router;
 var publicProcedure = t.procedure;
 
+// ../../packages/firms-client/dist/types.js
+var FIRMSError = class extends Error {
+  constructor(message, statusCode, details) {
+    super(message);
+    this.statusCode = statusCode;
+    this.details = details;
+    this.name = "FIRMSError";
+  }
+};
+__name(FIRMSError, "FIRMSError");
+var FIRMSAuthError = class extends FIRMSError {
+  constructor(message = "Invalid MAP_KEY") {
+    super(message, 401);
+    this.name = "FIRMSAuthError";
+  }
+};
+__name(FIRMSAuthError, "FIRMSAuthError");
+var FIRMSRateLimitError = class extends FIRMSError {
+  constructor(message = "Rate limit exceeded (5000 requests per 10 minutes)") {
+    super(message, 429);
+    this.name = "FIRMSRateLimitError";
+  }
+};
+__name(FIRMSRateLimitError, "FIRMSRateLimitError");
+
+// ../../packages/firms-client/dist/utils/csv-parser.js
+function parseFireCSV(csvText) {
+  const lines = csvText.trim().split("\n");
+  if (lines.length === 0) {
+    return [];
+  }
+  const headers = lines[0].split(",").map((h) => h.trim());
+  const fires = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line)
+      continue;
+    const values = line.split(",").map((v) => v.trim());
+    const fire = {};
+    headers.forEach((header, index) => {
+      const value = values[index];
+      if (header === "latitude" || header === "longitude") {
+        fire[header] = parseFloat(value);
+      } else if (header === "brightness" || header === "frp") {
+        fire[header] = parseFloat(value);
+      } else if (header === "confidence") {
+        const numValue = parseFloat(value);
+        fire[header] = isNaN(numValue) ? value : numValue;
+      } else {
+        fire[header] = value;
+      }
+    });
+    fires.push(fire);
+  }
+  return fires;
+}
+__name(parseFireCSV, "parseFireCSV");
+function normalizeConfidence(confidence) {
+  if (typeof confidence === "number") {
+    if (confidence < 30)
+      return "low";
+    if (confidence < 80)
+      return "nominal";
+    return "high";
+  }
+  if (confidence === "l" || confidence === "low")
+    return "low";
+  if (confidence === "n" || confidence === "nominal")
+    return "nominal";
+  if (confidence === "h" || confidence === "high")
+    return "high";
+  return "nominal";
+}
+__name(normalizeConfidence, "normalizeConfidence");
+function validateBoundingBox(west, south, east, north) {
+  if (west < -180 || west > 180) {
+    throw new Error(`Invalid west longitude: ${west} (must be -180 to 180)`);
+  }
+  if (east < -180 || east > 180) {
+    throw new Error(`Invalid east longitude: ${east} (must be -180 to 180)`);
+  }
+  if (south < -90 || south > 90) {
+    throw new Error(`Invalid south latitude: ${south} (must be -90 to 90)`);
+  }
+  if (north < -90 || north > 90) {
+    throw new Error(`Invalid north latitude: ${north} (must be -90 to 90)`);
+  }
+  if (west >= east) {
+    throw new Error(`Invalid bbox: west (${west}) must be less than east (${east})`);
+  }
+  if (south >= north) {
+    throw new Error(`Invalid bbox: south (${south}) must be less than north (${north})`);
+  }
+}
+__name(validateBoundingBox, "validateBoundingBox");
+
+// ../../packages/firms-client/dist/firms-client.js
+var FIRMSClient = class {
+  /**
+   * Crear cliente FIRMS
+   *
+   * @param credentials - Credenciales FIRMS (MAP_KEY)
+   *
+   * Para obtener MAP_KEY gratuito:
+   * https://firms.modaps.eosdis.nasa.gov/api/map_key/
+   */
+  constructor(credentials) {
+    this.baseURL = "https://firms.modaps.eosdis.nasa.gov/api";
+    if (!credentials.mapKey || credentials.mapKey.length !== 32) {
+      throw new FIRMSAuthError("MAP_KEY debe ser de 32 caracteres alfanum\xE9ricos");
+    }
+    this.mapKey = credentials.mapKey;
+  }
+  /**
+   * Obtener incendios activos en una región geográfica
+   *
+   * Usa endpoint /api/area/csv/
+   *
+   * @param bbox - Bounding box geográfico
+   * @param options - Opciones de consulta (sensor, días hacia atrás)
+   * @returns Respuesta con lista de incendios
+   *
+   * @example
+   * ```typescript
+   * // Incendios en California (últimas 24h, sensor VIIRS)
+   * const fires = await firms.getFiresInRegion({
+   *   west: -125, south: 32, east: -114, north: 42
+   * }, {
+   *   source: 'VIIRS_SNPP_NRT',
+   *   dayRange: 1
+   * });
+   * ```
+   */
+  async getFiresInRegion(bbox, options = {}) {
+    const { west, south, east, north } = bbox;
+    validateBoundingBox(west, south, east, north);
+    const source = options.source || "VIIRS_SNPP_NRT";
+    const dayRange = options.dayRange || 1;
+    if (dayRange < 1 || dayRange > 10) {
+      throw new FIRMSError("dayRange debe estar entre 1 y 10 d\xEDas");
+    }
+    let url;
+    if (options.date) {
+      url = `${this.baseURL}/area/csv/${this.mapKey}/${source}/${west},${south},${east},${north}/${options.date}`;
+    } else {
+      url = `${this.baseURL}/area/csv/${this.mapKey}/${source}/${west},${south},${east},${north}/${dayRange}`;
+    }
+    console.log(`[FIRMS] Fetching fires: ${url}`);
+    const response = await this.fetch(url);
+    const csvText = await response.text();
+    const fires = parseFireCSV(csvText);
+    return {
+      fires,
+      count: fires.length,
+      metadata: {
+        source,
+        bbox,
+        dayRange: options.date ? void 0 : dayRange,
+        date: options.date,
+        requestedAt: /* @__PURE__ */ new Date()
+      }
+    };
+  }
+  /**
+   * Obtener estadísticas de incendios en una región
+   *
+   * Calcula métricas agregadas sobre los incendios detectados
+   *
+   * @param bbox - Bounding box geográfico
+   * @param options - Opciones de consulta
+   * @returns Estadísticas de incendios
+   *
+   * @example
+   * ```typescript
+   * const stats = await firms.getFireStatistics({
+   *   west: -125, south: 32, east: -114, north: 42
+   * });
+   * console.log(`Total fires: ${stats.totalFires}`);
+   * console.log(`Average FRP: ${stats.averageFRP} MW`);
+   * ```
+   */
+  async getFireStatistics(bbox, options = {}) {
+    const response = await this.getFiresInRegion(bbox, options);
+    const fires = response.fires;
+    if (fires.length === 0) {
+      return {
+        totalFires: 0,
+        averageFRP: 0,
+        maxFRP: 0,
+        totalFRP: 0,
+        confidenceDistribution: { high: 0, nominal: 0, low: 0 },
+        daynightDistribution: { day: 0, night: 0 }
+      };
+    }
+    const frpValues = fires.map((f) => f.frp);
+    const totalFRP = frpValues.reduce((sum, frp) => sum + frp, 0);
+    const averageFRP = totalFRP / fires.length;
+    const maxFRP = Math.max(...frpValues);
+    const confidenceDistribution = { high: 0, nominal: 0, low: 0 };
+    fires.forEach((fire) => {
+      const level = normalizeConfidence(fire.confidence);
+      confidenceDistribution[level]++;
+    });
+    const daynightDistribution = { day: 0, night: 0 };
+    fires.forEach((fire) => {
+      if (fire.daynight === "D") {
+        daynightDistribution.day++;
+      } else {
+        daynightDistribution.night++;
+      }
+    });
+    return {
+      totalFires: fires.length,
+      averageFRP,
+      maxFRP,
+      totalFRP,
+      confidenceDistribution,
+      daynightDistribution
+    };
+  }
+  /**
+   * Verificar disponibilidad de datos
+   *
+   * Usa endpoint /api/data_availability/
+   *
+   * @param options - Opciones de disponibilidad
+   * @returns Fechas disponibles
+   *
+   * @example
+   * ```typescript
+   * const availability = await firms.checkDataAvailability({
+   *   source: 'VIIRS_SNPP_NRT',
+   *   year: '2024',
+   *   month: 1
+   * });
+   * console.log(`Available dates: ${availability.availableDates.join(', ')}`);
+   * ```
+   */
+  async checkDataAvailability(options) {
+    const { source, year, month, day } = options;
+    let url = `${this.baseURL}/data_availability/csv/${this.mapKey}/${source}`;
+    if (year)
+      url += `/${year}`;
+    if (month)
+      url += `/${month}`;
+    if (day)
+      url += `/${day}`;
+    console.log(`[FIRMS] Checking availability: ${url}`);
+    const response = await this.fetch(url);
+    const csvText = await response.text();
+    const lines = csvText.trim().split("\n");
+    const availableDates = lines.filter((line) => line.trim()).slice(1);
+    return {
+      source,
+      availableDates
+    };
+  }
+  /**
+   * Validar MAP_KEY
+   *
+   * Intenta una consulta simple para verificar que el MAP_KEY sea válido
+   *
+   * @returns true si el MAP_KEY es válido
+   * @throws FIRMSAuthError si el MAP_KEY es inválido
+   *
+   * @example
+   * ```typescript
+   * try {
+   *   await firms.validateMapKey();
+   *   console.log('MAP_KEY is valid');
+   * } catch (error) {
+   *   console.error('Invalid MAP_KEY');
+   * }
+   * ```
+   */
+  async validateMapKey() {
+    try {
+      await this.checkDataAvailability({
+        source: "VIIRS_SNPP_NRT"
+      });
+      return true;
+    } catch (error) {
+      if (error instanceof FIRMSAuthError) {
+        throw error;
+      }
+      return true;
+    }
+  }
+  /**
+   * Fetch wrapper con manejo de errores FIRMS
+   */
+  async fetch(url) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        const text = await response.text();
+        if (response.status === 429) {
+          throw new FIRMSRateLimitError();
+        }
+        if (response.status === 401 || response.status === 403) {
+          throw new FIRMSAuthError("Invalid or expired MAP_KEY");
+        }
+        throw new FIRMSError(`FIRMS API error: ${response.status} ${response.statusText}`, response.status, text);
+      }
+      return response;
+    } catch (error) {
+      if (error instanceof FIRMSError) {
+        throw error;
+      }
+      throw new FIRMSError(`Network error: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+};
+__name(FIRMSClient, "FIRMSClient");
+
+// ../../packages/earthdata-imageserver-client/dist/core/errors.js
+var ValidationError = class extends Error {
+  field;
+  constructor(message, field) {
+    super(message);
+    this.name = "ValidationError";
+    this.field = field;
+  }
+};
+__name(ValidationError, "ValidationError");
+var NoDataError = class extends Error {
+  location;
+  timestamp;
+  constructor(message, location, timestamp) {
+    super(message);
+    this.name = "NoDataError";
+    this.location = location;
+    this.timestamp = timestamp instanceof Date ? timestamp : timestamp ? new Date(timestamp) : void 0;
+  }
+};
+__name(NoDataError, "NoDataError");
+var AuthenticationError = class extends Error {
+  statusCode;
+  constructor(message, statusCode) {
+    super(message);
+    this.name = "AuthenticationError";
+    this.statusCode = statusCode;
+  }
+};
+__name(AuthenticationError, "AuthenticationError");
+var ServiceError = class extends Error {
+  statusCode;
+  response;
+  constructor(message, statusCode, response) {
+    super(message);
+    this.name = "ServiceError";
+    this.statusCode = statusCode;
+    this.response = response;
+  }
+};
+__name(ServiceError, "ServiceError");
+
+// ../../packages/earthdata-imageserver-client/dist/core/geo-types.js
+var GeoPoint = class {
+  latitude;
+  longitude;
+  /**
+   * Crear punto geográfico con validación
+   *
+   * @param coords - Coordenadas del punto
+   * @throws {ValidationError} Si latitud no está entre -90 y 90
+   * @throws {ValidationError} Si longitud no está entre -180 y 180
+   */
+  constructor(coords) {
+    if (coords.latitude < -90 || coords.latitude > 90) {
+      throw new ValidationError(`Latitude must be between -90 and 90, got ${coords.latitude}`, "latitude");
+    }
+    if (coords.longitude < -180 || coords.longitude > 180) {
+      throw new ValidationError(`Longitude must be between -180 and 180, got ${coords.longitude}`, "longitude");
+    }
+    this.latitude = coords.latitude;
+    this.longitude = coords.longitude;
+  }
+  /**
+   * Convertir a objeto plano
+   */
+  toJSON() {
+    return {
+      latitude: this.latitude,
+      longitude: this.longitude
+    };
+  }
+  /**
+   * Convertir a string
+   */
+  toString() {
+    return `(${this.latitude}, ${this.longitude})`;
+  }
+  /**
+   * Convertir a formato ArcGIS {x, y}
+   */
+  toArcGIS() {
+    return {
+      x: this.longitude,
+      y: this.latitude
+    };
+  }
+};
+__name(GeoPoint, "GeoPoint");
+var BoundingBox = class {
+  west;
+  south;
+  east;
+  north;
+  /**
+   * Crear bounding box con validación
+   *
+   * @param coords - Coordenadas del rectángulo
+   * @throws {ValidationError} Si coordenadas están fuera de rango
+   * @throws {ValidationError} Si west >= east o south >= north
+   */
+  constructor(coords) {
+    if (coords.west < -180 || coords.west > 180) {
+      throw new ValidationError(`West must be between -180 and 180, got ${coords.west}`, "west");
+    }
+    if (coords.east < -180 || coords.east > 180) {
+      throw new ValidationError(`East must be between -180 and 180, got ${coords.east}`, "east");
+    }
+    if (coords.south < -90 || coords.south > 90) {
+      throw new ValidationError(`South must be between -90 and 90, got ${coords.south}`, "south");
+    }
+    if (coords.north < -90 || coords.north > 90) {
+      throw new ValidationError(`North must be between -90 and 90, got ${coords.north}`, "north");
+    }
+    if (coords.west >= coords.east) {
+      throw new ValidationError(`West (${coords.west}) must be less than east (${coords.east})`, "west");
+    }
+    if (coords.south >= coords.north) {
+      throw new ValidationError(`South (${coords.south}) must be less than north (${coords.north})`, "south");
+    }
+    this.west = coords.west;
+    this.south = coords.south;
+    this.east = coords.east;
+    this.north = coords.north;
+  }
+  /**
+   * Ancho del bounding box en grados
+   */
+  get width() {
+    return this.east - this.west;
+  }
+  /**
+   * Alto del bounding box en grados
+   */
+  get height() {
+    return this.north - this.south;
+  }
+  /**
+   * Centro del bounding box
+   */
+  get center() {
+    return new GeoPoint({
+      latitude: (this.south + this.north) / 2,
+      longitude: (this.west + this.east) / 2
+    });
+  }
+  /**
+   * Verificar si contiene un punto
+   */
+  contains(point) {
+    return point.longitude >= this.west && point.longitude <= this.east && point.latitude >= this.south && point.latitude <= this.north;
+  }
+  /**
+   * Convertir a objeto plano
+   */
+  toJSON() {
+    return {
+      west: this.west,
+      south: this.south,
+      east: this.east,
+      north: this.north
+    };
+  }
+  /**
+   * Convertir a string
+   */
+  toString() {
+    return `BBox(${this.west}, ${this.south}, ${this.east}, ${this.north})`;
+  }
+  /**
+   * Convertir a string CSV para ArcGIS API
+   */
+  toArcGISString() {
+    return `${this.west},${this.south},${this.east},${this.north}`;
+  }
+};
+__name(BoundingBox, "BoundingBox");
+
+// ../../packages/earthdata-imageserver-client/dist/core/utils.js
+function normalizeGeoPoint(input) {
+  if (input instanceof GeoPoint) {
+    return input;
+  }
+  return new GeoPoint(input);
+}
+__name(normalizeGeoPoint, "normalizeGeoPoint");
+function normalizeBoundingBox(input) {
+  if (input instanceof BoundingBox) {
+    return input;
+  }
+  return new BoundingBox(input);
+}
+__name(normalizeBoundingBox, "normalizeBoundingBox");
+
+// ../../packages/earthdata-imageserver-client/dist/core/imageserver-client.js
+var IMAGESERVER_BASE_URL = "https://gis.earthdata.nasa.gov/image";
+var ImageServerClient = class {
+  baseUrl;
+  authToken;
+  /**
+   * Crear nuevo cliente ImageServer
+   *
+   * NOTA: La mayoría de servicios son públicos y NO requieren autenticación.
+   * Solo FIRMS requiere token JWT.
+   *
+   * @param baseUrl - URL base del ImageServer (opcional, usa NASA Earthdata por defecto)
+   *
+   * @example
+   * ```typescript
+   * // Servicios públicos (TEMPO, POWER, SEDAC, etc.)
+   * const client = new ImageServerClient();
+   *
+   * // Para FIRMS (requiere autenticación)
+   * const client = new ImageServerClient();
+   * client.setAuthToken('tu-token-jwt');
+   * ```
+   */
+  constructor(baseUrl = IMAGESERVER_BASE_URL) {
+    this.baseUrl = baseUrl;
+  }
+  /**
+   * Establecer token de autenticación
+   *
+   * Solo necesario para servicios que requieren autenticación como FIRMS.
+   *
+   * @param token - JWT token de NASA Earthdata
+   *
+   * @example
+   * ```typescript
+   * client.setAuthToken('eyJ0eXAiOiJKV1Q...');
+   * ```
+   */
+  setAuthToken(token) {
+    this.authToken = token;
+  }
+  /**
+   * Limpiar token de autenticación
+   */
+  clearAuthToken() {
+    this.authToken = void 0;
+  }
+  /**
+   * Crear headers de autenticación (solo si hay token)
+   */
+  getAuthHeaders() {
+    if (this.authToken) {
+      return {
+        Authorization: `Bearer ${this.authToken}`
+      };
+    }
+    return {};
+  }
+  /**
+   * Construir URL completa para un dataset
+   *
+   * @param datasetPath - Path del dataset (ej: "C2930763263-LARC_CLOUD/TEMPO_NO2_L3_V03_HOURLY_TROPOSPHERIC_VERTICAL_COLUMN")
+   * @returns URL completa del ImageServer
+   */
+  buildDatasetUrl(datasetPath) {
+    return `${this.baseUrl}/rest/services/${datasetPath}/ImageServer`;
+  }
+  /**
+   * Obtener información del servicio ImageServer
+   *
+   * @param datasetPath - Path del dataset
+   * @returns Información del servicio (extent, bandas, tiempo, etc.)
+   *
+   * @example
+   * ```typescript
+   * const info = await client.getServiceInfo('C2930763263-LARC_CLOUD/TEMPO_NO2_L3_V03');
+   * console.log(info.timeInfo.timeExtent); // [1690989169000, 1757893440000]
+   * ```
+   */
+  async getServiceInfo(datasetPath) {
+    const url = new URL(this.buildDatasetUrl(datasetPath));
+    url.searchParams.append("f", "json");
+    console.log(`[ImageServer] GET ${url.toString()}`);
+    const response = await fetch(url.toString(), {
+      headers: this.getAuthHeaders()
+    });
+    console.log(`[ImageServer] Response: ${response.status} ${response.statusText}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[ImageServer] Error body:`, errorText);
+      if (response.status === 498 || response.status === 499) {
+        throw new AuthenticationError(`Authentication required or invalid token for ${datasetPath}`, response.status);
+      }
+      throw new ServiceError(`Failed to get service info: ${response.statusText}`, response.status, errorText);
+    }
+    const data = await response.json();
+    console.log(`[ImageServer] Service info retrieved for ${datasetPath}`);
+    return data;
+  }
+  /**
+   * Exportar imagen desde ImageServer
+   *
+   * @param datasetPath - Path del dataset
+   * @param params - Parámetros de exportación (bbox, size, format, time, etc.)
+   * @returns ArrayBuffer con la imagen o JSON con datos
+   *
+   * @example
+   * ```typescript
+   * // Exportar como PNG
+   * const pngBuffer = await client.exportImage(
+   *   'C2930763263-LARC_CLOUD/TEMPO_NO2_L3_V03',
+   *   {
+   *     bbox: { west: -120, south: 34, east: -118, north: 36 },
+   *     size: { width: 512, height: 512 },
+   *     format: 'png',
+   *     time: Date.now()
+   *   }
+   * );
+   * ```
+   */
+  async exportImage(datasetPath, params) {
+    const url = new URL(`${this.buildDatasetUrl(datasetPath)}/exportImage`);
+    const bbox = normalizeBoundingBox(params.bbox);
+    const bboxStr = bbox.toArcGISString();
+    url.searchParams.append("bbox", bboxStr);
+    if (params.size) {
+      url.searchParams.append("size", `${params.size.width},${params.size.height}`);
+    }
+    url.searchParams.append("format", params.format || "png");
+    url.searchParams.append("f", params.f || "image");
+    if (params.time) {
+      url.searchParams.append("time", String(params.time));
+    }
+    if (params.imageSR) {
+      url.searchParams.append("imageSR", String(params.imageSR.wkid));
+    }
+    if (params.bboxSR) {
+      url.searchParams.append("bboxSR", String(params.bboxSR.wkid));
+    }
+    if (params.interpolation) {
+      url.searchParams.append("interpolation", params.interpolation);
+    }
+    if (params.noData !== void 0) {
+      url.searchParams.append("noData", String(params.noData));
+    }
+    if (params.compression) {
+      url.searchParams.append("compression", params.compression);
+    }
+    if (params.compressionQuality !== void 0) {
+      url.searchParams.append("compressionQuality", String(params.compressionQuality));
+    }
+    if (params.bandIds && params.bandIds.length > 0) {
+      url.searchParams.append("bandIds", params.bandIds.join(","));
+    }
+    if (params.mosaicRule) {
+      url.searchParams.append("mosaicRule", JSON.stringify(params.mosaicRule));
+    }
+    if (params.renderingRule) {
+      url.searchParams.append("renderingRule", JSON.stringify(params.renderingRule));
+    }
+    console.log(`[ImageServer] exportImage GET ${url.toString()}`);
+    const response = await fetch(url.toString(), {
+      headers: this.getAuthHeaders()
+    });
+    console.log(`[ImageServer] exportImage Response: ${response.status} ${response.statusText}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[ImageServer] exportImage Error:`, errorText);
+      if (response.status === 498 || response.status === 499) {
+        throw new AuthenticationError(`Authentication required or invalid token for ${datasetPath}`, response.status);
+      }
+      throw new ServiceError(`Failed to export image: ${response.statusText}`, response.status, errorText);
+    }
+    const buffer = await response.arrayBuffer();
+    console.log(`[ImageServer] Image exported, size: ${buffer.byteLength} bytes`);
+    return buffer;
+  }
+  /**
+   * Exportar datos como JSON desde ImageServer
+   *
+   * @param datasetPath - Path del dataset
+   * @param params - Parámetros de exportación
+   * @returns Objeto JSON con los datos
+   *
+   * @example
+   * ```typescript
+   * const data = await client.exportAsJSON(
+   *   'C2930763263-LARC_CLOUD/TEMPO_NO2_L3_V03',
+   *   {
+   *     bbox: { west: -120, south: 34, east: -118, north: 36 },
+   *     size: { width: 100, height: 100 },
+   *     time: Date.now()
+   *   }
+   * );
+   * console.log(data); // { value: [...], width: 100, height: 100 }
+   * ```
+   */
+  async exportAsJSON(datasetPath, params) {
+    const url = new URL(`${this.buildDatasetUrl(datasetPath)}/exportImage`);
+    const bbox = normalizeBoundingBox(params.bbox);
+    const bboxStr = bbox.toArcGISString();
+    url.searchParams.append("bbox", bboxStr);
+    if (params.size) {
+      url.searchParams.append("size", `${params.size.width},${params.size.height}`);
+    }
+    url.searchParams.append("f", "json");
+    if (params.time) {
+      url.searchParams.append("time", String(params.time));
+    }
+    if (params.imageSR) {
+      url.searchParams.append("imageSR", String(params.imageSR.wkid));
+    }
+    if (params.bboxSR) {
+      url.searchParams.append("bboxSR", String(params.bboxSR.wkid));
+    }
+    console.log(`[ImageServer] exportAsJSON GET ${url.toString()}`);
+    const response = await fetch(url.toString(), {
+      headers: this.getAuthHeaders()
+    });
+    console.log(`[ImageServer] exportAsJSON Response: ${response.status} ${response.statusText}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[ImageServer] exportAsJSON Error:`, errorText);
+      if (response.status === 498 || response.status === 499) {
+        throw new AuthenticationError(`Authentication required or invalid token for ${datasetPath}`, response.status);
+      }
+      throw new ServiceError(`Failed to export as JSON: ${response.statusText}`, response.status, errorText);
+    }
+    const data = await response.json();
+    console.log(`[ImageServer] JSON data exported, keys:`, Object.keys(data));
+    if (data.error) {
+      const errorCode = data.error.code || 500;
+      const errorMessage = data.error.message || "Unknown error";
+      if (errorCode === 498 || errorCode === 499) {
+        throw new AuthenticationError(`${errorMessage} for ${datasetPath}`, errorCode);
+      }
+      throw new ServiceError(`Service error: ${errorMessage}`, errorCode, JSON.stringify(data.error.details || []));
+    }
+    return data;
+  }
+  /**
+   * Identificar valores de píxeles en una ubicación específica
+   *
+   * @param datasetPath - Path del dataset
+   * @param geometry - Punto o geometría para identificar
+   * @param options - Opciones adicionales (time, tolerance, etc.)
+   * @returns Información identificada en esa ubicación
+   *
+   * @example
+   * ```typescript
+   * const result = await client.identify(
+   *   'C2930763263-LARC_CLOUD/TEMPO_NO2_L3_V03',
+   *   { x: -118.24, y: 34.05 },
+   *   { time: Date.now() }
+   * );
+   * console.log(result.value); // Valor del píxel en esa ubicación
+   * ```
+   */
+  async identify(datasetPath, geometry, options = {}) {
+    const url = new URL(`${this.buildDatasetUrl(datasetPath)}/identify`);
+    const geometryStr = typeof geometry === "string" ? geometry : JSON.stringify({ x: geometry.x, y: geometry.y });
+    url.searchParams.append("geometry", geometryStr);
+    url.searchParams.append("geometryType", "esriGeometryPoint");
+    url.searchParams.append("f", "json");
+    if (options.time) {
+      url.searchParams.append("time", String(options.time));
+    }
+    if (options.mosaicRule) {
+      url.searchParams.append("mosaicRule", JSON.stringify(options.mosaicRule));
+    }
+    if (options.renderingRule) {
+      url.searchParams.append("renderingRule", JSON.stringify(options.renderingRule));
+    }
+    if (options.returnGeometry !== void 0) {
+      url.searchParams.append("returnGeometry", String(options.returnGeometry));
+    }
+    if (options.returnCatalogItems !== void 0) {
+      url.searchParams.append("returnCatalogItems", String(options.returnCatalogItems));
+    }
+    console.log(`[ImageServer] identify GET ${url.toString()}`);
+    const response = await fetch(url.toString(), {
+      headers: this.getAuthHeaders()
+    });
+    console.log(`[ImageServer] identify Response: ${response.status} ${response.statusText}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[ImageServer] identify Error:`, errorText);
+      if (response.status === 498 || response.status === 499) {
+        throw new AuthenticationError(`Authentication required or invalid token for ${datasetPath}`, response.status);
+      }
+      throw new ServiceError(`Failed to identify: ${response.statusText}`, response.status, errorText);
+    }
+    const data = await response.json();
+    console.log(`[ImageServer] Identify data retrieved:`, data);
+    return data;
+  }
+  /**
+   * Listar datasets disponibles en el ImageServer
+   *
+   * @param folder - Carpeta específica (opcional)
+   * @returns Lista de datasets y carpetas disponibles
+   *
+   * @example
+   * ```typescript
+   * const datasets = await client.listDatasets();
+   * console.log(datasets.folders); // ['C2930763263-LARC_CLOUD', 'FireTracking', ...]
+   * console.log(datasets.services); // [{ name: 'FireTracking/...', type: 'MapServer' }]
+   * ```
+   */
+  async listDatasets(folder) {
+    const url = new URL(`${this.baseUrl}/rest/services${folder ? `/${folder}` : ""}`);
+    url.searchParams.append("f", "json");
+    console.log(`[ImageServer] listDatasets GET ${url.toString()}`);
+    const response = await fetch(url.toString(), {
+      headers: this.getAuthHeaders()
+    });
+    console.log(`[ImageServer] listDatasets Response: ${response.status} ${response.statusText}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[ImageServer] listDatasets Error:`, errorText);
+      throw new ServiceError(`Failed to list datasets: ${response.statusText}`, response.status, errorText);
+    }
+    const data = await response.json();
+    console.log(`[ImageServer] Found ${data.folders?.length || 0} folders, ${data.services?.length || 0} services`);
+    return data;
+  }
+  /**
+   * Obtener capacidades WMS del servicio
+   *
+   * @param datasetPath - Path del dataset
+   * @returns XML con las capacidades WMS
+   *
+   * @example
+   * ```typescript
+   * const wmsCapabilities = await client.getWMSCapabilities(
+   *   'C2930763263-LARC_CLOUD/TEMPO_NO2_L3_V03'
+   * );
+   * ```
+   */
+  async getWMSCapabilities(datasetPath) {
+    const url = new URL(`${this.buildDatasetUrl(datasetPath)}/WMSServer`);
+    url.searchParams.append("request", "GetCapabilities");
+    url.searchParams.append("service", "WMS");
+    console.log(`[ImageServer] getWMSCapabilities GET ${url.toString()}`);
+    const response = await fetch(url.toString(), {
+      headers: this.getAuthHeaders()
+    });
+    console.log(`[ImageServer] getWMSCapabilities Response: ${response.status} ${response.statusText}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[ImageServer] getWMSCapabilities Error:`, errorText);
+      if (response.status === 498 || response.status === 499) {
+        throw new AuthenticationError(`Authentication required or invalid token for ${datasetPath}`, response.status);
+      }
+      throw new ServiceError(`Failed to get WMS capabilities: ${response.statusText}`, response.status, errorText);
+    }
+    const xml = await response.text();
+    console.log(`[ImageServer] WMS Capabilities retrieved, length: ${xml.length} chars`);
+    return xml;
+  }
+};
+__name(ImageServerClient, "ImageServerClient");
+
+// ../../packages/earthdata-imageserver-client/dist/services/power-service.js
+var POWERVariable;
+(function(POWERVariable2) {
+  POWERVariable2["TEMPERATURE_2M"] = "T2M";
+  POWERVariable2["RELATIVE_HUMIDITY_2M"] = "RH2M";
+  POWERVariable2["PRECIPITATION"] = "PRECTOTCORR_SUM";
+  POWERVariable2["WIND_SPEED_10M"] = "WS10M";
+  POWERVariable2["SURFACE_PRESSURE"] = "PS";
+  POWERVariable2["SPECIFIC_HUMIDITY_2M"] = "QV2M";
+  POWERVariable2["WIND_SPEED_2M"] = "WS2M";
+  POWERVariable2["DEW_POINT_2M"] = "T2MDEW";
+})(POWERVariable || (POWERVariable = {}));
+var POWER_UNITS = {
+  [POWERVariable.TEMPERATURE_2M]: "\xB0C",
+  [POWERVariable.RELATIVE_HUMIDITY_2M]: "%",
+  [POWERVariable.PRECIPITATION]: "mm",
+  [POWERVariable.WIND_SPEED_10M]: "m/s",
+  [POWERVariable.SURFACE_PRESSURE]: "kPa",
+  [POWERVariable.SPECIFIC_HUMIDITY_2M]: "g/kg",
+  [POWERVariable.WIND_SPEED_2M]: "m/s",
+  [POWERVariable.DEW_POINT_2M]: "\xB0C"
+};
+
+// ../../packages/earthdata-imageserver-client/dist/services/sedac-service.js
+var SEDAC_DATASETS = {
+  /** Population Density 1km (SSP scenarios by year) */
+  POPULATION_DENSITY_1KM: "SEDAC/ciesin_sedac_pd_sspbsyr_1km",
+  /** Population Density 1/8 degree (SSP scenarios by year) */
+  POPULATION_DENSITY_1_8TH: "SEDAC/ciesin_sedac_pd_sspbsyr_1_8th",
+  /** Land Use/Land Cover Urban Expansion to 2030 */
+  URBAN_EXPANSION_2030: "SEDAC/ciesin_sedac_lulc_puexpans_2030",
+  /** Multidimensional Poverty Index 2010-2020 */
+  POVERTY_INDEX: "SEDAC/ciesin_sedac_pmp_grdi_2010_2020"
+};
+var SEDACService = class {
+  client;
+  /**
+   * Crear nuevo servicio SEDAC
+   *
+   * SEDAC es un servicio público, NO requiere autenticación.
+   *
+   * @example
+   * ```typescript
+   * const sedac = new SEDACService();
+   * ```
+   */
+  constructor() {
+    this.client = new ImageServerClient();
+  }
+  // ============================================================================
+  // MÉTODOS PRINCIPALES - Population Density
+  // ============================================================================
+  /**
+   * Obtener densidad poblacional en un punto específico
+   *
+   * Esencial para:
+   * - Identificar áreas de alto riesgo (high pollution + high population)
+   * - Priorizar alertas de air quality
+   * - Environmental justice analysis
+   *
+   * @param options - Opciones de consulta
+   * @returns Densidad poblacional en el punto
+   * @throws {ValidationError} Si las coordenadas son inválidas
+   * @throws {NoDataError} Si no hay datos para ese punto
+   *
+   * @example
+   * ```typescript
+   * const data = await sedac.getPopulationAtPoint({
+   *   location: { latitude: 34.05, longitude: -118.24 }
+   * });
+   *
+   * console.log(`Densidad: ${data.density} personas/km²`);
+   * ```
+   */
+  async getPopulationAtPoint(options) {
+    const location = normalizeGeoPoint(options.location);
+    const dataset = options.dataset || "POPULATION_DENSITY_1KM";
+    const datasetPath = SEDAC_DATASETS[dataset];
+    const result = await this.client.identify(datasetPath, location.toArcGIS(), { returnCatalogItems: false });
+    const density = result.value === "NoData" || result.value === void 0 ? null : typeof result.value === "string" ? parseFloat(result.value) : result.value;
+    if (density === null) {
+      throw new NoDataError(`No population data available at ${location.toString()}`, location);
+    }
+    return {
+      location,
+      density,
+      unit: "persons/km\xB2",
+      dataset
+    };
+  }
+  /**
+   * Obtener densidad poblacional en una región (imagen)
+   *
+   * @param options - Opciones de consulta
+   * @returns Densidad poblacional en la región (URL de imagen)
+   * @throws {ValidationError} Si el bounding box es inválido
+   *
+   * @example
+   * ```typescript
+   * const data = await sedac.getPopulationInRegion({
+   *   bbox: { west: -120, south: 34, east: -118, north: 36 },
+   *   resolution: { width: 512, height: 512 }
+   * });
+   *
+   * console.log(`Image URL: ${data.imageUrl}`);
+   *
+   * // Integrar con air quality:
+   * const no2 = await tempo.getNO2InRegion({ bbox, timestamp });
+   * // App logic: identificar áreas con high NO2 + high population
+   * ```
+   */
+  async getPopulationInRegion(options) {
+    const bbox = normalizeBoundingBox(options.bbox);
+    const resolution = options.resolution || { width: 256, height: 256 };
+    const dataset = options.dataset || "POPULATION_DENSITY_1KM";
+    const datasetPath = SEDAC_DATASETS[dataset];
+    const result = await this.client.exportAsJSON(datasetPath, {
+      bbox,
+      size: resolution,
+      format: "jpg"
+    });
+    return {
+      bbox,
+      imageUrl: result.href,
+      width: result.width,
+      height: result.height,
+      unit: "persons/km\xB2",
+      dataset
+    };
+  }
+  /**
+   * Obtener estadísticas espaciales de población (muestreo por grid)
+   *
+   * Útil para:
+   * - Calcular población total expuesta a contaminación
+   * - Identificar hotspots poblacionales
+   * - Análisis de vulnerabilidad
+   *
+   * NOTA: Este método usa muestreo de puntos para calcular estadísticas.
+   * Para datos precisos de píxeles, usar directamente el ImageServer API.
+   *
+   * @param options - Opciones de consulta
+   * @returns Estadísticas espaciales aproximadas
+   *
+   * @example
+   * ```typescript
+   * const stats = await sedac.getPopulationStatistics({
+   *   bbox: { west: -120, south: 34, east: -118, north: 36 },
+   *   resolution: { width: 10, height: 10 } // Grid 10x10 = 100 muestras
+   * });
+   *
+   * console.log(`Población estimada: ${stats.totalPopulation.toLocaleString()}`);
+   * console.log(`Densidad máxima: ${stats.max} personas/km²`);
+   * ```
+   */
+  async getPopulationStatistics(options) {
+    const bbox = normalizeBoundingBox(options.bbox);
+    const gridSize = options.resolution || { width: 10, height: 10 };
+    const dataset = options.dataset || "POPULATION_DENSITY_1KM";
+    const deltaLon = bbox.width / gridSize.width;
+    const deltaLat = bbox.height / gridSize.height;
+    const samplePoints = [];
+    for (let i = 0; i < gridSize.width; i++) {
+      for (let j = 0; j < gridSize.height; j++) {
+        samplePoints.push({
+          lon: bbox.west + deltaLon * (i + 0.5),
+          lat: bbox.south + deltaLat * (j + 0.5)
+        });
+      }
+    }
+    const values = [];
+    const batchSize = 10;
+    for (let i = 0; i < samplePoints.length; i += batchSize) {
+      const batch = samplePoints.slice(i, i + batchSize);
+      const densities = await Promise.all(batch.map(async (point) => {
+        try {
+          const data = await this.getPopulationAtPoint({
+            location: { latitude: point.lat, longitude: point.lon },
+            dataset
+          });
+          return data.density || 0;
+        } catch {
+          return 0;
+        }
+      }));
+      values.push(...densities.filter((v) => v > 0));
+    }
+    if (values.length === 0) {
+      throw new Error("No valid population values found in the specified region");
+    }
+    values.sort((a, b) => a - b);
+    const sum = values.reduce((a, b) => a + b, 0);
+    const mean = sum / values.length;
+    const median = values[Math.floor(values.length / 2)];
+    const min = values[0];
+    const max = values[values.length - 1];
+    const squaredDiffs = values.map((v) => Math.pow(v - mean, 2));
+    const variance = squaredDiffs.reduce((a, b) => a + b, 0) / values.length;
+    const stdDev = Math.sqrt(variance);
+    const percentile25 = values[Math.floor(values.length * 0.25)];
+    const percentile75 = values[Math.floor(values.length * 0.75)];
+    const percentile95 = values[Math.floor(values.length * 0.95)];
+    const areaPerPoint = bbox.width * 111 * (bbox.height * 111) / samplePoints.length;
+    const estimatedTotal = sum * areaPerPoint;
+    return {
+      bbox,
+      dataset,
+      min,
+      max,
+      mean,
+      median,
+      stdDev,
+      totalPopulation: estimatedTotal,
+      percentile25,
+      percentile75,
+      percentile95
+    };
+  }
+  // ============================================================================
+  // MÉTODOS DE CONVENIENCIA - Population Shortcuts
+  // ============================================================================
+  /**
+   * Obtener densidad poblacional en alta resolución (1km) en un punto
+   *
+   * @example
+   * ```typescript
+   * const data = await sedac.getPopulationAtPoint1km({
+   *   location: { latitude: 34.05, longitude: -118.24 }
+   * });
+   * ```
+   */
+  async getPopulationAtPoint1km(options) {
+    return this.getPopulationAtPoint({ ...options, dataset: "POPULATION_DENSITY_1KM" });
+  }
+  /**
+   * Obtener densidad poblacional en baja resolución (1/8 degree) en un punto
+   *
+   * @example
+   * ```typescript
+   * const data = await sedac.getPopulationAtPoint1_8th({
+   *   location: { latitude: 34.05, longitude: -118.24 }
+   * });
+   * ```
+   */
+  async getPopulationAtPoint1_8th(options) {
+    return this.getPopulationAtPoint({ ...options, dataset: "POPULATION_DENSITY_1_8TH" });
+  }
+  /**
+   * Obtener densidad poblacional en alta resolución (1km) en región
+   */
+  async getPopulationInRegion1km(options) {
+    return this.getPopulationInRegion({ ...options, dataset: "POPULATION_DENSITY_1KM" });
+  }
+  /**
+   * Obtener densidad poblacional en baja resolución (1/8 degree) en región
+   */
+  async getPopulationInRegion1_8th(options) {
+    return this.getPopulationInRegion({ ...options, dataset: "POPULATION_DENSITY_1_8TH" });
+  }
+  // ============================================================================
+  // MÉTODOS AVANZADOS - Análisis de riesgo
+  // ============================================================================
+  /**
+   * Identificar áreas de alto riesgo en una región
+   *
+   * Áreas de alto riesgo = alta densidad poblacional (>threshold)
+   *
+   * @param options - Opciones de consulta
+   * @param densityThreshold - Umbral de densidad (default: percentile 90)
+   * @returns Lista de áreas de alto riesgo
+   *
+   * @example
+   * ```typescript
+   * const highRiskAreas = await sedac.identifyHighRiskAreas({
+   *   bbox: { west: -120, south: 34, east: -118, north: 36 },
+   *   resolution: { width: 100, height: 100 }
+   * }, 1000); // >1000 personas/km²
+   *
+   * console.log(`${highRiskAreas.length} áreas de alto riesgo identificadas`);
+   * ```
+   */
+  async identifyHighRiskAreas(options, _densityThreshold) {
+    const stats = await this.getPopulationStatistics(options);
+    return [{
+      location: stats.bbox.center,
+      density: stats.max
+    }];
+  }
+  // ============================================================================
+  // MÉTODOS DE UTILIDAD
+  // ============================================================================
+  /**
+   * Obtener información del servicio SEDAC
+   *
+   * @param dataset - Dataset a consultar (default: POPULATION_DENSITY_1KM)
+   * @returns Información del ImageServer
+   *
+   * @example
+   * ```typescript
+   * const info = await sedac.getServiceInfo();
+   * console.log(`Dataset: ${info.name}`);
+   * ```
+   */
+  async getServiceInfo(dataset = "POPULATION_DENSITY_1KM") {
+    const datasetPath = SEDAC_DATASETS[dataset];
+    return await this.client.getServiceInfo(datasetPath);
+  }
+  /**
+   * Helper: Crear bounding box desde centro + radio
+   *
+   * @example
+   * ```typescript
+   * const bbox = SEDACService.createBBoxFromRadius(
+   *   { latitude: 34.05, longitude: -118.24 },
+   *   50 // 50km radius
+   * );
+   * ```
+   */
+  static createBBoxFromRadius(center, radiusKm) {
+    const point = normalizeGeoPoint(center);
+    const degreesPerKm = 1 / 111;
+    const delta = radiusKm * degreesPerKm;
+    return new BoundingBox({
+      west: point.longitude - delta,
+      south: point.latitude - delta,
+      east: point.longitude + delta,
+      north: point.latitude + delta
+    });
+  }
+};
+__name(SEDACService, "SEDACService");
+
+// ../../packages/airnow-client/dist/airnow-client.js
+var AirNowClient = class {
+  /**
+   * Crear nuevo cliente AirNow
+   *
+   * @param credentials - API Key de AirNow
+   *
+   * @example
+   * ```typescript
+   * const client = new AirNowClient({ apiKey: 'tu-api-key' });
+   * ```
+   */
+  constructor(credentials) {
+    this.baseUrl = "https://www.airnowapi.org";
+    this.apiKey = credentials.apiKey;
+  }
+  // ============================================================================
+  // MÉTODOS DE OBSERVACIONES ACTUALES
+  // ============================================================================
+  /**
+   * Obtener observaciones actuales por coordenadas
+   *
+   * @param location - Punto geográfico
+   * @param options - Opciones de consulta
+   * @returns Observaciones actuales de todas las estaciones cercanas
+   *
+   * @example
+   * ```typescript
+   * const obs = await client.getCurrentObservationsByLocation(
+   *   { latitude: 34.05, longitude: -118.24 },
+   *   { distance: 25 }
+   * );
+   *
+   * // Comparar con TEMPO:
+   * const tempo = await imageServer.tempo.getNO2AtPoint(location);
+   * const airnowNO2 = obs.find(o => o.ParameterName === 'NO2');
+   * console.log(`Satellite: ${tempo}, Ground: ${airnowNO2?.AQI}`);
+   * ```
+   */
+  async getCurrentObservationsByLocation(location, options = {}) {
+    const { distance = 25, format = "application/json" } = options;
+    const params = new URLSearchParams({
+      format,
+      latitude: location.latitude.toString(),
+      longitude: location.longitude.toString(),
+      distance: distance.toString(),
+      API_KEY: this.apiKey
+    });
+    const response = await fetch(`${this.baseUrl}/aq/observation/latLong/current/?${params}`);
+    if (!response.ok) {
+      throw new Error(`AirNow API error: ${response.status} ${response.statusText}`);
+    }
+    return await response.json();
+  }
+  /**
+   * Obtener observaciones actuales por ZIP code (solo USA)
+   *
+   * @param zipCode - Código postal USA
+   * @param options - Opciones de consulta
+   * @returns Observaciones actuales
+   *
+   * @example
+   * ```typescript
+   * const obs = await client.getCurrentObservationsByZip('90210');
+   * console.log(`AQI: ${obs[0].AQI} - ${obs[0].Category.Name}`);
+   * ```
+   */
+  async getCurrentObservationsByZip(zipCode, options = {}) {
+    const { distance = 25, format = "application/json" } = options;
+    const params = new URLSearchParams({
+      format,
+      zipCode,
+      distance: distance.toString(),
+      API_KEY: this.apiKey
+    });
+    const response = await fetch(`${this.baseUrl}/aq/observation/zipCode/current/?${params}`);
+    if (!response.ok) {
+      throw new Error(`AirNow API error: ${response.status} ${response.statusText}`);
+    }
+    return await response.json();
+  }
+  // ============================================================================
+  // MÉTODOS DE FORECAST
+  // ============================================================================
+  /**
+   * Obtener forecast de AQI por coordenadas
+   *
+   * @param location - Punto geográfico
+   * @param options - Opciones de consulta
+   * @returns Forecast de AQI
+   *
+   * @example
+   * ```typescript
+   * const forecast = await client.getForecastByLocation({
+   *   latitude: 34.05,
+   *   longitude: -118.24
+   * });
+   * console.log(`Forecast para mañana: AQI ${forecast[0].AQI}`);
+   * ```
+   */
+  async getForecastByLocation(location, options = {}) {
+    const { distance = 25, format = "application/json" } = options;
+    const params = new URLSearchParams({
+      format,
+      latitude: location.latitude.toString(),
+      longitude: location.longitude.toString(),
+      distance: distance.toString(),
+      API_KEY: this.apiKey
+    });
+    const response = await fetch(`${this.baseUrl}/aq/forecast/latLong/?${params}`);
+    if (!response.ok) {
+      throw new Error(`AirNow API error: ${response.status} ${response.statusText}`);
+    }
+    return await response.json();
+  }
+  /**
+   * Obtener forecast de AQI por ZIP code
+   *
+   * @param zipCode - Código postal USA
+   * @param options - Opciones de consulta
+   * @returns Forecast de AQI
+   *
+   * @example
+   * ```typescript
+   * const forecast = await client.getForecastByZip('90210');
+   * ```
+   */
+  async getForecastByZip(zipCode, options = {}) {
+    const { distance = 25, format = "application/json" } = options;
+    const params = new URLSearchParams({
+      format,
+      zipCode,
+      distance: distance.toString(),
+      API_KEY: this.apiKey
+    });
+    const response = await fetch(`${this.baseUrl}/aq/forecast/zipCode/?${params}`);
+    if (!response.ok) {
+      throw new Error(`AirNow API error: ${response.status} ${response.statusText}`);
+    }
+    return await response.json();
+  }
+  // ============================================================================
+  // MÉTODOS DE OBSERVACIONES HISTÓRICAS
+  // ============================================================================
+  /**
+   * Obtener observaciones históricas por coordenadas
+   *
+   * @param location - Punto geográfico
+   * @param options - Opciones de consulta (incluye fecha)
+   * @returns Observaciones históricas del día especificado
+   *
+   * @example
+   * ```typescript
+   * const historical = await client.getHistoricalObservationsByLocation(
+   *   { latitude: 34.05, longitude: -118.24 },
+   *   { date: '2025-10-01', distance: 25 }
+   * );
+   * console.log(`AQI histórico: ${historical[0].AQI}`);
+   * ```
+   */
+  async getHistoricalObservationsByLocation(location, options) {
+    const { date, distance = 25, format = "application/json" } = options;
+    const params = new URLSearchParams({
+      format,
+      latitude: location.latitude.toString(),
+      longitude: location.longitude.toString(),
+      date,
+      distance: distance.toString(),
+      API_KEY: this.apiKey
+    });
+    const response = await fetch(`${this.baseUrl}/aq/observation/latLong/historical/?${params}`);
+    if (!response.ok) {
+      throw new Error(`AirNow API error: ${response.status} ${response.statusText}`);
+    }
+    return await response.json();
+  }
+  /**
+   * Obtener observaciones históricas por ZIP code
+   *
+   * @param zipCode - Código postal USA
+   * @param options - Opciones de consulta (incluye fecha)
+   * @returns Observaciones históricas del día especificado
+   *
+   * @example
+   * ```typescript
+   * const historical = await client.getHistoricalObservationsByZip(
+   *   '90210',
+   *   { date: '2025-10-01' }
+   * );
+   * console.log(`AQI histórico: ${historical[0].AQI}`);
+   * ```
+   */
+  async getHistoricalObservationsByZip(zipCode, options) {
+    const { date, distance = 25, format = "application/json" } = options;
+    const params = new URLSearchParams({
+      format,
+      zipCode,
+      date,
+      distance: distance.toString(),
+      API_KEY: this.apiKey
+    });
+    const response = await fetch(`${this.baseUrl}/aq/observation/zipCode/historical/?${params}`);
+    if (!response.ok) {
+      throw new Error(`AirNow API error: ${response.status} ${response.statusText}`);
+    }
+    return await response.json();
+  }
+  // ============================================================================
+  // MÉTODOS DE ESTACIONES DE MONITOREO
+  // ============================================================================
+  /**
+   * Obtener estaciones de monitoreo en un área geográfica
+   *
+   * @param bbox - Bounding box (área rectangular)
+   * @param options - Opciones de consulta con fechas y parámetros
+   * @returns Lista de estaciones de monitoreo en el área
+   *
+   * @example
+   * ```typescript
+   * const sites = await client.getMonitoringSites({
+   *   minLongitude: -118.5,
+   *   minLatitude: 33.5,
+   *   maxLongitude: -117.5,
+   *   maxLatitude: 34.5
+   * }, {
+   *   startDate: '2025-10-04T16',
+   *   endDate: '2025-10-04T17',
+   *   parameters: 'PM25'
+   * });
+   * console.log(`Encontradas ${sites.length} estaciones`);
+   * ```
+   */
+  async getMonitoringSites(bbox, options) {
+    const { format = "application/json", startDate, endDate, parameters = "O3,PM25,NO2,SO2,CO", dataType = "A", verbose = 1, monitorType = 2, includerawconcentrations = 1 } = options;
+    const params = new URLSearchParams({
+      startDate,
+      endDate,
+      parameters,
+      BBOX: `${bbox.minLongitude},${bbox.minLatitude},${bbox.maxLongitude},${bbox.maxLatitude}`,
+      dataType,
+      format,
+      verbose: verbose.toString(),
+      monitorType: monitorType.toString(),
+      includerawconcentrations: includerawconcentrations.toString(),
+      API_KEY: this.apiKey
+    });
+    const url = `${this.baseUrl}/aq/data/?${params}`;
+    console.log("URL:", url);
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.log("pre json");
+      const data2 = await response.json();
+      console.log("data json");
+      console.log(data2);
+      console.log(response.statusText);
+      throw new Error(`AirNow API error: ${response.status} ${response.statusText}`);
+    }
+    console.log("pre json");
+    const data = await response.json();
+    console.log("data json");
+    console.log(data);
+    return data;
+  }
+  // ============================================================================
+  // MÉTODOS HELPER
+  // ============================================================================
+  /**
+   * Obtener observación de un parámetro específico
+   *
+   * @param location - Punto geográfico
+   * @param parameter - Parámetro a obtener (O3, PM25, NO2, etc.)
+   * @param options - Opciones de consulta
+   * @returns Observación del parámetro o null si no existe
+   *
+   * @example
+   * ```typescript
+   * const no2 = await client.getParameterObservation(
+   *   { latitude: 34.05, longitude: -118.24 },
+   *   AirNowParameter.NO2
+   * );
+   * console.log(`NO2 AQI: ${no2?.AQI}`);
+   * ```
+   */
+  async getParameterObservation(location, parameter, options = {}) {
+    const observations = await this.getCurrentObservationsByLocation(location, options);
+    return observations.find((obs) => obs.ParameterName === parameter) || null;
+  }
+  /**
+   * Obtener el peor AQI (máximo) de todas las estaciones cercanas
+   *
+   * @param location - Punto geográfico
+   * @param options - Opciones de consulta
+   * @returns Observación con el peor AQI
+   *
+   * @example
+   * ```typescript
+   * const worst = await client.getWorstAQI({
+   *   latitude: 34.05,
+   *   longitude: -118.24
+   * });
+   * console.log(`Peor AQI: ${worst.AQI} (${worst.ParameterName})`);
+   * ```
+   */
+  async getWorstAQI(location, options = {}) {
+    const observations = await this.getCurrentObservationsByLocation(location, options);
+    if (observations.length === 0) {
+      throw new Error("No observations found for the specified location");
+    }
+    return observations.reduce((worst, current) => current.AQI > worst.AQI ? current : worst);
+  }
+  // ============================================================================
+  // HELPERS ESTÁTICOS
+  // ============================================================================
+  /**
+   * Convertir AQI a categoría de color (para visualización)
+   *
+   * @param aqi - Valor AQI (0-500+)
+   * @returns Color hexadecimal
+   *
+   * @example
+   * ```typescript
+   * const color = AirNowClient.getAQIColor(150);
+   * console.log(color); // '#FF7E00' (Orange - Unhealthy for Sensitive)
+   * ```
+   */
+  static getAQIColor(aqi) {
+    if (aqi <= 50)
+      return "#00E400";
+    if (aqi <= 100)
+      return "#FFFF00";
+    if (aqi <= 150)
+      return "#FF7E00";
+    if (aqi <= 200)
+      return "#FF0000";
+    if (aqi <= 300)
+      return "#8F3F97";
+    return "#7E0023";
+  }
+  /**
+   * Obtener categoría AQI por número
+   *
+   * @param aqi - Valor AQI (0-500+)
+   * @returns Nombre de la categoría
+   *
+   * @example
+   * ```typescript
+   * const category = AirNowClient.getAQICategoryName(150);
+   * console.log(category); // 'Unhealthy for Sensitive Groups'
+   * ```
+   */
+  static getAQICategoryName(aqi) {
+    if (aqi <= 50)
+      return "Good";
+    if (aqi <= 100)
+      return "Moderate";
+    if (aqi <= 150)
+      return "Unhealthy for Sensitive Groups";
+    if (aqi <= 200)
+      return "Unhealthy";
+    if (aqi <= 300)
+      return "Very Unhealthy";
+    return "Hazardous";
+  }
+  /**
+   * Convertir Date a formato AirNow (YYYY-MM-DD)
+   *
+   * @param date - Fecha
+   * @returns String en formato YYYY-MM-DD
+   *
+   * @example
+   * ```typescript
+   * const formatted = AirNowClient.dateToAirNowFormat(new Date());
+   * console.log(formatted); // '2025-10-02'
+   * ```
+   */
+  static dateToAirNowFormat(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+};
+__name(AirNowClient, "AirNowClient");
+
+// ../../packages/airnow-client/dist/types.js
+var AirNowParameter;
+(function(AirNowParameter2) {
+  AirNowParameter2["OZONE"] = "OZONE";
+  AirNowParameter2["PM25"] = "PM25";
+  AirNowParameter2["PM10"] = "PM10";
+  AirNowParameter2["CO"] = "CO";
+  AirNowParameter2["NO2"] = "NO2";
+  AirNowParameter2["SO2"] = "SO2";
+})(AirNowParameter || (AirNowParameter = {}));
+
 // src/router.ts
 var appRouter = router({
   hello: publicProcedure.input(external_exports.object({ name: external_exports.string().optional() })).query(({ input }) => {
@@ -8648,7 +10247,82 @@ var appRouter = router({
       id: Math.floor(Math.random() * 1e3),
       name: input.name
     };
+  }),
+  obtenerFuegoActivoenArea: publicProcedure.input(
+    external_exports.object({
+      latitud: external_exports.number().min(0).max(90),
+      longitud: external_exports.number().min(-180).max(180),
+      radiusKm: external_exports.number().positive().max(500).default(50)
+    })
+  ).query(async ({ input }) => {
+    const { latitud, longitud, radiusKm } = input;
+    const bbox = SEDACService.createBBoxFromRadius(
+      { latitude: latitud, longitude: longitud },
+      radiusKm
+    );
+    const firmsClient = new FIRMSClient({ mapKey: "0912b42987c4a3aeeb686a0bc0b2f870" });
+    const fireData = await firmsClient.getFiresInRegion(bbox.toJSON());
+    return fireData;
+  }),
+  obtenerCalidadDelAire: publicProcedure.input(
+    external_exports.object({
+      latitud: external_exports.number().min(0).max(90),
+      longitud: external_exports.number().min(-180).max(180),
+      radiusKm: external_exports.number().positive().max(500).default(50)
+    })
+  ).query(async ({ input }) => {
+    const { latitud, longitud, radiusKm } = input;
+    const bbox = SEDACService.createBBoxFromRadius(
+      { latitude: latitud, longitude: longitud },
+      radiusKm
+    );
+    const airnowClient = new AirNowClient({ apiKey: "A09EAF06-910B-4426-A2A8-8DC2D82641C6" });
+    const observations = await airnowClient.getCurrentObservationsByLocation(
+      { latitude: latitud, longitude: longitud },
+      { distance: radiusKm }
+    );
+    return observations;
+  }),
+  obtenerEstacionesAirNow: publicProcedure.input(
+    external_exports.object({
+      latitud: external_exports.number().min(0).max(90),
+      longitud: external_exports.number().min(-180).max(180),
+      radiusKm: external_exports.number().positive().max(500).default(50)
+    })
+  ).query(async ({ input }) => {
+    const { latitud, longitud, radiusKm } = input;
+    const airnowClient = new AirNowClient({ apiKey: "A09EAF06-910B-4426-A2A8-8DC2D82641C6" });
+    const latOffset = radiusKm / 111;
+    const lngOffset = radiusKm / (111 * Math.cos(latitud * Math.PI / 180));
+    try {
+      const stations = await airnowClient.getMonitoringSites(
+        {
+          minLongitude: longitud - lngOffset,
+          minLatitude: latitud - latOffset,
+          maxLongitude: longitud + lngOffset,
+          maxLatitude: latitud + latOffset
+        },
+        {
+          startDate: "2025-10-04T16",
+          endDate: "2025-10-04T17",
+          parameters: "NO2,PM25,O3,PM10,SO2,CO"
+        }
+      );
+      return stations;
+    } catch (error) {
+      console.error("Error al obtener estaciones de AirNow:", error);
+    }
   })
+  /* obtenerDatosMeteorologicos: publicProcedure
+   .input(
+     z.object({
+       latitud: z.number().min(0).max(90),
+       longitud: z.number().min(-180).max(180),
+     })
+   )
+   .query(async ({ input }) => {
+     const { latitud, longitud } = input
+     const */
 });
 
 // src/env.ts

@@ -4,11 +4,9 @@ import { cn } from "@/lib/utils"
 import { useEffect } from "react"
 import dynamic from "next/dynamic"
 
-// Importar Leaflet CSS
 import "leaflet/dist/leaflet.css"
 import L from "leaflet"
-
-// Componente dinámico para evitar problemas de SSR
+import { MonitoringStationsLayer } from "./monitoring-stations-layer"
 const MapContainer = dynamic(
   () => import("react-leaflet").then((mod) => mod.MapContainer),
   { ssr: false }
@@ -625,17 +623,18 @@ interface CaliforniaMapProps {
   className?: string
   mapType?: keyof typeof MAP_TYPES
   onMapTypeChange?: (mapType: keyof typeof MAP_TYPES) => void
+  showMonitoringStations?: boolean
 }
 
-export function CaliforniaMap({ className, mapType = "streetmap", onMapTypeChange }: CaliforniaMapProps) {
+export function CaliforniaMap({ className, mapType = "streetmap", onMapTypeChange, showMonitoringStations = true }: CaliforniaMapProps) {
   const currentMapType = MAP_TYPES[mapType]
 
   return (
-    <div className={cn("relative w-full h-full overflow-hidden", className)}>
+    <div className={cn("relative w-full h-full overflow-hidden z-[1]", className)}>
       <MapContainer
         center={CALIFORNIA_CONFIG.center}
         zoom={LEAFLET_CONFIG.zoom.DEFAULT}
-        style={{ height: "100%", width: "100%" }}
+        style={{ height: "100%", width: "100%", zIndex: 1 }}
         bounds={CALIFORNIA_CONFIG.boundsArray}
         boundsOptions={{ 
           padding: [30, 30],
@@ -653,6 +652,9 @@ export function CaliforniaMap({ className, mapType = "streetmap", onMapTypeChang
         
         {/* Enhanced Markers */}
         <EnhancedMarkersComponent />
+        
+        {/* Monitoring Stations Layer */}
+        {showMonitoringStations && <MonitoringStationsLayer />}
         
         <MapTypeControlComponent 
           mapTypes={MAP_TYPES}
