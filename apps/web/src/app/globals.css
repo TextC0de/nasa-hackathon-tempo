@@ -150,6 +150,14 @@
   z-index: 1 !important;
 }
 
+.leaflet-popup-pane {
+  z-index: 200 !important;
+}
+
+.leaflet-marker-pane {
+  z-index: 150 !important;
+}
+
 /* Ensure dialogs and UI elements appear above Leaflet */
 [data-radix-portal] {
   z-index: 10001 !important;
@@ -158,6 +166,35 @@
 /* Custom map controls should be above Leaflet */
 .map-controls {
   z-index: 1000 !important;
+}
+
+/* Header should be above everything */
+header {
+  z-index: 10000 !important;
+  position: relative;
+}
+
+/* Ensure all shadcn/ui components are above map */
+[data-slot="dialog-overlay"] {
+  z-index: 10000 !important;
+}
+
+[data-slot="dialog-content"] {
+  z-index: 10001 !important;
+}
+
+/* Ensure Select components inside dialogs appear above dialog */
+[data-radix-select-content] {
+  z-index: 10002 !important;
+}
+
+[data-radix-select-viewport] {
+  z-index: 10002 !important;
+}
+
+/* Ensure all Radix UI portals are above dialogs */
+[data-radix-portal] {
+  z-index: 10002 !important;
 }
 
 /* Enhanced Marker Styles */

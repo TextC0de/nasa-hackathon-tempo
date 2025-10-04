@@ -347,7 +347,7 @@ export class AirNowClient {
       format = 'application/json',
       startDate,
       endDate,
-      parameters,
+      parameters = 'O3,PM25,NO2,SO2,CO',
       dataType = 'A',
       verbose = 1,
       monitorType = 2,
@@ -371,7 +371,6 @@ export class AirNowClient {
     console.log("URL:", url);
 
     const response = await fetch(url);
-    console.log("sdjfpdsfjpofdsjposafd")
     if (!response.ok) {
 
     console.log("pre json");

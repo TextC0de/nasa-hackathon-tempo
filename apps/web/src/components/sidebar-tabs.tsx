@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Separator } from "@/components/ui/separator"
 import { Cloud } from "lucide-react"
 
 interface SidebarTabsProps {
@@ -66,32 +67,32 @@ export function SidebarTabs({ className }: SidebarTabsProps) {
               <CardTitle className="text-sm font-medium">Datos Históricos</CardTitle>
             </CardHeader>
             <CardContent>
-              {/* Gráfico de líneas */}
-              <div className="relative h-32">
-                {/* Área del gráfico */}
-                <div className="h-full relative">
-                  {/* Líneas de cuadrícula horizontales */}
-                  {[0, 1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      className="absolute w-full border-t border-border"
-                      style={{ top: `${i * 25}%` }}
-                    />
-                  ))}
-                  
-                  {/* Gráfico vacío */}
-                  <svg
-                    className="absolute inset-0 w-full h-full"
-                    viewBox="0 0 100 100"
-                    preserveAspectRatio="none"
-                  >
-                    {/* Solo las líneas de cuadrícula, sin datos */}
-                  </svg>
-                  
-                  {/* Etiqueta del eje Y */}
-                  <div className="absolute -left-3 top-1/2 transform -translate-y-1/2 -rotate-90 text-xs text-muted-foreground">
+              {/* Gráfico usando componentes shadcn/ui */}
+              <div className="relative h-32 space-y-3">
+                {/* Líneas de cuadrícula usando Separator */}
+                <div className="space-y-3">
+                  <Separator className="w-full" />
+                  <Separator className="w-full" />
+                  <Separator className="w-full" />
+                  <Separator className="w-full" />
+                </div>
+                
+                {/* Etiqueta del eje Y usando Badge */}
+                <div className="absolute -left-3 top-1/2 transform -translate-y-1/2 -rotate-90">
+                  <Badge variant="outline" className="text-xs">
                     ICA
-                  </div>
+                  </Badge>
+                </div>
+                
+                {/* Mensaje de estado usando Card */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Card className="bg-muted/50 border-dashed">
+                    <CardContent className="p-2">
+                      <Badge variant="secondary" className="text-xs">
+                        Sin datos
+                      </Badge>
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
             </CardContent>

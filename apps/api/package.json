@@ -16,7 +16,8 @@
     "zod": "^3.23.8",
     "@atmos/airnow-client": "workspace:*",
     "@atmos/earthdata-imageserver-client": "workspace:*",
-    "@atmos/firms-client": "workspace:*"
+    "@atmos/firms-client": "workspace:*",
+    "@atmos/openmeteo-client": "workspace:*"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250110.0",
