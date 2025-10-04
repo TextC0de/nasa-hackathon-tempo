@@ -3,8 +3,9 @@
  * Reads CSV files from EPA Air Quality System
  */
 
-import { readFileSync } from 'fs';
+import { readFileSync, createReadStream } from 'fs';
 import { parse } from 'date-fns';
+import { createInterface } from 'readline';
 import type { GroundMeasurement } from '../types';
 
 /**
@@ -209,4 +210,163 @@ export function getClosestMeasurement(
   }
 
   return closest;
+}
+
+/**
+ * Load EPA data with streaming (for large files)
+ * Samples the file while reading to avoid loading everything in memory
+ */
+export async function loadEPADataStreaming(
+  filePath: string,
+  options?: {
+    sampleSize?: number;
+    filterLocation?: {
+      latitude: number;
+      longitude: number;
+      radiusKm: number;
+    };
+    filterTimeRange?: {
+      start: Date;
+      end: Date;
+    };
+    parameter?: string;
+  }
+): Promise<GroundMeasurement[]> {
+  const sampleSize = options?.sampleSize || 1000;
+  const reservoirSize = sampleSize * 10; // Reservoir for random sampling
+
+  return new Promise((resolve, reject) => {
+    const fileStream = createReadStream(filePath);
+    const rl = createInterface({
+      input: fileStream,
+      crlfDelay: Infinity,
+    });
+
+    let headers: string[] = [];
+    let lineNumber = 0;
+    let reservoir: GroundMeasurement[] = [];
+
+    rl.on('line', (line: string) => {
+      lineNumber++;
+
+      // Parse header
+      if (lineNumber === 1) {
+        headers = parseCSVLine(line);
+        return;
+      }
+
+      // Parse data line
+      const values = parseCSVLine(line);
+      if (values.length !== headers.length) {
+        return;
+      }
+
+      // Create row object
+      const row: Record<string, string> = {};
+      headers.forEach((header, idx) => {
+        row[header] = values[idx];
+      });
+
+      // Filter by parameter
+      if (options?.parameter) {
+        const paramName = row['Parameter Name'];
+        if (!paramName.includes(options.parameter)) {
+          return;
+        }
+      }
+
+      // Parse basic fields
+      const value = parseFloat(row['Sample Measurement']);
+      if (isNaN(value)) {
+        return;
+      }
+
+      const latitude = parseFloat(row['Latitude']);
+      const longitude = parseFloat(row['Longitude']);
+
+      // Filter by location
+      if (options?.filterLocation) {
+        const distance = getDistanceKm(
+          options.filterLocation.latitude,
+          options.filterLocation.longitude,
+          latitude,
+          longitude
+        );
+        if (distance > options.filterLocation.radiusKm) {
+          return;
+        }
+      }
+
+      // Parse timestamp
+      const dateStr = row['Date Local'];
+      const timeStr = row['Time Local'];
+      const timestamp = parse(
+        `${dateStr} ${timeStr}`,
+        'yyyy-MM-dd HH:mm',
+        new Date()
+      );
+
+      // Filter by time range
+      if (options?.filterTimeRange) {
+        if (
+          timestamp < options.filterTimeRange.start ||
+          timestamp > options.filterTimeRange.end
+        ) {
+          return;
+        }
+      }
+
+      // Create measurement
+      const measurement: GroundMeasurement = {
+        latitude,
+        longitude,
+        parameter: row['Parameter Name'].includes('NO2')
+          ? 'NO2'
+          : row['Parameter Name'].includes('PM2.5')
+          ? 'PM25'
+          : row['Parameter Name'].includes('Ozone')
+          ? 'O3'
+          : row['Parameter Name'],
+        value,
+        unit: row['Units of Measure'],
+        timestamp,
+        state: row['State Name'],
+        county: row['County Name'],
+      };
+
+      // Reservoir sampling algorithm
+      if (reservoir.length < reservoirSize) {
+        reservoir.push(measurement);
+      } else {
+        // Random replacement
+        const randomIndex = Math.floor(Math.random() * lineNumber);
+        if (randomIndex < reservoirSize) {
+          reservoir[randomIndex] = measurement;
+        }
+      }
+    });
+
+    rl.on('close', () => {
+      // Final random sample from reservoir
+      const finalSample: GroundMeasurement[] = [];
+      const indices = new Set<number>();
+
+      while (
+        indices.size < Math.min(sampleSize, reservoir.length) &&
+        indices.size < reservoir.length
+      ) {
+        indices.add(Math.floor(Math.random() * reservoir.length));
+      }
+
+      for (const idx of indices) {
+        finalSample.push(reservoir[idx]);
+      }
+
+      resolve(finalSample);
+    });
+
+    rl.on('error', (error) => {
+      reject(error);
+    });
+  });
 }

@@ -7,10 +7,15 @@
     "dev": "turbo dev",
     "dev:web": "pnpm --filter @atmos/web dev",
     "dev:api": "pnpm --filter @atmos/api dev",
-    "dev:packages": "turbo dev --filter='./packages/*'",
+    "dev:packages": "turbo dev --filter=./packages/*",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "type-check": "turbo type-check",
+    "test": "turbo test",
+    "test:run": "turbo test:run",
+    "test:advection": "pnpm --filter @atmos/advection test:run",
+    "validate:advection": "tsx scripts/real-advection-validation.ts",
+    "calibrate:advection": "tsx scripts/calibrate-advection-factors.ts",
     "db:gen": "pnpm --filter database db:gen",
     "db:studio": "pnpm --filter database db:studio",
     "db:start": "docker-compose up -d postgres",
@@ -29,6 +34,7 @@
   "dependencies": {
     "date-fns": "^4.1.0",
     "drizzle-kit": "^0.31.5",
-    "drizzle-orm": "^0.44.6"
+    "drizzle-orm": "^0.44.6",
+    "netcdfjs": "^3.0.0"
   }
 }
