@@ -1,0 +1,15 @@
+# Environment Variables for Atmos API
+# Copy this file to .dev.vars and fill in your API keys
+# ALL variables are REQUIRED
+
+# NASA Earthdata authentication token
+# Get it from: https://urs.earthdata.nasa.gov/
+NASA_EARTHDATA_TOKEN=your_nasa_earthdata_token_here
+
+# AirNow API Key (EPA ground-based air quality data)
+# Get it from: https://docs.airnowapi.org/account/request/
+AIRNOW_API_KEY=your_airnow_api_key_here
+
+# NASA FIRMS API Key (Fire and thermal anomaly data)
+# Get it from: https://firms.modaps.eosdis.nasa.gov/api/
+FIRMS_API_KEY=your_firms_api_key_here

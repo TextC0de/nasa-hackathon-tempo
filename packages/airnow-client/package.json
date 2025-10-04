@@ -1,0 +1,45 @@
+{
+  "name": "@atmos/airnow-client",
+  "version": "0.1.0",
+  "description": "Cliente TypeScript para AirNow API (EPA) - Ground-based air quality data para validación de datos satelitales",
+  "keywords": [
+    "airnow",
+    "epa",
+    "air-quality",
+    "aqi",
+    "ground-stations",
+    "pollution",
+    "ozone",
+    "pm25",
+    "no2",
+    "validation"
+  ],
+  "author": "nasa-tempo",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

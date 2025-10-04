@@ -1,0 +1,23 @@
+{
+  "name": "@atmos/api",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./src/types.ts",
+  "types": "./src/types.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/trpc-server": "^0.4.0",
+    "@trpc/server": "^11.0.0",
+    "hono": "^4.6.15",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250110.0",
+    "typescript": "^5.4.5",
+    "wrangler": "^3.100.0"
+  }
+}
