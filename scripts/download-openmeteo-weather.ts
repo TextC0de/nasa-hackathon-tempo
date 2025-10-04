@@ -191,6 +191,7 @@ async function downloadCityWeather(
 ): Promise<void> {
   console.log(`\n📍 ${city.name.replace(/_/g, ' ')} (${city.lat}, ${city.lon})`);
 
+  const outputPath = path.join(CONFIG.outputDir, `${city.name}.json`);
   const allData: any[] = [];
 
   for (let i = 0; i < dateRanges.length; i++) {
@@ -211,23 +212,28 @@ async function downloadCityWeather(
       allData.push(weather);
       console.log(`   ✓ Downloaded ${weather.hourly?.time.length || 0} hours`);
 
+      // Guardar progreso inmediatamente después de cada range
+      const merged = mergeWeatherData(allData);
+      fs.writeFileSync(outputPath, JSON.stringify(merged, null, 2));
+      const fileSize = fs.statSync(outputPath).size;
+      console.log(`   💾 Saved progress: ${formatSize(fileSize)}`);
+
       // Rate limiting: esperar 200ms entre requests
       await new Promise((resolve) => setTimeout(resolve, 200));
     } catch (error) {
       console.error(`   ❌ Error: ${error}`);
+      // Si ya tenemos datos parciales, los guardamos antes de fallar
+      if (allData.length > 0) {
+        const merged = mergeWeatherData(allData);
+        fs.writeFileSync(outputPath, JSON.stringify(merged, null, 2));
+        console.log(`   💾 Saved partial data before failing`);
+      }
       throw error;
     }
   }
 
-  // Merge all ranges into single dataset
-  const merged = mergeWeatherData(allData);
-
-  // Save to file
-  const outputPath = path.join(CONFIG.outputDir, `${city.name}.json`);
-  fs.writeFileSync(outputPath, JSON.stringify(merged, null, 2));
-
   const fileSize = fs.statSync(outputPath).size;
-  console.log(`   💾 Saved: ${formatSize(fileSize)}`);
+  console.log(`   ✅ Complete: ${formatSize(fileSize)}`);
 }
 
 function mergeWeatherData(datasets: any[]): any {
