@@ -10,7 +10,7 @@
     "dev:packages": "turbo dev --filter='./packages/*'",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
-    "typecheck": "turbo typecheck",
+    "type-check": "turbo type-check",
     "db:gen": "pnpm --filter database db:gen",
     "db:studio": "pnpm --filter database db:studio",
     "db:start": "docker-compose up -d postgres",
@@ -25,5 +25,10 @@
   "packageManager": "pnpm@10.11.1",
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "date-fns": "^4.1.0",
+    "drizzle-kit": "^0.31.5",
+    "drizzle-orm": "^0.44.6"
   }
 }
