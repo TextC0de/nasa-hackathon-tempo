@@ -10,7 +10,12 @@
     "dev:packages": "turbo dev --filter='./packages/*'",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
-    "typecheck": "turbo typecheck"
+    "typecheck": "turbo typecheck",
+    "db:gen": "pnpm --filter database db:gen",
+    "db:studio": "pnpm --filter database db:studio",
+    "db:start": "docker-compose up -d postgres",
+    "db:stop": "docker-compose stop postgres",
+    "db:restart": "docker-compose restart postgres"
   },
   "devDependencies": {
     "prettier": "^3.2.5",
