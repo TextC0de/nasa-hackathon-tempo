@@ -7,7 +7,7 @@
     "dev": "turbo dev",
     "dev:web": "pnpm --filter @atmos/web dev",
     "dev:api": "pnpm --filter @atmos/api dev",
-    "dev:packages": "turbo dev --filter='./packages/*'",
+    "dev:packages": "turbo dev --filter=./packages/*",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "type-check": "turbo type-check",

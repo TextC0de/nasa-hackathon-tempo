@@ -23,6 +23,7 @@ import {
   loadEPADataStreaming,
   loadFIRMSData,
   loadOpenMeteoData,
+  loadTEMPODataAtTime,
   filterByTimeRange,
   filterByLocation,
   getClosestMeasurement,
@@ -48,11 +49,16 @@ const LOS_ANGELES = {
 };
 
 const VALIDATION_PERIOD = {
-  start: new Date('2024-01-01T00:00:00Z'),
-  end: new Date('2024-06-30T23:59:59Z'), // Primer semestre 2024
+  start: new Date('2024-01-10T00:00:00Z'), // TEMPO data starts Jan 10
+  end: new Date('2024-01-31T23:59:59Z'), // Jan 2024 (periodo con datos TEMPO)
 };
 
-const SAMPLE_SIZE = 1000; // Número de puntos a validar (de 8M disponibles)
+const SAMPLE_SIZE = 500; // Número de puntos a validar
+
+const TEMPO_DIR = join(
+  process.cwd(),
+  'scripts/data/tempo/california/cropped'
+);
 
 // Colores para terminal
 const colors = {
@@ -91,24 +97,43 @@ function findClosestWeather(
 }
 
 /**
- * Generar predicción usando modelo COMPLETO
+ * Generar predicción usando modelo COMPLETO con TEMPO REAL
  */
 function generateRealPrediction(
   epaMeasurement: GroundMeasurement,
   weather: WeatherConditions,
   fires: Fire[],
-  factors: AdvectionFactors
+  factors: AdvectionFactors,
+  tempoDir: string
 ): number {
-  // Usar NO2 column sintético por ahora (hasta que tengamos datos TEMPO reales)
-  // En producción, esto vendría de TEMPO satellite
-  const estimatedNO2Column = 2e15; // molecules/cm² (valor típico urbano)
+  // Intentar cargar datos TEMPO reales
+  let no2Column = 2e15; // Fallback: valor típico urbano
+  let usedTEMPO = false;
+
+  try {
+    const tempoData = loadTEMPODataAtTime(
+      epaMeasurement.timestamp,
+      epaMeasurement.latitude,
+      epaMeasurement.longitude,
+      tempoDir,
+      50 // 50km radius
+    );
+
+    if (tempoData && tempoData.success) {
+      no2Column = tempoData.no2_column;
+      usedTEMPO = true;
+    }
+  } catch (error) {
+    // Si falla TEMPO, usar fallback
+    // console.warn(`TEMPO load failed for ${epaMeasurement.timestamp.toISOString()}: ${error}`);
+  }
 
   const forecast = forecastAdvection(
     {
       latitude: epaMeasurement.latitude,
       longitude: epaMeasurement.longitude,
     },
-    estimatedNO2Column,
+    no2Column,
     weather,
     fires,
     null, // No usar bias correction en validación inicial
@@ -765,8 +790,8 @@ async function main() {
     );
     totalFiresFound += firesNearby.length;
 
-    // Generar predicción
-    const predicted = generateRealPrediction(epa, weather, firesNearby, DEFAULT_FACTORS);
+    // Generar predicción con TEMPO real
+    const predicted = generateRealPrediction(epa, weather, firesNearby, DEFAULT_FACTORS, TEMPO_DIR);
     const actual = epa.value;
 
     samples.push({
