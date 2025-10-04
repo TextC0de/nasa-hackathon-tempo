@@ -526,7 +526,12 @@ export function StationWeatherDialog({
                       <span className="text-gray-600">Temp. Máxima:</span>
                       <span className="font-semibold ml-2">
                         {forecastData.weather_data.hourly.temperature_2m
-                          ? `${Math.max(...forecastData.weather_data.hourly.temperature_2m.filter((t): t is number => t !== null)).toFixed(1)}°C`
+                          ? (() => {
+                              const temps = forecastData.weather_data.hourly.temperature_2m
+                                .map(t => typeof t === 'number' ? t : (typeof t === 'string' ? parseFloat(t) : null))
+                                .filter((t): t is number => t !== null && !isNaN(t))
+                              return temps.length > 0 ? `${Math.max(...temps).toFixed(1)}°C` : 'N/A'
+                            })()
                           : 'N/A'}
                       </span>
                     </div>
@@ -534,7 +539,12 @@ export function StationWeatherDialog({
                       <span className="text-gray-600">Temp. Mínima:</span>
                       <span className="font-semibold ml-2">
                         {forecastData.weather_data.hourly.temperature_2m
-                          ? `${Math.min(...forecastData.weather_data.hourly.temperature_2m.filter((t): t is number => t !== null)).toFixed(1)}°C`
+                          ? (() => {
+                              const temps = forecastData.weather_data.hourly.temperature_2m
+                                .map(t => typeof t === 'number' ? t : (typeof t === 'string' ? parseFloat(t) : null))
+                                .filter((t): t is number => t !== null && !isNaN(t))
+                              return temps.length > 0 ? `${Math.min(...temps).toFixed(1)}°C` : 'N/A'
+                            })()
                           : 'N/A'}
                       </span>
                     </div>
@@ -542,7 +552,12 @@ export function StationWeatherDialog({
                       <span className="text-gray-600">Precipitación Total:</span>
                       <span className="font-semibold ml-2">
                         {forecastData.weather_data.hourly.precipitation
-                          ? `${forecastData.weather_data.hourly.precipitation.reduce((sum, p) => sum + (p ?? 0), 0).toFixed(1)} mm`
+                          ? (() => {
+                              const precips = forecastData.weather_data.hourly.precipitation
+                                .map(p => typeof p === 'number' ? p : (typeof p === 'string' ? parseFloat(p) : null))
+                                .filter((p): p is number => p !== null && !isNaN(p))
+                              return precips.length > 0 ? `${precips.reduce((sum, p) => sum + p, 0).toFixed(1)} mm` : 'N/A'
+                            })()
                           : 'N/A'}
                       </span>
                     </div>
@@ -550,7 +565,12 @@ export function StationWeatherDialog({
                       <span className="text-gray-600">Viento Máx.:</span>
                       <span className="font-semibold ml-2">
                         {forecastData.weather_data.hourly.windspeed_10m
-                          ? `${Math.max(...forecastData.weather_data.hourly.windspeed_10m.filter((w): w is number => w !== null)).toFixed(1)} m/s`
+                          ? (() => {
+                              const winds = forecastData.weather_data.hourly.windspeed_10m
+                                .map(w => typeof w === 'number' ? w : (typeof w === 'string' ? parseFloat(w) : null))
+                                .filter((w): w is number => w !== null && !isNaN(w))
+                              return winds.length > 0 ? `${Math.max(...winds).toFixed(1)} m/s` : 'N/A'
+                            })()
                           : 'N/A'}
                       </span>
                     </div>
