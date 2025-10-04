@@ -142,6 +142,8 @@ export interface MonitoringSite {
   Latitude: number;
   /** Longitud de la estación */
   Longitude: number;
+  /** Elevación/Altitud de la estación en metros (opcional, puede no estar disponible) */
+  Elevation?: number;
   /** Fecha y hora UTC del reporte */
   UTCDateTimeReported: string;
   /** Estado de la estación (e.g., 'Active') */
