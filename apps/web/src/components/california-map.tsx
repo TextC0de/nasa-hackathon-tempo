@@ -518,6 +518,7 @@ interface CaliforniaMapProps {
   alerts?: AlertType[]
   fires?: FireDataPoint[]
   onStationClick?: (station: any) => void
+  onFireClick?: (fire: FireDataPoint) => void
 }
 
 // Optimización: Memoización del componente principal

@@ -501,13 +501,15 @@ const createFirePopupContent = (fire: FireDataPoint): string => {
  */
 interface ActiveFiresLayerProps {
   fires: FireDataPoint[]
+  onFireClick?: (fire: FireDataPoint) => void
 }
 
 /**
  * Componente para mostrar incendios activos en el mapa
  */
 export const ActiveFiresLayer = React.memo(function ActiveFiresLayer({
-  fires
+  fires,
+  onFireClick
 }: ActiveFiresLayerProps) {
   const map = useMap()
   const [clusterGroup, setClusterGroup] = useState<L.MarkerClusterGroup | null>(null)
@@ -612,14 +614,23 @@ export const ActiveFiresLayer = React.memo(function ActiveFiresLayer({
           icon: createFireIcon(fire)
         })
 
-        const popupContent = createFirePopupContent(fire)
-        marker.bindPopup(popupContent, {
-          maxWidth: 500,
-          className: 'fire-popup-container',
-          closeButton: true,
-          autoClose: true,
-          keepInView: true
-        })
+        // Si hay callback, usar onClick para abrir Dialog
+        if (onFireClick) {
+          marker.on('click', () => {
+            console.log('🔥 [FIRES LAYER] Click en incendio:', fire)
+            onFireClick(fire)
+          })
+        } else {
+          // Fallback al popup si no hay callback
+          const popupContent = createFirePopupContent(fire)
+          marker.bindPopup(popupContent, {
+            maxWidth: 500,
+            className: 'fire-popup-container',
+            closeButton: true,
+            autoClose: true,
+            keepInView: true
+          })
+        }
 
         newClusterGroup.addLayer(marker)
         markersCreated++
