@@ -69,25 +69,35 @@ export const predecirAqiProcedure = publicProcedure
       apiKey: ctx.env.AIRNOW_API_KEY,
     })
 
-    // Crear bounding box pequeño alrededor de la estación (±0.5° ~ 55km)
-    const latOffset = 0.5
-    const lngOffset = 0.5
-
     // Obtener hora actual para el rango de tiempo
     const now = new Date()
-    const endTime = new Date(now.getTime() + 60 * 60 * 1000) // +1 hora
-    const startDate = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}T${String(now.getUTCHours()).padStart(2, '0')}`
-    const endDate = `${endTime.getUTCFullYear()}-${String(endTime.getUTCMonth() + 1).padStart(2, '0')}-${String(endTime.getUTCDate()).padStart(2, '0')}T${String(endTime.getUTCHours()).padStart(2, '0')}`
 
-    // Obtener datos de monitoring sites (incluye Value, Unit, RawConcentration, etc.)
-    const currentAirQuality = await airNowClient.getMonitoringSites(
-      {
-        minLongitude: station.longitude - lngOffset,
-        minLatitude: station.latitude - latOffset,
-        maxLongitude: station.longitude + lngOffset,
-        maxLatitude: station.latitude + latOffset,
-      },
-      {
+    // Intentar con diferentes rangos de tiempo (últimas 6 horas)
+    let currentAirQuality: any[] = []
+    const timeRanges = [
+      { start: 0, end: 1 },   // Hora actual
+      { start: -1, end: 1 },  // Última hora hasta próxima
+      { start: -3, end: 1 },  // Últimas 3 horas
+      { start: -6, end: 1 },  // Últimas 6 horas
+    ]
+
+    const bbox = {
+      minLongitude: station.longitude - 1.5,
+      minLatitude: station.latitude - 1.5,
+      maxLongitude: station.longitude + 1.5,
+      maxLatitude: station.latitude + 1.5,
+    }
+
+    for (const range of timeRanges) {
+      const startTime = new Date(now.getTime() + range.start * 60 * 60 * 1000)
+      const endTime = new Date(now.getTime() + range.end * 60 * 60 * 1000)
+
+      const startDate = `${startTime.getUTCFullYear()}-${String(startTime.getUTCMonth() + 1).padStart(2, '0')}-${String(startTime.getUTCDate()).padStart(2, '0')}T${String(startTime.getUTCHours()).padStart(2, '0')}`
+      const endDate = `${endTime.getUTCFullYear()}-${String(endTime.getUTCMonth() + 1).padStart(2, '0')}-${String(endTime.getUTCDate()).padStart(2, '0')}T${String(endTime.getUTCHours()).padStart(2, '0')}`
+
+      console.log(`   🔍 Intentando rango de tiempo: ${startDate} a ${endDate}...`)
+
+      currentAirQuality = await airNowClient.getMonitoringSites(bbox, {
         startDate,
         endDate,
         parameters: 'O3,NO2,PM25',
@@ -95,10 +105,31 @@ export const predecirAqiProcedure = publicProcedure
         verbose: 1,
         monitorType: 2,
         includerawconcentrations: 1,
+      })
+
+      // Verificar si tenemos O3 o NO2
+      const hasO3 = currentAirQuality.some(obs => obs.Parameter.toUpperCase().includes('O3'))
+      const hasNO2 = currentAirQuality.some(obs => obs.Parameter.toUpperCase().includes('NO2'))
+
+      console.log(`      → ${currentAirQuality.length} obs (O3: ${hasO3 ? '✓' : '✗'}, NO2: ${hasNO2 ? '✓' : '✗'})`)
+
+      if (hasO3 || hasNO2) {
+        console.log(`   ✓ Encontrados datos de O3/NO2 con rango ${startDate} a ${endDate}`)
+        break
       }
-    )
+    }
 
     console.log(`   ✓ ${currentAirQuality.length} observaciones obtenidas`)
+
+    // Log detallado de parámetros recibidos
+    if (currentAirQuality.length > 0) {
+      console.log(`   📋 Parámetros disponibles:`)
+      const uniqueParams = [...new Set(currentAirQuality.map(obs => obs.Parameter))]
+      uniqueParams.forEach(param => {
+        const count = currentAirQuality.filter(obs => obs.Parameter === param).length
+        console.log(`      - ${param}: ${count} observación(es)`)
+      })
+    }
 
     // =====================================================
     // 3. OBTENER DATOS DE TEMPO (O3 y NO2)
@@ -200,6 +231,11 @@ export const predecirAqiProcedure = publicProcedure
     const o3Data = currentAirQuality.find((obs) => obs.Parameter.toUpperCase().includes('O3'))
     const no2Data = currentAirQuality.find((obs) => obs.Parameter.toUpperCase().includes('NO2'))
     const pm25Data = currentAirQuality.find((obs) => obs.Parameter.toUpperCase().includes('PM2.5'))
+
+    console.log(`   🔍 Búsqueda de parámetros:`)
+    console.log(`      - O3 encontrado: ${o3Data ? 'Sí (' + o3Data.Parameter + ')' : 'No'}`)
+    console.log(`      - NO2 encontrado: ${no2Data ? 'Sí (' + no2Data.Parameter + ')' : 'No'}`)
+    console.log(`      - PM2.5 encontrado: ${pm25Data ? 'Sí (' + pm25Data.Parameter + ')' : 'No'}`)
 
     // NOTA IMPORTANTE: Las proporciones tienen sentido limitado porque:
     // - TEMPO mide columna troposférica (integral vertical)
