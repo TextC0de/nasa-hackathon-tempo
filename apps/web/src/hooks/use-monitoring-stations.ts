@@ -64,6 +64,19 @@ const QUERY_CONFIG = {
 } as const
 
 /**
+ * Valores de error comunes en APIs de calidad del aire
+ */
+const ERROR_VALUES = [-999, -9999, -1, 999, 9999] as const
+
+/**
+ * Valores de estado considerados como activos
+ */
+const ACTIVE_STATUS_VALUES = [
+  'Active', 'active', 'ACTIVE', '1', 'true', 
+  'operational', 'Operational', undefined, null
+] as const
+
+/**
  * Hook personalizado para obtener datos de estaciones de monitoreo AirNow
  * 
  * @param props - Configuración del hook
@@ -164,40 +177,36 @@ export function useMonitoringStations({
   const stationStats = useMemo(() => {
     if (!stations.length) return null
 
-    // Debug: Ver qué valores de Status están llegando
-    const statusValues = [...new Set(stations.map(station => station.Status))]
-    console.log('Valores de Status encontrados:', statusValues)
-    console.log('Primeras 5 estaciones:', stations.slice(0, 5).map(s => ({ 
-      SiteName: s.SiteName, 
-      Status: s.Status, 
-      Parameter: s.Parameter 
-    })))
+    // Filtrar estaciones con datos válidos
+    const validDataStations = stations.filter(station => 
+      station.RawConcentration > 0 && !ERROR_VALUES.includes(station.RawConcentration as any)
+    )
 
-    // Filtrar estaciones activas - considerar diferentes valores posibles
+    // Filtrar estaciones activas
     const activeStations = stations.filter(station => 
-      station.Status === 'Active' || 
-      station.Status === 'active' || 
-      station.Status === 'ACTIVE' ||
-      station.Status === '1' ||
-      station.Status === 'true' ||
-      station.Status === 'operational' ||
-      station.Status === 'Operational'
+      ACTIVE_STATUS_VALUES.includes(station.Status as any)
     )
     
+    // Obtener parámetros y agencias únicos
     const parameters = [...new Set(stations.map(station => station.Parameter))]
     const agencies = [...new Set(stations.map(station => station.AgencyName))]
+
+    // Calcular AQI promedio solo de estaciones con datos válidos
+    const validAQIStations = validDataStations.filter(station => 
+      station.AQI > 0 && station.AQI <= 500
+    )
+    
+    const avgAQI = validAQIStations.length > 0 
+      ? validAQIStations.reduce((sum, station) => sum + station.AQI, 0) / validAQIStations.length
+      : 0
 
     return {
       total: stations.length,
       active: activeStations.length,
+      validData: validDataStations.length,
       parameters: parameters.length,
       agencies: agencies.length,
-      avgAQI: stations.reduce((sum, station) => sum + station.AQI, 0) / stations.length,
-      // Debug info
-      debug: {
-        statusValues,
-        sampleStations: stations.slice(0, 3)
-      }
+      avgAQI: avgAQI
     }
   }, [stations])
 

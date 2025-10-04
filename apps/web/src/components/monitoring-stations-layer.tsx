@@ -33,6 +33,21 @@ const MARKER_CONFIG = {
 } as const
 
 /**
+ * Valores de error comunes en APIs de calidad del aire
+ */
+const ERROR_VALUES = [-999, -9999, -1, 999, 9999] as const
+
+/**
+ * Configuración de California para el hook
+ */
+const CALIFORNIA_CONFIG = {
+  centerLat: 36.7783,
+  centerLng: -119.4179,
+  radiusKm: 200,
+  enabled: true
+} as const
+
+/**
  * Obtiene el color del marcador basado en el parámetro de calidad del aire
  * 
  * @param parameter - Parámetro de calidad del aire (PM2.5, O3, NO2, etc.)
@@ -113,6 +128,74 @@ function formatDate(dateString: string): string {
 }
 
 /**
+ * Valida y formatea la concentración
+ * 
+ * @param concentration - Valor de concentración
+ * @param unit - Unidad de medida
+ * @returns String formateado o mensaje de error
+ */
+function formatConcentration(concentration: number, unit: string): string {
+  if (ERROR_VALUES.includes(concentration as any) || concentration < 0) {
+    return 'Dato no disponible'
+  }
+  
+  // Formatear con decimales apropiados
+  const formattedValue = concentration.toFixed(2)
+  return `${formattedValue} ${unit}`
+}
+
+/**
+ * Valida y formatea el estado de la estación
+ * 
+ * @param status - Estado de la estación
+ * @returns Estado formateado o mensaje por defecto
+ */
+function formatStatus(status: string | undefined): string {
+  if (!status || status === 'undefined' || status === 'null') {
+    return 'Estado desconocido'
+  }
+  
+  // Normalizar valores comunes
+  const statusMap: Record<string, string> = {
+    'Active': 'Activa',
+    'active': 'Activa',
+    'ACTIVE': 'Activa',
+    'Inactive': 'Inactiva',
+    'inactive': 'Inactiva',
+    'INACTIVE': 'Inactiva',
+    'Maintenance': 'Mantenimiento',
+    'maintenance': 'Mantenimiento',
+    'Offline': 'Fuera de línea',
+    'offline': 'Fuera de línea',
+    'Operational': 'Operativa',
+    'operational': 'Operativa'
+  }
+  
+  return statusMap[status] || status
+}
+
+/**
+ * Valida el AQI
+ * 
+ * @param aqi - Valor del AQI
+ * @param concentration - Concentración para validación cruzada
+ * @returns AQI válido o mensaje de error
+ */
+function validateAQI(aqi: number, concentration: number): string {
+  // Si la concentración es inválida, el AQI probablemente también lo sea
+  if (ERROR_VALUES.includes(concentration as any) || concentration < 0) {
+    return 'Dato no disponible'
+  }
+  
+  // AQI debe estar entre 0 y 500
+  if (aqi < 0 || aqi > 500) {
+    return 'Dato no disponible'
+  }
+  
+  return aqi.toString()
+}
+
+/**
  * Crea el contenido HTML para el popup de una estación
  * 
  * @param station - Datos de la estación de monitoreo
@@ -121,6 +204,13 @@ function formatDate(dateString: string): string {
 function createPopupContent(station: MonitoringStation): string {
   const color = getMarkerColor(station.Parameter)
   const formattedDate = formatDate(station.UTC)
+  const formattedConcentration = formatConcentration(station.RawConcentration, station.Unit)
+  const formattedStatus = formatStatus(station.Status)
+  const validatedAQI = validateAQI(station.AQI, station.RawConcentration)
+  
+  // Determinar color del estado basado en datos válidos
+  const isDataValid = station.RawConcentration > 0 && !ERROR_VALUES.includes(station.RawConcentration as any)
+  const statusColor = isDataValid ? 'text-green-600' : 'text-orange-600'
   
   return `
     <div class="station-popup min-w-[280px] max-w-[320px]">
@@ -143,18 +233,22 @@ function createPopupContent(station: MonitoringStation): string {
           
           <div class="flex justify-between">
             <span class="text-gray-600">AQI:</span>
-            <span class="font-bold text-gray-900">${station.AQI}</span>
+            <span class="font-bold ${validatedAQI === 'Dato no disponible' ? 'text-gray-500' : 'text-gray-900'}">
+              ${validatedAQI}
+            </span>
           </div>
           
           <div class="flex justify-between">
             <span class="text-gray-600">Concentración:</span>
-            <span class="font-medium text-gray-900">${station.RawConcentration} ${station.Unit}</span>
+            <span class="font-medium ${formattedConcentration === 'Dato no disponible' ? 'text-gray-500' : 'text-gray-900'}">
+              ${formattedConcentration}
+            </span>
           </div>
           
           <div class="flex justify-between">
             <span class="text-gray-600">Estado:</span>
-            <span class="font-medium ${station.Status === 'Active' ? 'text-green-600' : 'text-red-600'}">
-              ${station.Status}
+            <span class="font-medium ${statusColor}">
+              ${formattedStatus}
             </span>
           </div>
           
@@ -170,6 +264,11 @@ function createPopupContent(station: MonitoringStation): string {
             <div class="text-xs text-gray-500">
               <strong>Código AQS:</strong> ${station.FullAQSCode}
             </div>
+            ${!isDataValid ? `
+              <div class="text-xs text-orange-600 mt-1">
+                <strong>⚠️ Nota:</strong> Datos de concentración no disponibles
+              </div>
+            ` : ''}
           </div>
         </div>
       </div>
@@ -190,35 +289,7 @@ export function MonitoringStationsLayer() {
   const map = useMap()
   
   // Hook para obtener datos de estaciones
-  const { stations, isLoading, error } = useMonitoringStations({
-    centerLat: 36.7783, // Centro geográfico de California
-    centerLng: -119.4179,
-    radiusKm: 200, // Radio amplio para cubrir todo el estado
-    enabled: true
-  })
-
-  // Debug: Log de información de estaciones
-  useEffect(() => {
-    if (stations.length > 0) {
-      console.log('=== DEBUG MONITORING STATIONS ===')
-      console.log('Total estaciones recibidas:', stations.length)
-      console.log('Primeras 3 estaciones:', stations.slice(0, 3).map(s => ({
-        SiteName: s.SiteName,
-        Status: s.Status,
-        Parameter: s.Parameter,
-        AQI: s.AQI,
-        Latitude: s.Latitude,
-        Longitude: s.Longitude
-      })))
-      
-      const statusCounts = stations.reduce((acc, station) => {
-        acc[station.Status] = (acc[station.Status] || 0) + 1
-        return acc
-      }, {} as Record<string, number>)
-      console.log('Conteo por Status:', statusCounts)
-      console.log('================================')
-    }
-  }, [stations])
+  const { stations, isLoading, error } = useMonitoringStations(CALIFORNIA_CONFIG)
 
   // Memoizar estaciones válidas (con coordenadas)
   const validStations = useMemo(() => {
