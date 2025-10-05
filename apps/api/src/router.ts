@@ -11,6 +11,7 @@ import { obtenerClimaActualProcedure } from './procedures/obtener-clima-actual'
 import { obtenerAlturaDelTerrenoProcedure } from './procedures/obtener-altura-del-terreno'
 import { obtenerDatosTEMPOProcedure } from './procedures/obtener-datos-tempo'
 import { obtenerImagenTEMPOProcedure } from './procedures/obtener-imagen-tempo'
+import { analizarImpactoIncendioProcedure } from './procedures/analizar-impacto-incendio'
 import { obtenerHistoricoAqiProcedure } from './procedures/obtener-historico-aqi'
 import { crearAlertaProcedure } from './procedures/crear-alerta'
 import { listarAlertasProcedure } from './procedures/listar-alertas'
@@ -32,6 +33,7 @@ export const appRouter = router({
   obtenerAlturaDelTerreno: obtenerAlturaDelTerrenoProcedure,
   obtenerDatosTEMPO: obtenerDatosTEMPOProcedure,
   obtenerImagenTEMPO: obtenerImagenTEMPOProcedure,
+  analizarImpactoIncendio: analizarImpactoIncendioProcedure,
   obtenerHistoricoAqi: obtenerHistoricoAqiProcedure,
   crearAlerta: crearAlertaProcedure,
   listarAlertas: listarAlertasProcedure,

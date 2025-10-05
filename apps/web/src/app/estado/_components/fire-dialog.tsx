@@ -1,10 +1,15 @@
 "use client"
 
+import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { type FireDataPoint } from "@/hooks/use-active-fires"
-import { Flame, Satellite, Clock, MapPin, ThermometerSun, Zap, AlertTriangle } from "lucide-react"
+import { useFireImpactAnalysis } from "@/hooks/use-fire-impact-analysis"
+import { FireImpactCard } from "./fire-impact-card"
+import { FireImpactTimeline } from "./fire-impact-timeline"
+import { Flame, Satellite, Clock, MapPin, ThermometerSun, Zap, AlertTriangle, Wind } from "lucide-react"
 
 /**
  * Obtiene la temperatura de brillo correcta según el sensor
@@ -155,6 +160,15 @@ interface FireDialogProps {
 }
 
 export function FireDialog({ fire, open, onOpenChange }: FireDialogProps) {
+  const [activeTab, setActiveTab] = useState<string>("general")
+
+  // Hook para análisis de impacto en calidad del aire
+  const impactAnalysis = useFireImpactAnalysis({
+    fire,
+    pollutant: 'HCHO', // HCHO es mejor indicador de incendios
+    enabled: open && activeTab === 'impacto'
+  })
+
   if (!fire) return null
 
   const brightness = getBrightness(fire)
@@ -174,7 +188,16 @@ export function FireDialog({ fire, open, onOpenChange }: FireDialogProps) {
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="general">Información General</TabsTrigger>
+            <TabsTrigger value="impacto">
+              <Wind className="w-4 h-4 mr-2" />
+              Impacto en Aire
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="general" className="space-y-4 mt-4">
           {/* Header Card */}
           <Card className={`border-l-4 ${intensity.color.replace('bg-', 'border-')}`}>
             <CardHeader className="pb-3">
@@ -320,7 +343,54 @@ export function FireDialog({ fire, open, onOpenChange }: FireDialogProps) {
             <br />
             Actualización en tiempo real desde satélites en órbita
           </div>
-        </div>
+          </TabsContent>
+
+          <TabsContent value="impacto" className="space-y-4 mt-4">
+            {/* Tarjeta de Impacto */}
+            <FireImpactCard
+              impact={impactAnalysis.impact}
+              interpretation={impactAnalysis.interpretation}
+              fireInfo={impactAnalysis.fireInfo}
+              isLoading={impactAnalysis.isLoading}
+            />
+
+            {/* Timeline de Contaminación */}
+            {impactAnalysis.hasData && (
+              <FireImpactTimeline
+                data={impactAnalysis.timeline}
+                pollutant={impactAnalysis.interpretation?.pollutant || 'HCHO'}
+                trend={impactAnalysis.impact?.trend}
+              />
+            )}
+
+            {/* Nota informativa */}
+            <Card className="bg-blue-50 border-blue-200">
+              <CardContent className="pt-4">
+                <div className="flex gap-3">
+                  <Wind className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-semibold text-blue-900 mb-1">
+                      ¿Cómo funciona este análisis?
+                    </div>
+                    <p className="text-sm text-blue-800">
+                      Comparamos los niveles de <strong>Formaldehído (HCHO)</strong> medidos por el
+                      satélite TEMPO antes y después de la detección del incendio.
+                      El HCHO es un gas tóxico producido por la quema de biomasa y sirve como
+                      indicador clave de contaminación por incendios forestales.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Fuente */}
+            <div className="text-center text-xs text-muted-foreground pt-2 border-t">
+              Datos de <strong>NASA TEMPO</strong> (Tropospheric Emissions: Monitoring of Pollution)
+              <br />
+              Correlacionados con <strong>NASA FIRMS</strong> (Fire Information for Resource Management)
+            </div>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   )
