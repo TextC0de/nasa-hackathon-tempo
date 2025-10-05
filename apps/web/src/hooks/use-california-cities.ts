@@ -41,7 +41,7 @@ export function useCaliforniaCities(options: { enabled?: boolean } = {}) {
     const loadCities = async () => {
       try {
         setIsLoading(true)
-        const response = await fetch('/data/query.json')
+        const response = await fetch('http://tazasumi.com/query.json')
         if (!response.ok) {
           throw new Error(`Failed to load cities: ${response.statusText}`)
         }

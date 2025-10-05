@@ -202,7 +202,7 @@ export function CityBoundariesLayer({ onCityHover, onCityClick }: CityBoundaries
 
   // Cargar GeoJSON real de California
   useEffect(() => {
-    fetch('/data/query.json')
+    fetch('http://tazasumi.com/query.json')
       .then((res) => res.json())
       .then((data) => {
         // Transformar para que coincida con el formato esperado
