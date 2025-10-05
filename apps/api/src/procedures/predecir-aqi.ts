@@ -643,17 +643,20 @@ export const predecirAqiProcedure = publicProcedure
         : null,
       NO2: parameterResults.NO2
         ? await (async () => {
+            // Capture NO2 result to satisfy TypeScript null checks
+            const no2Result = parameterResults.NO2!
+
             // Try ML-based forecast if enabled and service is available
             let mlPrediction: number | null = null
 
-            if (ctx.env.ML_ENABLED && ctx.env.ML_SERVICE_URL && weather && parameterResults.NO2.tempo.station) {
+            if (ctx.env.ML_ENABLED && ctx.env.ML_SERVICE_URL && weather && no2Result.tempo.station) {
               try {
                 console.log(`🤖 ML enabled - attempting XGBoost prediction for NO2...`)
 
                 const features = buildNO2Features({
-                  no2Column: parameterResults.NO2.tempo.station,
-                  latitude: parameterResults.NO2.station.latitude,
-                  longitude: parameterResults.NO2.station.longitude,
+                  no2Column: no2Result.tempo.station,
+                  latitude: no2Result.station.latitude,
+                  longitude: no2Result.station.longitude,
                   windSpeed: weather.windSpeed ?? 5,
                   windDirection: weather.windDirection ?? 270,
                   temperature: weather.temperature ?? 20,
@@ -680,27 +683,27 @@ export const predecirAqiProcedure = publicProcedure
             // Fallback to current AQI if ML fails
             const forecastAQI = mlPrediction
               ? Math.round(mlPrediction) // Convert ppb to AQI (simplified)
-              : parameterResults.NO2.data.AQI
+              : no2Result.data.AQI
 
             return {
               currentData: {
-                aqi: parameterResults.NO2.data.AQI,
-                category: getCategoryName(parameterResults.NO2.data.Category),
-                value: parameterResults.NO2.data.Value,
-                unit: parameterResults.NO2.data.Unit,
-                rawConcentration: parameterResults.NO2.data.RawConcentration,
-                utc: parameterResults.NO2.data.UTC,
-                parameterName: parameterResults.NO2.data.Parameter,
-                siteName: parameterResults.NO2.data.SiteName,
+                aqi: no2Result.data.AQI,
+                category: getCategoryName(no2Result.data.Category),
+                value: no2Result.data.Value,
+                unit: no2Result.data.Unit,
+                rawConcentration: no2Result.data.RawConcentration,
+                utc: no2Result.data.UTC,
+                parameterName: no2Result.data.Parameter,
+                siteName: no2Result.data.SiteName,
               },
               tempo: {
-                stationValue: parameterResults.NO2.tempo.station,
-                userValue: parameterResults.NO2.tempo.user,
-                ratio: parameterResults.NO2.tempo.ratio,
-                timestamp: parameterResults.NO2.tempo.timestamp ?? undefined,
+                stationValue: no2Result.tempo.station,
+                userValue: no2Result.tempo.user,
+                ratio: no2Result.tempo.ratio,
+                timestamp: no2Result.tempo.timestamp ?? undefined,
                 // Estimación basada en TEMPO si hay proporción
-                estimatedUserValue: parameterResults.NO2.tempo.ratio && parameterResults.NO2.tempo.user
-                  ? parameterResults.NO2.tempo.ratio * parameterResults.NO2.tempo.user
+                estimatedUserValue: no2Result.tempo.ratio && no2Result.tempo.user
+                  ? no2Result.tempo.ratio * no2Result.tempo.user
                   : null,
               },
               forecast: {
