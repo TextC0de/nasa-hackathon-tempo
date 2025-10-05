@@ -52,9 +52,6 @@ export default function EstadoOverviewPage() {
 
   // Hook para obtener datos de estaciones de monitoreo
   const { isLoading, error, stats } = useMonitoringStations({
-    centerLat: 36.7783, // Centro de California
-    centerLng: -119.4179,
-    radiusKm: 200,
     enabled: true
   })
 
@@ -162,6 +159,8 @@ export default function EstadoOverviewPage() {
           setShowActiveFires={setShowActiveFires}
           showTempoOverlay={showTempoOverlay}
           setShowTempoOverlay={setShowTempoOverlay}
+          showCityBoundaries={showCityBoundaries}
+          setShowCityBoundaries={setShowCityBoundaries}
           tempoOpacity={tempoOpacity}
           setTempoOpacity={setTempoOpacity}
           isLoading={isLoading}

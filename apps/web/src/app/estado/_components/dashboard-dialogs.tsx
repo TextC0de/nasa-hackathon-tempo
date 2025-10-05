@@ -36,6 +36,8 @@ interface DashboardDialogsProps {
   setShowActiveFires: (show: boolean) => void
   showTempoOverlay: boolean
   setShowTempoOverlay: (show: boolean) => void
+  showCityBoundaries: boolean
+  setShowCityBoundaries: (show: boolean) => void
   tempoOpacity: number
   setTempoOpacity: (opacity: number) => void
   isLoading: boolean
@@ -71,6 +73,8 @@ export function DashboardDialogs({
   setShowActiveFires,
   showTempoOverlay,
   setShowTempoOverlay,
+  showCityBoundaries,
+  setShowCityBoundaries,
   tempoOpacity,
   setTempoOpacity,
   isLoading,
@@ -153,6 +157,19 @@ export function DashboardDialogs({
                       {fireStats.totalFires}
                     </Badge>
                   )}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="cities"
+                    checked={showCityBoundaries}
+                    onCheckedChange={(checked) => setShowCityBoundaries(!!checked)}
+                  />
+                  <label
+                    htmlFor="cities"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    🏙️ Ciudades
+                  </label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox
