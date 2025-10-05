@@ -64,6 +64,23 @@ const MapClickHandler = ({ onClick }: { onClick: (e: L.LeafletMouseEvent) => voi
   return null
 }
 
+// Componente para invalidar el tamaño del mapa cuando se expande/contrae
+const MapResizeHandler = ({ isExpanded }: { isExpanded: boolean }) => {
+  const { useMap } = require('react-leaflet')
+  const map = useMap()
+
+  useEffect(() => {
+    // Esperar a que termine la animación CSS antes de invalidar el tamaño
+    const timer = setTimeout(() => {
+      map.invalidateSize()
+    }, 350) // Ligeramente más que la duración de la transición (300ms)
+
+    return () => clearTimeout(timer)
+  }, [isExpanded, map])
+
+  return null
+}
+
 // Fix para iconos de Leaflet + Crear ícono personalizado arrastrable
 if (typeof window !== 'undefined') {
   delete (L.Icon.Default.prototype as any)._getIconUrl
