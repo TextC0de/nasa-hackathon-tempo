@@ -28,7 +28,7 @@ const navigation: NavigationItem[] = [
   { href: "/estado", name: "Overview", icon: LayoutDashboard },
   { href: "/estado/history", name: "History", icon: Clock },
   { href: "/estado/alerts", name: "Alerts", icon: Bell },
-  { href: "/admin/reportes", name: "Admin Reportes", icon: Shield },
+  { href: "/estado/reportes", name: "Admin Reportes", icon: Shield },
 ]
 
 export function EstadoSidebar({ className }: EstadoSidebarProps) {

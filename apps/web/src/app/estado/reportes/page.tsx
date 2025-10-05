@@ -23,22 +23,13 @@ import {
   Users,
   TrendingUp
 } from "lucide-react"
-import Link from "next/link"
 import { toast } from "sonner"
+import { UserReport } from "@/lib/report-types"
+import { formatDate, formatCoordinates, getSeverityConfig, getTypeConfig } from "@/lib/report-utils"
+import { ReportsMap } from "@/components/reports-map"
 
-// Tipos para los reportes (coincide con la API)
-interface AdminReport {
-  id: string
-  email: string
-  latitud: string
-  longitud: string
-  descripcion: string | null
-  gravedad: 'low' | 'intermediate' | 'critical'
-  tipo: 'fire' | 'smoke' | 'dust'
-  fechaReporte: string
-  createdAt: string
-  updatedAt: string
-}
+// Alias para compatibilidad con el código existente
+type AdminReport = UserReport
 
 // Configuración de estados
 const STATUS_CONFIG = {
@@ -47,19 +38,7 @@ const STATUS_CONFIG = {
   resolved: { label: 'Resuelto', color: 'bg-green-100 text-green-800 border-green-200', icon: CheckCircle }
 } as const
 
-// Configuración de gravedad
-const SEVERITY_CONFIG = {
-  low: { label: 'Bajo', color: 'bg-green-100 text-green-800 border-green-200' },
-  intermediate: { label: 'Intermedio', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  critical: { label: 'Crítico', color: 'bg-red-100 text-red-800 border-red-200' }
-} as const
 
-// Configuración de tipos
-const TYPE_CONFIG = {
-  fire: { label: 'Fuego', icon: '🔥', color: 'bg-orange-100 text-orange-800 border-orange-200' },
-  smoke: { label: 'Humo', icon: '💨', color: 'bg-gray-100 text-gray-800 border-gray-200' },
-  dust: { label: 'Polvo', icon: '🌪️', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' }
-} as const
 
 export default function AdminReportsPage() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -67,6 +46,7 @@ export default function AdminReportsPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [activeTab, setActiveTab] = useState("overview")
+  const [selectedReportId, setSelectedReportId] = useState<string | undefined>()
 
   // Query para obtener todos los reportes (esto necesitaría implementarse en el backend)
   // Por ahora usaremos los reportes del usuario como ejemplo
@@ -107,21 +87,6 @@ export default function AdminReportsPage() {
     }
   }, [allReports])
 
-  // Función para formatear fecha
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
-
-  // Función para formatear coordenadas
-  const formatCoordinates = (lat: string, lng: string) => {
-    return `${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)}`
-  }
 
   // Función para cambiar estado del reporte
   const handleStatusChange = (reportId: string, newStatus: string) => {
@@ -129,20 +94,27 @@ export default function AdminReportsPage() {
     // Aquí se implementaría la mutación para actualizar el estado
   }
 
+  // Función para manejar clicks en reportes del mapa
+  const handleReportClick = (report: UserReport) => {
+    setSelectedReportId(report.id)
+    setActiveTab("reports") // Cambiar a la pestaña de reportes
+    toast.info(`Reporte ${report.id.slice(-8)} seleccionado`)
+  }
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-6">
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex-shrink-0">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-foreground">Gestión de Reportes</h1>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Administra y revisa todos los reportes de contaminación
               </p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" className="gap-2">
+              <Button variant="outline" size="sm" className="gap-2">
                 <Download className="h-4 w-4" />
                 Exportar
               </Button>
@@ -152,8 +124,24 @@ export default function AdminReportsPage() {
       </div>
 
       {/* Contenido principal */}
-      <div className="container mx-auto px-4 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
+          
+          {/* Columna izquierda - Mapa */}
+          <div className="h-full">
+            <div className="h-full bg-muted/20 rounded-lg border overflow-hidden">
+              <ReportsMap 
+                reports={allReports || []}
+                selectedReportId={selectedReportId}
+                onReportClick={handleReportClick}
+                className="h-full"
+              />
+            </div>
+          </div>
+
+          {/* Columna derecha - Panel de gestión */}
+          <div className="h-full overflow-y-auto">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
           {/* Pestañas */}
           <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:grid-cols-4">
             <TabsTrigger value="overview">Resumen</TabsTrigger>
@@ -238,8 +226,8 @@ export default function AdminReportsPage() {
                     {allReports?.slice(0, 5).map((report: AdminReport) => (
                       <div key={report.id} className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex items-center gap-4">
-                          <Badge className={SEVERITY_CONFIG[report.gravedad].color}>
-                            {SEVERITY_CONFIG[report.gravedad].label}
+                          <Badge className={getSeverityConfig(report.gravedad).color}>
+                            {getSeverityConfig(report.gravedad).label}
                           </Badge>
                           <div>
                             <p className="font-medium">#{report.id.slice(-8)}</p>
@@ -248,9 +236,9 @@ export default function AdminReportsPage() {
                             </p>
                           </div>
                         </div>
-                        <Badge className={TYPE_CONFIG[report.tipo].color}>
-                          <span className="mr-1">{TYPE_CONFIG[report.tipo].icon}</span>
-                          {TYPE_CONFIG[report.tipo].label}
+                        <Badge className={getTypeConfig(report.tipo).color}>
+                          <span className="mr-1">{getTypeConfig(report.tipo).icon}</span>
+                          {getTypeConfig(report.tipo).label}
                         </Badge>
                       </div>
                     ))}
@@ -262,6 +250,7 @@ export default function AdminReportsPage() {
 
           {/* Reportes */}
           <TabsContent value="reports" className="space-y-6">
+
             {/* Filtros */}
             <Card>
               <CardHeader>
@@ -341,12 +330,12 @@ export default function AdminReportsPage() {
                             <div className="flex-1 space-y-3">
                               {/* Header */}
                               <div className="flex items-center gap-3">
-                                <Badge className={SEVERITY_CONFIG[report.gravedad].color}>
-                                  {SEVERITY_CONFIG[report.gravedad].label}
+                                <Badge className={getSeverityConfig(report.gravedad).color}>
+                                  {getSeverityConfig(report.gravedad).label}
                                 </Badge>
-                                <Badge className={TYPE_CONFIG[report.tipo].color}>
-                                  <span className="mr-1">{TYPE_CONFIG[report.tipo].icon}</span>
-                                  {TYPE_CONFIG[report.tipo].label}
+                                <Badge className={getTypeConfig(report.tipo).color}>
+                                  <span className="mr-1">{getTypeConfig(report.tipo).icon}</span>
+                                  {getTypeConfig(report.tipo).label}
                                 </Badge>
                                 <span className="text-sm text-muted-foreground">
                                   ID: #{report.id.slice(-8)}
@@ -468,7 +457,9 @@ export default function AdminReportsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
+            </Tabs>
+          </div>
+        </div>
       </div>
     </div>
   )

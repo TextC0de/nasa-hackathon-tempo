@@ -5,56 +5,150 @@ import { trpc } from "@/lib/trpc"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { AlertTriangle, MapPin, Calendar, Mail, FileText, ArrowLeft } from "lucide-react"
-import { ReportPollutionDialog } from "@/components/report-pollution-dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { AlertTriangle, MapPin, Calendar, FileText, ArrowLeft, Send, CheckCircle } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
+import dynamic from "next/dynamic"
+import { 
+  UserReport, 
+  ReportFormData, 
+  EventType, 
+  SeverityLevel, 
+  EVENT_TYPES, 
+  SEVERITY_LEVELS 
+} from "@/lib/report-types"
+import { 
+  isValidLocation, 
+  formatDate, 
+  formatCoordinates, 
+  getSeverityConfig, 
+  getTypeConfig 
+} from "@/lib/report-utils"
 
-// Tipos para los reportes del usuario (coincide con la API)
-interface UserReport {
-  id: string
-  email: string
-  latitud: string
-  longitud: string
-  descripcion: string | null
-  gravedad: string // Más flexible para aceptar cualquier valor del API
-  tipo: string // Más flexible para aceptar cualquier valor del API
-  fechaReporte: string
-  createdAt: string
-  updatedAt: string
-}
 
-// Configuración de gravedad para badges - Mapeo completo de valores del API
-const SEVERITY_CONFIG = {
-  low: { label: 'Bajo', color: 'bg-green-100 text-green-800 border-green-200' },
-  intermediate: { label: 'Intermedio', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  critical: { label: 'Crítico', color: 'bg-red-100 text-red-800 border-red-200' },
-  // Valores alternativos que podrían venir del API
-  'bajo': { label: 'Bajo', color: 'bg-green-100 text-green-800 border-green-200' },
-  'intermedio': { label: 'Intermedio', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  'critico': { label: 'Crítico', color: 'bg-red-100 text-red-800 border-red-200' }
-} as const
 
-// Configuración de tipos para badges - Mapeo completo de valores del API
-const TYPE_CONFIG = {
-  fire: { label: 'Fuego', icon: '🔥', color: 'bg-orange-100 text-orange-800 border-orange-200' },
-  smoke: { label: 'Humo', icon: '💨', color: 'bg-gray-100 text-gray-800 border-gray-200' },
-  dust: { label: 'Polvo', icon: '🌪️', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  // Valores alternativos que podrían venir del API
-  'fuego': { label: 'Fuego', icon: '🔥', color: 'bg-orange-100 text-orange-800 border-orange-200' },
-  'humo': { label: 'Humo', icon: '💨', color: 'bg-gray-100 text-gray-800 border-gray-200' },
-  'polvo': { label: 'Polvo', icon: '🌪️', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' }
-} as const
+
+// Importar el mapa dinámicamente
+const ReportMap = dynamic(() => import("@/components/report-map").then(mod => ({ default: mod.ReportMap })), {
+  ssr: false,
+  loading: () => (
+    <div className="h-64 bg-muted rounded-lg flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+        <p className="text-sm text-muted-foreground">Cargando mapa...</p>
+      </div>
+    </div>
+  )
+})
 
 export default function UserReportsPage() {
-  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [formData, setFormData] = useState<ReportFormData>({
+    email: '',
+    latitud: 0,
+    longitud: 0,
+    descripcion: '',
+    gravedad: '',
+    tipo: ''
+  })
 
   // Query para obtener reportes del usuario
   const { data: reportsData, isLoading, refetch } = trpc.obtenerReportesUsuario.useQuery()
   
   // Extraer el array de reportes de la respuesta
   const reports = reportsData?.reportes || []
+
+  // Mutación para crear reporte
+  const crearReporteMutation = trpc.crearReporteUsuario.useMutation({
+    onSuccess: () => {
+      setIsSubmitted(true)
+      toast.success("¡Reporte enviado exitosamente!")
+      refetch() // Refrescar la lista de reportes
+    },
+    onError: (error) => {
+      toast.error(error.message || "Error al enviar el reporte")
+    },
+    onSettled: () => {
+      setIsSubmitting(false)
+    }
+  })
+
+  // Manejar clic en el mapa
+  const handleMapClick = (e: L.LeafletMouseEvent) => {
+    const lat = e.latlng.lat
+    const lng = e.latlng.lng
+    
+    if (isValidLocation(lat, lng)) {
+      setFormData(prev => ({ 
+        ...prev, 
+        latitud: lat, 
+        longitud: lng 
+      }))
+      toast.success('Ubicación seleccionada en el mapa')
+    } else {
+      toast.error('Por favor selecciona una ubicación dentro de California')
+    }
+  }
+
+  // Manejar envío del formulario
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!formData.email.trim()) {
+      toast.error("Por favor ingresa tu email")
+      return
+    }
+    if (formData.latitud === 0 && formData.longitud === 0) {
+      toast.error("Por favor selecciona una ubicación en el mapa")
+      return
+    }
+    if (!formData.tipo) {
+      toast.error("Por favor selecciona el tipo de evento")
+      return
+    }
+    if (!formData.gravedad) {
+      toast.error("Por favor selecciona la gravedad del evento")
+      return
+    }
+
+    setIsSubmitting(true)
+    
+    try {
+      await crearReporteMutation.mutateAsync({
+        email: formData.email,
+        latitud: formData.latitud,
+        longitud: formData.longitud,
+        descripcion: formData.descripcion || undefined,
+        gravedad: formData.gravedad as SeverityLevel,
+        tipo: formData.tipo as EventType
+      })
+    } catch (error) {
+      console.error('Error submitting report:', error)
+    }
+  }
+
+  // Manejar cambio de inputs
+  const handleInputChange = (field: keyof ReportFormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  // Resetear formulario
+  const resetForm = () => {
+    setIsSubmitted(false)
+    setFormData({
+      email: '',
+      latitud: 0,
+      longitud: 0,
+      descripcion: '',
+      gravedad: '',
+      tipo: ''
+    })
+  }
 
   // Debug: Mostrar los valores que llegan del API
   if (reports.length > 0) {
@@ -64,41 +158,6 @@ export default function UserReportsPage() {
     })
   }
 
-  // Función para formatear fecha
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
-
-  // Función para obtener coordenadas formateadas
-  const formatCoordinates = (lat: string, lng: string) => {
-    return `${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)}`
-  }
-
-  // Función helper para obtener configuración de gravedad
-  const getSeverityConfig = (gravedad: string) => {
-    const config = SEVERITY_CONFIG[gravedad as keyof typeof SEVERITY_CONFIG]
-    if (!config) {
-      console.warn(`Gravedad no reconocida: ${gravedad}`)
-      return { label: gravedad, color: 'bg-gray-100 text-gray-800 border-gray-200' }
-    }
-    return config
-  }
-
-  // Función helper para obtener configuración de tipo
-  const getTypeConfig = (tipo: string) => {
-    const config = TYPE_CONFIG[tipo as keyof typeof TYPE_CONFIG]
-    if (!config) {
-      console.warn(`Tipo no reconocido: ${tipo}`)
-      return { label: tipo, icon: '❓', color: 'bg-gray-100 text-gray-800 border-gray-200' }
-    }
-    return config
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -113,24 +172,197 @@ export default function UserReportsPage() {
               </Button>
             </Link>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-foreground">Mis Reportes</h1>
+              <h1 className="text-2xl font-bold text-foreground">Reportes</h1>
               <p className="text-muted-foreground">
-                Gestiona y visualiza todos tus reportes de contaminación
+                Gestiona y visualiza todos los reportes de contaminación
               </p>
             </div>
-            <Button 
-              onClick={() => setIsReportDialogOpen(true)}
-              className="gap-2 bg-orange-600 hover:bg-orange-700"
-            >
-              <AlertTriangle className="h-4 w-4" />
-              Nuevo Reporte
-            </Button>
           </div>
         </div>
       </div>
 
       {/* Contenido principal */}
       <div className="container mx-auto px-4 py-8">
+        {/* Formulario de reporte */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-500" />
+              Reportar Contaminación
+            </CardTitle>
+            <CardDescription>
+              Ayúdanos a identificar y resolver problemas de contaminación en California
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isSubmitted ? (
+              <div className="space-y-6 py-6">
+                <div className="text-center">
+                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+                    <CheckCircle className="h-8 w-8 text-green-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-green-700 mb-2">¡Reporte Enviado!</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Tu reporte ha sido enviado exitosamente y será revisado por nuestros administradores.
+                  </p>
+                </div>
+                
+                <div className="flex gap-3 justify-center">
+                  <Button onClick={resetForm} variant="outline">
+                    Cerrar
+                  </Button>
+                  <Button onClick={resetForm}>
+                    Hacer Otro Reporte
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Mapa Interactivo */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    <Label>Ubicación en California *</Label>
+                  </div>
+                  
+                  <div className="h-64 w-full rounded-lg overflow-hidden border border-border">
+                    <ReportMap
+                      onMapClick={handleMapClick}
+                      selectedLocation={formData.latitud !== 0 && formData.longitud !== 0 ? 
+                        { lat: formData.latitud, lng: formData.longitud } : undefined
+                      }
+                      className="h-full w-full"
+                    />
+                  </div>
+                  
+                  {formData.latitud !== 0 && formData.longitud !== 0 && (
+                    <div className="flex items-center gap-2 text-sm text-green-600 p-3 bg-green-50 rounded-lg border border-green-200">
+                      <MapPin className="h-4 w-4" />
+                      <span>Ubicación seleccionada: {formData.latitud.toFixed(4)}, {formData.longitud.toFixed(4)}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Email */}
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email de contacto *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="tu@email.com"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Te contactaremos en esta dirección para seguimiento del reporte
+                  </p>
+                </div>
+
+                {/* Tipo de Evento */}
+                <div className="space-y-2">
+                  <Label>Tipo de Evento *</Label>
+                  <Select 
+                    value={formData.tipo} 
+                    onValueChange={(value) => {
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        tipo: value,
+                        gravedad: '' // Reset gravedad when tipo changes
+                      }))
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecciona el tipo de evento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EVENT_TYPES.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          <div className="flex items-center gap-3">
+                            <span className="text-lg">{type.icon}</span>
+                            <div className="flex flex-col items-start">
+                              <div className="font-medium text-sm">{type.label}</div>
+                              <div className="text-xs text-muted-foreground">{type.description}</div>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Gravedad del Evento */}
+                <div className="space-y-2">
+                  <Label>Gravedad del Evento *</Label>
+                  <Select 
+                    value={formData.gravedad} 
+                    onValueChange={(value) => handleInputChange('gravedad', value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecciona la gravedad del evento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SEVERITY_LEVELS.map((severity) => (
+                        <SelectItem key={severity.value} value={severity.value}>
+                          <div className="flex flex-col items-start">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-sm">{severity.label}</span>
+                              <Badge 
+                                variant="outline" 
+                                className={`text-xs ${severity.color}`}
+                              >
+                                {severity.value}
+                              </Badge>
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">{severity.description}</div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Descripción */}
+                <div className="space-y-2">
+                  <Label htmlFor="descripcion">Descripción (Opcional)</Label>
+                  <Textarea
+                    id="descripcion"
+                    placeholder="Proporciona detalles sobre el incidente: cuándo ocurrió, qué observaste, cómo te afecta..."
+                    value={formData.descripcion}
+                    onChange={(e) => handleInputChange('descripcion', e.target.value)}
+                    rows={4}
+                    maxLength={500}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {formData.descripcion.length}/500 caracteres
+                  </p>
+                </div>
+
+                {/* Botón de envío */}
+                <div className="flex justify-center pt-4">
+                  <Button 
+                    type="submit" 
+                    disabled={isSubmitting}
+                    className="gap-2 bg-orange-600 hover:bg-orange-700 min-w-[200px]"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4" />
+                        Enviar Reporte
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Estadísticas rápidas */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
@@ -265,33 +497,15 @@ export default function UserReportsPage() {
               <div className="text-center py-12">
                 <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No tienes reportes aún</h3>
-                <p className="text-muted-foreground mb-4">
-                  Comienza reportando problemas de contaminación en California
+                <p className="text-muted-foreground">
+                  Usa el formulario de arriba para crear tu primer reporte de contaminación
                 </p>
-                <Button 
-                  onClick={() => setIsReportDialogOpen(true)}
-                  className="gap-2 bg-orange-600 hover:bg-orange-700"
-                >
-                  <AlertTriangle className="h-4 w-4" />
-                  Crear Primer Reporte
-                </Button>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Diálogo de reporte */}
-      <ReportPollutionDialog 
-        open={isReportDialogOpen} 
-        onOpenChange={(open) => {
-          setIsReportDialogOpen(open)
-          if (!open) {
-            // Refrescar la lista cuando se cierre el diálogo
-            refetch()
-          }
-        }} 
-      />
     </div>
   )
 }
