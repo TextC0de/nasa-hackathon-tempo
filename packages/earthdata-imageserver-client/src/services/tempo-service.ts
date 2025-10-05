@@ -361,6 +361,7 @@ export class TEMPOService {
     if (!extent.isWithinRange(start) || !extent.isWithinRange(end)) {
       throw new TimeRangeError(
         `Requested time range ${start.toISOString()} - ${end.toISOString()} is outside available range`,
+        start,
         { start: extent.start, end: extent.end }
       );
     }
