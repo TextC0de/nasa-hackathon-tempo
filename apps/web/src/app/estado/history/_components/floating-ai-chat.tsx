@@ -23,15 +23,15 @@ const MessageBubble = memo(({ message, isUser }: { message: any; isUser: boolean
       isUser ? 'justify-end' : 'justify-start'
     )}>
       {!isUser && (
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center ring-2 ring-primary/10">
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center ring-2 ring-primary/10 shadow-sm">
           <Bot className="h-4 w-4 text-primary" />
         </div>
       )}
       <div className={cn(
-        "rounded-2xl px-4 py-3 max-w-[85%] shadow-sm",
+        "rounded-2xl px-4 py-3 max-w-[85%] shadow-sm transition-all hover:shadow-md",
         isUser
-          ? "bg-primary text-primary-foreground rounded-tr-sm"
-          : "bg-muted/70 backdrop-blur-sm rounded-tl-sm border border-border/50"
+          ? "bg-gradient-to-br from-primary to-primary/90 text-primary-foreground rounded-tr-sm"
+          : "bg-card/80 backdrop-blur-sm rounded-tl-sm border border-border/50"
       )}>
         {message.parts.map((part: any, index: number) => {
           if (part.type === 'text') {
@@ -44,27 +44,43 @@ const MessageBubble = memo(({ message, isUser }: { message: any; isUser: boolean
                   remarkPlugins={[remarkGfm]}
                   components={{
                     // Optimizar renderizado de elementos
-                    p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                    ul: ({ children }) => <ul className="list-disc pl-4 mb-2">{children}</ul>,
-                    ol: ({ children }) => <ol className="list-decimal pl-4 mb-2">{children}</ol>,
+                    p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
+                    ul: ({ children }) => <ul className="list-disc pl-4 mb-2 space-y-1">{children}</ul>,
+                    ol: ({ children }) => <ol className="list-decimal pl-4 mb-2 space-y-1">{children}</ol>,
                     li: ({ children }) => <li className="mb-1">{children}</li>,
                     code: ({ children, className }) => {
                       const isInline = !className
                       return isInline ? (
-                        <code className="px-1.5 py-0.5 rounded bg-muted/50 text-xs font-mono">
+                        <code className="px-1.5 py-0.5 rounded bg-primary/10 text-xs font-mono border border-primary/20">
                           {children}
                         </code>
                       ) : (
-                        <code className={cn("block p-2 rounded bg-muted/50 text-xs font-mono overflow-x-auto", className)}>
+                        <code className={cn("block p-3 rounded-lg bg-muted/80 text-xs font-mono overflow-x-auto border border-border/50", className)}>
                           {children}
                         </code>
                       )
                     },
-                    strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                    strong: ({ children }) => <strong className="font-bold text-foreground">{children}</strong>,
                     em: ({ children }) => <em className="italic">{children}</em>,
-                    h1: ({ children }) => <h1 className="text-lg font-bold mb-2">{children}</h1>,
-                    h2: ({ children }) => <h2 className="text-base font-bold mb-2">{children}</h2>,
-                    h3: ({ children }) => <h3 className="text-sm font-bold mb-1">{children}</h3>,
+                    h1: ({ children }) => <h1 className="text-lg font-bold mb-3 mt-2 border-b pb-1">{children}</h1>,
+                    h2: ({ children }) => <h2 className="text-base font-bold mb-2 mt-2">{children}</h2>,
+                    h3: ({ children }) => <h3 className="text-sm font-bold mb-1 mt-1">{children}</h3>,
+                    blockquote: ({ children }) => (
+                      <blockquote className="border-l-4 border-primary/30 pl-4 italic my-2 text-muted-foreground">
+                        {children}
+                      </blockquote>
+                    ),
+                    hr: () => <hr className="my-4 border-border/50" />,
+                    a: ({ children, href }) => (
+                      <a
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline font-medium"
+                      >
+                        {children}
+                      </a>
+                    ),
                   }}
                 >
                   {part.text}
@@ -77,6 +93,10 @@ const MessageBubble = memo(({ message, isUser }: { message: any; isUser: boolean
       </div>
     </div>
   )
+}, (prevProps, nextProps) => {
+  // Optimización: solo re-renderizar si el mensaje cambió
+  return prevProps.message.id === nextProps.message.id &&
+         prevProps.message.parts === nextProps.message.parts
 })
 
 MessageBubble.displayName = 'MessageBubble'
