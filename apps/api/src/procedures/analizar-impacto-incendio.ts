@@ -141,6 +141,7 @@ export const analizarImpactoIncendioProcedure = publicProcedure
             : null,
           changePercent: changePercent.toFixed(1),
           event: isT0 ? 'fire_detected' : isPeak ? 'peak' : isCurrent ? 'current' : null,
+          reason: (point as any).reason,
         }
       })
 

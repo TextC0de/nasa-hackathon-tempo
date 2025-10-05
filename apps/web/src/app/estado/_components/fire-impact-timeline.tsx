@@ -10,6 +10,7 @@ interface TimelinePoint {
   valueFormatted: string | null
   changePercent: string
   event: 'fire_detected' | 'peak' | 'current' | null
+  reason?: 'no_data' | 'outside_coverage' | 'error'
 }
 
 interface FireImpactTimelineProps {
@@ -52,7 +53,7 @@ export function FireImpactTimeline({ data, pollutant, trend }: FireImpactTimelin
   const trendText = trend === 'improving' ? 'Mejorando' : trend === 'worsening' ? 'Empeorando' : 'Estable'
 
   return (
-    <Card>
+    <Card className="overflow-visible">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
@@ -69,7 +70,7 @@ export function FireImpactTimeline({ data, pollutant, trend }: FireImpactTimelin
       </CardHeader>
       <CardContent>
         {/* Gráfica Simple */}
-        <div className="relative h-48 bg-muted/20 rounded-lg p-4 overflow-x-auto">
+        <div className="relative h-48 bg-muted/20 rounded-lg p-4 overflow-x-auto overflow-y-visible" style={{ paddingTop: '3rem' }}>
           {/* Grid de fondo */}
           <div className="absolute inset-0 p-4">
             {[0, 25, 50, 75, 100].map((pct) => (
@@ -90,12 +91,30 @@ export function FireImpactTimeline({ data, pollutant, trend }: FireImpactTimelin
               const isCurrent = point.event === 'current'
               const changeNum = parseFloat(point.changePercent)
 
-              // Color basado en cambio
-              const barColor =
-                changeNum > 100 ? 'bg-red-600' :
-                changeNum > 50 ? 'bg-orange-500' :
-                changeNum > 20 ? 'bg-yellow-500' :
-                'bg-green-500'
+              // Color basado en estado
+              let barColor = 'bg-gray-300'
+              let barPattern = ''
+
+              if (point.value !== null) {
+                // Tiene valor - color por cambio
+                barColor =
+                  changeNum > 100 ? 'bg-red-600' :
+                  changeNum > 50 ? 'bg-orange-500' :
+                  changeNum > 20 ? 'bg-yellow-500' :
+                  'bg-green-500'
+              } else if (point.reason === 'no_data') {
+                // Sin datos TEMPO (normal - noche o gaps)
+                barColor = 'bg-gray-300'
+                barPattern = 'opacity-40'
+              } else if (point.reason === 'outside_coverage') {
+                // Fuera de cobertura
+                barColor = 'bg-amber-200'
+                barPattern = 'opacity-60'
+              } else if (point.reason === 'error') {
+                // Error real
+                barColor = 'bg-red-300'
+                barPattern = 'opacity-30'
+              }
 
               return (
                 <div
@@ -104,8 +123,8 @@ export function FireImpactTimeline({ data, pollutant, trend }: FireImpactTimelin
                 >
                   {/* Barra */}
                   <div
-                    className={`w-full ${barColor} rounded-t transition-all hover:opacity-80 cursor-pointer`}
-                    style={{ height: `${height}%`, minHeight: point.value !== null ? '4px' : '0' }}
+                    className={`w-full ${barColor} ${barPattern} rounded-t transition-all hover:opacity-80 cursor-pointer`}
+                    style={{ height: point.value !== null ? `${height}%` : '8px', minHeight: '4px' }}
                   >
                     {/* Marcador de eventos */}
                     {isT0 && (
@@ -121,15 +140,26 @@ export function FireImpactTimeline({ data, pollutant, trend }: FireImpactTimelin
                   </div>
 
                   {/* Tooltip en hover */}
-                  <div className="absolute bottom-full mb-2 hidden group-hover:block z-10 pointer-events-none">
-                    <div className="bg-popover text-popover-foreground shadow-lg rounded-md p-2 text-xs whitespace-nowrap border">
+                  <div className="absolute bottom-full mb-2 hidden group-hover:block z-50 pointer-events-none">
+                    <div className="bg-popover text-popover-foreground shadow-xl rounded-md p-3 text-xs whitespace-nowrap border-2">
                       <div className="font-semibold">{point.relativeTime}</div>
                       <div className="text-muted-foreground">{point.timestampLocal}</div>
                       <div className="mt-1">
-                        <span className="font-medium">{point.valueFormatted || 'Sin datos'}</span>
-                      </div>
-                      <div className={`font-semibold ${changeNum > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                        {changeNum > 0 ? '+' : ''}{point.changePercent}%
+                        {point.value !== null ? (
+                          <>
+                            <span className="font-medium">{point.valueFormatted}</span>
+                            <div className={`font-semibold ${changeNum > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                              {changeNum > 0 ? '+' : ''}{point.changePercent}%
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-muted-foreground italic">
+                            {point.reason === 'no_data' && '⚪ Sin datos TEMPO'}
+                            {point.reason === 'outside_coverage' && '⚠️ Fuera de cobertura'}
+                            {point.reason === 'error' && '❌ Error al obtener datos'}
+                            {!point.reason && 'Sin datos'}
+                          </div>
+                        )}
                       </div>
                       {isT0 && <div className="text-orange-600 font-semibold mt-1">🔥 Incendio detectado</div>}
                     </div>
@@ -148,23 +178,43 @@ export function FireImpactTimeline({ data, pollutant, trend }: FireImpactTimelin
         </div>
 
         {/* Leyenda */}
-        <div className="mt-8 flex flex-wrap gap-4 text-xs">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-green-500 rounded" />
-            <span>Normal (+0-20%)</span>
+        <div className="mt-8 space-y-2">
+          <div className="text-xs font-semibold text-muted-foreground">Niveles de contaminación:</div>
+          <div className="flex flex-wrap gap-4 text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-green-500 rounded" />
+              <span>Normal (+0-20%)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-yellow-500 rounded" />
+              <span>Elevado (+20-50%)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-orange-500 rounded" />
+              <span>Alto (+50-100%)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-red-600 rounded" />
+              <span>Crítico (+100%)</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-yellow-500 rounded" />
-            <span>Elevado (+20-50%)</span>
+          <div className="text-xs font-semibold text-muted-foreground mt-4">Estados sin datos:</div>
+          <div className="flex flex-wrap gap-4 text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-gray-300 opacity-40 rounded" />
+              <span>Sin datos TEMPO (esperado)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-amber-200 opacity-60 rounded" />
+              <span>Fuera de cobertura</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-red-300 opacity-30 rounded" />
+              <span>Error al obtener</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-orange-500 rounded" />
-            <span>Alto (+50-100%)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-red-600 rounded" />
-            <span>Crítico (+100%)</span>
-          </div>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-4 text-xs">
           {t0Point && (
             <div className="flex items-center gap-2">
               <Flame className="h-3 w-3 text-orange-600" />

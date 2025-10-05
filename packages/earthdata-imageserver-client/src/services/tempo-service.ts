@@ -130,6 +130,8 @@ export interface TimeSeriesPoint {
   timestamp: Date;
   /** Valor medido (null si NoData) */
   value: number | null;
+  /** Razón por la que no hay valor */
+  reason?: 'no_data' | 'outside_coverage' | 'error';
 }
 
 /**
@@ -366,11 +368,16 @@ export class TEMPOService {
       );
     }
 
-    // Generar timestamps para cada intervalo
+    // Generar timestamps para cada intervalo (solo horas diurnas cuando TEMPO opera)
+    // TEMPO opera ~12:00-23:00 UTC (cubre América durante el día)
     const timestamps: Date[] = [];
     let currentTime = new Date(start);
     while (currentTime <= end) {
-      timestamps.push(new Date(currentTime));
+      const utcHour = currentTime.getUTCHours();
+      // Solo intentar horas cuando TEMPO está activo (12-23 UTC)
+      if (utcHour >= 12 && utcHour <= 23) {
+        timestamps.push(new Date(currentTime));
+      }
       currentTime = new Date(currentTime.getTime() + intervalHours * 60 * 60 * 1000);
     }
 
@@ -396,10 +403,20 @@ export class TEMPOService {
             value: result.value.value,
           });
         } else {
-          // Si falla (NoData), agregar null
+          // Determinar razón del fallo
+          const errorMsg = result.reason?.message || '';
+          let reason: 'no_data' | 'outside_coverage' | 'error' = 'error';
+
+          if (errorMsg.includes('NoData') || errorMsg.includes('Unable to complete operation')) {
+            reason = 'no_data';
+          } else if (errorMsg.includes('outside available range')) {
+            reason = 'outside_coverage';
+          }
+
           data.push({
             timestamp,
             value: null,
+            reason,
           });
         }
       }

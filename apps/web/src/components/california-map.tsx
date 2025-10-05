@@ -10,8 +10,11 @@ import { MonitoringStationsLayer } from "./monitoring-stations-layer"
 import { AlertMarkers } from "./alert-markers"
 import { ActiveFiresLayer } from "./active-fires-layer"
 import { CitiesLayer } from "./cities-layer"
+import { CityBoundariesLayer } from "./city-boundaries-layer"
+import { MapLegend } from "./map-legend"
 import { Alert as AlertType } from '@/hooks/use-alerts'
 import { type FireDataPoint } from '@/hooks/use-active-fires'
+import { useSelectedCity } from '@/hooks/use-selected-city'
 
 // Optimización: Lazy loading con loading state
 const MapContainer = dynamic(
@@ -522,6 +525,7 @@ interface CaliforniaMapProps {
   showMonitoringStations?: boolean
   showActiveFires?: boolean
   showCities?: boolean
+  showCityBoundaries?: boolean
   showTempoOverlay?: boolean
   tempoOverlayData?: {
     imageUrl: string
@@ -550,6 +554,7 @@ export const CaliforniaMap = React.memo(function CaliforniaMap({
   showMonitoringStations = true,
   showActiveFires = true,
   showCities = true,
+  showCityBoundaries = true,
   showTempoOverlay = false,
   tempoOverlayData = null,
   alerts = [],
@@ -561,6 +566,7 @@ export const CaliforniaMap = React.memo(function CaliforniaMap({
   initialCenter,
   initialZoom
 }: CaliforniaMapProps) {
+  const { setHoveredCity, setSelectedCity } = useSelectedCity()
   // Memoización de configuraciones para evitar re-renders innecesarios
   const currentMapType = useMemo(() => MAP_TYPES[mapType], [mapType])
   
@@ -636,13 +642,24 @@ export const CaliforniaMap = React.memo(function CaliforniaMap({
 
         {/* Cities Layer - Población afectada */}
         {showCities && <CitiesLayer onCityClick={onCityClick} />}
-        
-        <MapTypeControlComponent 
+
+        {/* City Boundaries Layer - Límites de ciudades con hover */}
+        {showCityBoundaries && (
+          <CityBoundariesLayer
+            onCityHover={setHoveredCity}
+            onCityClick={setSelectedCity}
+          />
+        )}
+
+        <MapTypeControlComponent
           mapTypes={MAP_TYPES}
           selectedMapType={mapType}
           onMapTypeChange={handleMapTypeChange}
         />
       </MapContainer>
+
+      {/* Map Legend - Floating legend on bottom-right */}
+      <MapLegend />
     </div>
   )
 })

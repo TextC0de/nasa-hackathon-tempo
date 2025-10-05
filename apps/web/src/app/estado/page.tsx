@@ -3,6 +3,7 @@
 import { useState } from "react"
 import dynamic from "next/dynamic"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { SelectedCityProvider } from "@/hooks/use-selected-city"
 import { useMonitoringStations, type GroupedStation } from "@/hooks/use-monitoring-stations"
 import { useActiveFires, type FireDataPoint } from "@/hooks/use-active-fires"
 import { useAlerts } from "@/hooks/use-alerts"
@@ -35,6 +36,7 @@ export default function EstadoOverviewPage() {
   const [showMonitoringStations, setShowMonitoringStations] = useState(true)
   const [showActiveFires, setShowActiveFires] = useState(true)
   const [showTempoOverlay, setShowTempoOverlay] = useState(true)
+  const [showCityBoundaries, setShowCityBoundaries] = useState(true)
   const [currentPollutant, setCurrentPollutant] = useState<'NO2' | 'O3' | 'HCHO'>('NO2')
   const [isSubmittingAlert, setIsSubmittingAlert] = useState(false)
 
@@ -128,9 +130,10 @@ export default function EstadoOverviewPage() {
   }
 
   return (
-    <TooltipProvider>
-      <div className="flex flex-col h-full overflow-hidden">
-        <DashboardHeader
+    <SelectedCityProvider>
+      <TooltipProvider>
+        <div className="flex flex-col h-full overflow-hidden">
+          <DashboardHeader
           isLoading={isLoading}
           error={error}
           stats={stats}
@@ -170,6 +173,7 @@ export default function EstadoOverviewPage() {
               showMonitoringStations={showMonitoringStations}
               showActiveFires={showActiveFires}
               showTempoOverlay={showTempoOverlay}
+              showCityBoundaries={showCityBoundaries}
               tempoOverlayData={tempoOverlay.overlay ?? null}
               alerts={getActiveAlerts()}
               fires={fires}
@@ -201,13 +205,14 @@ export default function EstadoOverviewPage() {
         getAQICategory={getAQIDetails}
       />
 
-      {/* Dialog de Incendio */}
-      <FireDialog
-        fire={selectedFire}
-        open={fireDialogOpen}
-        onOpenChange={setFireDialogOpen}
-      />
-      </div>
-    </TooltipProvider>
+        {/* Dialog de Incendio */}
+        <FireDialog
+          fire={selectedFire}
+          open={fireDialogOpen}
+          onOpenChange={setFireDialogOpen}
+        />
+        </div>
+      </TooltipProvider>
+    </SelectedCityProvider>
   )
 }
