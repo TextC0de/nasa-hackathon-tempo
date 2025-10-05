@@ -64,7 +64,7 @@ export const obtenerPoblacionAfectadaProcedure = publicProcedure
     // Generar cache key única basada en la hora (datos de AirNow se actualizan cada hora)
     const now = new Date()
     const hourTimestamp = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}T${String(now.getUTCHours()).padStart(2, '0')}`
-    const cacheKey = `poblacion-afectada-v1:${hourTimestamp}:${input.minimoNivelAQI || 0}`
+    const cacheKey = `poblacion-afectada-v2:${hourTimestamp}:${input.minimoNivelAQI || 0}`
     const cacheUrl = new URL(`https://cache.internal/${cacheKey}`)
 
     console.log('📊 [POBLACIÓN AFECTADA] Obteniendo datos de AQI para ciudades principales...')
