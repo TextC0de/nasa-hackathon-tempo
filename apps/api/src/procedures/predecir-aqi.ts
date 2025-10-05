@@ -643,12 +643,12 @@ export const predecirAqiProcedure = publicProcedure
         : null,
       NO2: parameterResults.NO2
         ? await (async () => {
-            // Try ML-based forecast if service is available
+            // Try ML-based forecast if enabled and service is available
             let mlPrediction: number | null = null
 
-            if (weather && parameterResults.NO2.tempo.station) {
+            if (ctx.env.ML_ENABLED && ctx.env.ML_SERVICE_URL && weather && parameterResults.NO2.tempo.station) {
               try {
-                console.log(`🤖 Attempting ML prediction for NO2...`)
+                console.log(`🤖 ML enabled - attempting XGBoost prediction for NO2...`)
 
                 const features = buildNO2Features({
                   no2Column: parameterResults.NO2.tempo.station,
@@ -665,10 +665,16 @@ export const predecirAqiProcedure = publicProcedure
 
                 if (mlPrediction) {
                   console.log(`✅ ML prediction successful: ${mlPrediction.toFixed(2)} ppb`)
+                } else {
+                  console.log(`⚠️  ML prediction returned null, using fallback`)
                 }
               } catch (err) {
                 console.error(`⚠️ ML prediction failed, using fallback:`, err)
               }
+            } else if (!ctx.env.ML_ENABLED) {
+              console.log(`ℹ️  ML predictions disabled (ML_ENABLED=false)`)
+            } else if (!ctx.env.ML_SERVICE_URL) {
+              console.log(`ℹ️  ML service URL not configured`)
             }
 
             // Fallback to current AQI if ML fails
