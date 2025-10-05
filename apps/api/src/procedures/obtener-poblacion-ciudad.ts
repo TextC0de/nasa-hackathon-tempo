@@ -35,7 +35,7 @@ export const obtenerPoblacionCiudadProcedure = publicProcedure
 
       return {
         nombre: ciudadEncontrada[0],
-        poblacion: parseInt(ciudadEncontrada[1]),
+        population: parseInt(ciudadEncontrada[1]),
         codigoEstado: ciudadEncontrada[2],
         codigoCiudad: ciudadEncontrada[3],
       }
