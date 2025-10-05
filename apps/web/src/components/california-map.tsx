@@ -9,6 +9,7 @@ import L from "leaflet"
 import { MonitoringStationsLayer } from "./monitoring-stations-layer"
 import { AlertMarkers } from "./alert-markers"
 import { ActiveFiresLayer } from "./active-fires-layer"
+import { CitiesLayer } from "./cities-layer"
 import { Alert as AlertType } from '@/hooks/use-alerts'
 import { type FireDataPoint } from '@/hooks/use-active-fires'
 
@@ -520,6 +521,7 @@ interface CaliforniaMapProps {
   onMapTypeChange?: (mapType: keyof typeof MAP_TYPES) => void
   showMonitoringStations?: boolean
   showActiveFires?: boolean
+  showCities?: boolean
   showTempoOverlay?: boolean
   tempoOverlayData?: {
     imageUrl: string
@@ -534,6 +536,7 @@ interface CaliforniaMapProps {
   fires?: FireDataPoint[]
   onStationClick?: (station: any) => void
   onFireClick?: (fire: FireDataPoint) => void
+  onCityClick?: (city: any) => void
   onMapClick?: (e: L.LeafletMouseEvent) => void
   initialCenter?: [number, number]
   initialZoom?: number
@@ -546,12 +549,14 @@ export const CaliforniaMap = React.memo(function CaliforniaMap({
   onMapTypeChange,
   showMonitoringStations = true,
   showActiveFires = true,
+  showCities = true,
   showTempoOverlay = false,
   tempoOverlayData = null,
   alerts = [],
   fires = [],
   onStationClick,
   onFireClick,
+  onCityClick,
   onMapClick,
   initialCenter,
   initialZoom
@@ -628,6 +633,9 @@ export const CaliforniaMap = React.memo(function CaliforniaMap({
 
         {/* Alert Markers Layer */}
         <AlertMarkers alerts={alerts} />
+
+        {/* Cities Layer - Población afectada */}
+        {showCities && <CitiesLayer onCityClick={onCityClick} />}
         
         <MapTypeControlComponent 
           mapTypes={MAP_TYPES}

@@ -36,13 +36,22 @@ export const analizarImpactoIncendioProcedure = publicProcedure
 
       const t0 = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0))
 
-      // 2. Calcular rango temporal: [T-hoursBack, T+hoursForward] o [T-hoursBack, ahora]
-      const now = new Date()
-      const startTime = new Date(t0.getTime() - hoursBack * 60 * 60 * 1000)
-      const maxEndTime = new Date(t0.getTime() + hoursForward * 60 * 60 * 1000)
-      const endTime = maxEndTime < now ? maxEndTime : now
+      // 2. Obtener rango temporal disponible real de TEMPO
+      const temporalExtent = await tempoService.getTemporalExtent(pollutant)
 
-      // 3. Obtener serie temporal de contaminante en ubicación del incendio
+      // 3. Calcular rango temporal deseado y ajustarlo a datos disponibles
+      const requestedStart = new Date(t0.getTime() - hoursBack * 60 * 60 * 1000)
+      const requestedEnd = new Date(t0.getTime() + hoursForward * 60 * 60 * 1000)
+
+      // Ajustar a rango disponible
+      const startTime = requestedStart < temporalExtent.start
+        ? temporalExtent.start
+        : requestedStart
+      const endTime = requestedEnd > temporalExtent.end
+        ? temporalExtent.end
+        : requestedEnd
+
+      // 4. Obtener serie temporal de contaminante en ubicación del incendio
       let timeSeries
       if (pollutant === 'HCHO') {
         timeSeries = await tempoService.getHCHOTimeSeries({
