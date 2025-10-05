@@ -57,7 +57,7 @@ export default function EstadoOverviewPage() {
   })
 
   // Hook para obtener datos de incendios activos
-  const { fires, statistics: fireStats } = useActiveFires({
+  const { fires, statistics: fireStats, isLoading: isLoadingFires } = useActiveFires({
     centerLat: 36.7783, // Centro de California
     centerLng: -119.4179,
     radiusKm: 200,
@@ -165,7 +165,32 @@ export default function EstadoOverviewPage() {
 
         <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
           {/* Mapa Principal */}
-          <div className="flex-1 lg:w-[65%]">
+          <div className="flex-1 lg:w-[65%] relative">
+            {/* Overlay de carga de incendios */}
+            {isLoadingFires && (
+              <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-[1000] flex items-center justify-center">
+                <div className="bg-card rounded-lg shadow-lg p-6 border border-border max-w-sm mx-4">
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="relative">
+                      <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-2xl">🔥</span>
+                      </div>
+                    </div>
+                    <div className="text-center space-y-2">
+                      <h3 className="font-semibold text-lg">Cargando datos de incendios</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Obteniendo información de NASA FIRMS...
+                      </p>
+                    </div>
+                    <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+                      <div className="bg-primary h-full rounded-full animate-pulse" style={{ width: '70%' }}></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <CaliforniaMap
               className="h-full w-full"
               mapType={mapType}

@@ -1,8 +1,27 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import L from "leaflet"
 import { trpc } from "@/lib/trpc"
+
+// Ciudades base - Se muestran inmediatamente sin esperar AQI
+const CIUDADES_BASE = [
+  { nombre: 'Los Angeles', lat: 34.0522, lng: -118.2437, poblacion: 3898747 },
+  { nombre: 'San Diego', lat: 32.7157, lng: -117.1611, poblacion: 1386932 },
+  { nombre: 'San Jose', lat: 37.3382, lng: -121.8863, poblacion: 1013240 },
+  { nombre: 'San Francisco', lat: 37.7749, lng: -122.4194, poblacion: 873965 },
+  { nombre: 'Fresno', lat: 36.7378, lng: -119.7871, poblacion: 542107 },
+  { nombre: 'Sacramento', lat: 38.5816, lng: -121.4944, poblacion: 524943 },
+  { nombre: 'Long Beach', lat: 33.7701, lng: -118.1937, poblacion: 466742 },
+  { nombre: 'Oakland', lat: 37.8044, lng: -122.2712, poblacion: 440646 },
+  { nombre: 'Bakersfield', lat: 35.3733, lng: -119.0187, poblacion: 403455 },
+  { nombre: 'Anaheim', lat: 33.8366, lng: -117.9143, poblacion: 346824 },
+  { nombre: 'Santa Ana', lat: 33.7455, lng: -117.8677, poblacion: 310227 },
+  { nombre: 'Riverside', lat: 33.9806, lng: -117.3755, poblacion: 314998 },
+  { nombre: 'Stockton', lat: 37.9577, lng: -121.2908, poblacion: 320804 },
+  { nombre: 'Irvine', lat: 33.6846, lng: -117.8265, poblacion: 307670 },
+  { nombre: 'Chula Vista', lat: 32.6401, lng: -117.0842, poblacion: 275487 },
+]
 
 interface CitiesLayerProps {
   onCityClick?: (city: {
@@ -115,9 +134,28 @@ function CitiesLayerInner({ data, onCityClick }: {
 }
 
 export function CitiesLayer({ onCityClick }: CitiesLayerProps) {
-  const { data } = trpc.obtenerPoblacionAfectada.useQuery({})
+  // Estado local con ciudades base (se muestran inmediatamente)
+  const [ciudadesData, setCiudadesData] = useState({
+    ciudades: CIUDADES_BASE.map(c => ({ ...c, aqi: null, categoria: null, color: null }))
+  })
 
-  if (!data) return null
+  // Query para obtener AQI actualizado (en segundo plano)
+  const { data } = trpc.obtenerPoblacionAfectada.useQuery(
+    {},
+    {
+      // No bloquear la UI mientras carga
+      refetchInterval: 5 * 60 * 1000, // Refetch cada 5 minutos
+      staleTime: 2 * 60 * 1000, // Considerar stale después de 2 minutos
+    }
+  )
 
-  return <CitiesLayerInner data={data} onCityClick={onCityClick} />
+  // Actualizar ciudades cuando llegue data con AQI
+  useEffect(() => {
+    if (data?.ciudades) {
+      console.log('🏙️ [CITIES LAYER] Actualizando ciudades con AQI desde API')
+      setCiudadesData(data)
+    }
+  }, [data])
+
+  return <CitiesLayerInner data={ciudadesData} onCityClick={onCityClick} />
 }
