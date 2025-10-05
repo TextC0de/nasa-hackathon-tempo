@@ -23,22 +23,12 @@ import {
   Users,
   TrendingUp
 } from "lucide-react"
-import Link from "next/link"
 import { toast } from "sonner"
+import { UserReport } from "@/lib/report-types"
+import { formatDate, formatCoordinates, getSeverityConfig, getTypeConfig } from "@/lib/report-utils"
 
-// Tipos para los reportes (coincide con la API)
-interface AdminReport {
-  id: string
-  email: string
-  latitud: string
-  longitud: string
-  descripcion: string | null
-  gravedad: 'low' | 'intermediate' | 'critical'
-  tipo: 'fire' | 'smoke' | 'dust'
-  fechaReporte: string
-  createdAt: string
-  updatedAt: string
-}
+// Alias para compatibilidad con el código existente
+type AdminReport = UserReport
 
 // Configuración de estados
 const STATUS_CONFIG = {
@@ -47,19 +37,7 @@ const STATUS_CONFIG = {
   resolved: { label: 'Resuelto', color: 'bg-green-100 text-green-800 border-green-200', icon: CheckCircle }
 } as const
 
-// Configuración de gravedad
-const SEVERITY_CONFIG = {
-  low: { label: 'Bajo', color: 'bg-green-100 text-green-800 border-green-200' },
-  intermediate: { label: 'Intermedio', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  critical: { label: 'Crítico', color: 'bg-red-100 text-red-800 border-red-200' }
-} as const
 
-// Configuración de tipos
-const TYPE_CONFIG = {
-  fire: { label: 'Fuego', icon: '🔥', color: 'bg-orange-100 text-orange-800 border-orange-200' },
-  smoke: { label: 'Humo', icon: '💨', color: 'bg-gray-100 text-gray-800 border-gray-200' },
-  dust: { label: 'Polvo', icon: '🌪️', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' }
-} as const
 
 export default function AdminReportsPage() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -107,21 +85,6 @@ export default function AdminReportsPage() {
     }
   }, [allReports])
 
-  // Función para formatear fecha
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
-
-  // Función para formatear coordenadas
-  const formatCoordinates = (lat: string, lng: string) => {
-    return `${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)}`
-  }
 
   // Función para cambiar estado del reporte
   const handleStatusChange = (reportId: string, newStatus: string) => {
@@ -238,8 +201,8 @@ export default function AdminReportsPage() {
                     {allReports?.slice(0, 5).map((report: AdminReport) => (
                       <div key={report.id} className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex items-center gap-4">
-                          <Badge className={SEVERITY_CONFIG[report.gravedad].color}>
-                            {SEVERITY_CONFIG[report.gravedad].label}
+                          <Badge className={getSeverityConfig(report.gravedad).color}>
+                            {getSeverityConfig(report.gravedad).label}
                           </Badge>
                           <div>
                             <p className="font-medium">#{report.id.slice(-8)}</p>
@@ -248,9 +211,9 @@ export default function AdminReportsPage() {
                             </p>
                           </div>
                         </div>
-                        <Badge className={TYPE_CONFIG[report.tipo].color}>
-                          <span className="mr-1">{TYPE_CONFIG[report.tipo].icon}</span>
-                          {TYPE_CONFIG[report.tipo].label}
+                        <Badge className={getTypeConfig(report.tipo).color}>
+                          <span className="mr-1">{getTypeConfig(report.tipo).icon}</span>
+                          {getTypeConfig(report.tipo).label}
                         </Badge>
                       </div>
                     ))}
@@ -262,6 +225,7 @@ export default function AdminReportsPage() {
 
           {/* Reportes */}
           <TabsContent value="reports" className="space-y-6">
+
             {/* Filtros */}
             <Card>
               <CardHeader>
@@ -341,12 +305,12 @@ export default function AdminReportsPage() {
                             <div className="flex-1 space-y-3">
                               {/* Header */}
                               <div className="flex items-center gap-3">
-                                <Badge className={SEVERITY_CONFIG[report.gravedad].color}>
-                                  {SEVERITY_CONFIG[report.gravedad].label}
+                                <Badge className={getSeverityConfig(report.gravedad).color}>
+                                  {getSeverityConfig(report.gravedad).label}
                                 </Badge>
-                                <Badge className={TYPE_CONFIG[report.tipo].color}>
-                                  <span className="mr-1">{TYPE_CONFIG[report.tipo].icon}</span>
-                                  {TYPE_CONFIG[report.tipo].label}
+                                <Badge className={getTypeConfig(report.tipo).color}>
+                                  <span className="mr-1">{getTypeConfig(report.tipo).icon}</span>
+                                  {getTypeConfig(report.tipo).label}
                                 </Badge>
                                 <span className="text-sm text-muted-foreground">
                                   ID: #{report.id.slice(-8)}
