@@ -386,7 +386,7 @@ export function HistoryChart({
                   outerRadius={80}
                   paddingAngle={2}
                   dataKey="value"
-                  label={({ name, percent }) => `${name.split(' ')[0]} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name?.split(' ')[0] || ''} ${((percent as number) * 100).toFixed(0)}%`}
                   labelLine={false}
                 >
                   <Cell fill="#3b82f6" />

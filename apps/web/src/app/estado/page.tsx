@@ -188,7 +188,7 @@ export default function EstadoOverviewPage() {
               metadata={tempoOverlay.metadata}
               satellite={tempoOverlay.satellite}
               isLoading={tempoOverlay.isLoading}
-              error={tempoOverlay.error ?? null}
+              error={tempoOverlay.error ? new Error(tempoOverlay.error.message) : null}
               onRefresh={tempoOverlay.refresh}
               onPollutantChange={setCurrentPollutant}
               currentPollutant={currentPollutant}
