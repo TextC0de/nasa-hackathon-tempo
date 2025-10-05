@@ -18,7 +18,7 @@ export function ExportDataButtons() {
 
       // Crear un mapa de ciudades por nombre
       const ciudadesMap = new Map(
-        ciudadesData.ciudades.map((ciudad) => [ciudad.nombre, ciudad])
+        ciudadesData.ciudades.map((ciudad: any) => [ciudad.nombre, ciudad])
       )
 
       // Enriquecer el GeoJSON con datos de AQI actuales
