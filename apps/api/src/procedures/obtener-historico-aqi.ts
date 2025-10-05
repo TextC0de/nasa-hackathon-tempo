@@ -17,22 +17,25 @@ export const obtenerHistoricoAqiProcedure = publicProcedure
     z.object({
       latitude: z.number().min(-90).max(90),
       longitude: z.number().min(-180).max(180),
-      // Número de días hacia atrás (default 30)
-      days: z.number().min(1).max(365).default(30),
+      // Fechas de inicio y fin
+      startDate: z.string().datetime(),
+      endDate: z.string().datetime(),
+      // Granularidad de agregación
+      granularity: z.enum(['hourly', 'daily', 'weekly', 'monthly']).default('daily'),
       // Radio de búsqueda en km (default 50km)
       radiusKm: z.number().min(1).max(200).default(50),
     })
   )
   .query(async ({ input, ctx }) => {
-    const { latitude, longitude, days, radiusKm } = input
+    try {
+    const { latitude, longitude, startDate: startDateStr, endDate: endDateStr, granularity, radiusKm } = input
+
+    const startDate = new Date(startDateStr)
+    const endDate = new Date(endDateStr)
 
     console.log(`📈 Obteniendo histórico de AQI para (${latitude}, ${longitude})`)
-    console.log(`   Días: ${days}, Radio: ${radiusKm} km`)
-
-    // Calcular fechas
-    const endDate = new Date()
-    const startDate = new Date()
-    startDate.setDate(startDate.getDate() - days)
+    console.log(`   Rango: ${startDate.toISOString()} → ${endDate.toISOString()}`)
+    console.log(`   Granularidad: ${granularity}, Radio: ${radiusKm} km`)
 
     // Calcular bounding box para el radio especificado
     // 1 grado de latitud ≈ 111 km
@@ -47,13 +50,30 @@ export const obtenerHistoricoAqiProcedure = publicProcedure
 
     console.log(`   Bounding box: (${latMin.toFixed(2)}, ${lngMin.toFixed(2)}) → (${latMax.toFixed(2)}, ${lngMax.toFixed(2)})`)
 
-    // Decidir granularidad: <= 7 días = horario, > 7 días = diario
-    const useHourly = days <= 7
-
     let data: any[]
+    let datetruncExpression: string
 
-    if (useHourly) {
-      console.log(`   Granularidad: POR HORA (SQL GROUP BY)`)
+    // Determinar expresión DATE_TRUNC según granularidad
+    switch (granularity) {
+      case 'hourly':
+        datetruncExpression = 'hour'
+        console.log(`   Granularidad: POR HORA (SQL GROUP BY)`)
+        break
+      case 'daily':
+        datetruncExpression = 'day'
+        console.log(`   Granularidad: POR DÍA (SQL GROUP BY)`)
+        break
+      case 'weekly':
+        datetruncExpression = 'week'
+        console.log(`   Granularidad: POR SEMANA (SQL GROUP BY)`)
+        break
+      case 'monthly':
+        datetruncExpression = 'month'
+        console.log(`   Granularidad: POR MES (SQL GROUP BY)`)
+        break
+    }
+
+    if (granularity === 'hourly') {
 
       // Agregación SQL nativa por hora
       const rawData = await ctx.db.execute<{
@@ -86,22 +106,20 @@ export const obtenerHistoricoAqiProcedure = publicProcedure
         LIMIT 500
       `)
 
-      console.log(`   ✓ ${rawData.length} horas agregadas encontradas`)
+      console.log(`   ✓ ${rawData.length} registros agregados encontrados`)
 
       data = rawData.map(row => ({
         timestamp: row.timestamp,
-        aqi_avg: row.aqi_avg,
-        aqi_min: row.aqi_min,
-        aqi_max: row.aqi_max,
-        o3_avg: row.o3_avg,
-        no2_avg: row.no2_avg,
-        pm25_avg: row.pm25_avg,
+        aqi_avg: Number(row.aqi_avg),
+        aqi_min: Number(row.aqi_min),
+        aqi_max: Number(row.aqi_max),
+        o3_avg: row.o3_avg ? Number(row.o3_avg) : null,
+        no2_avg: row.no2_avg ? Number(row.no2_avg) : null,
+        pm25_avg: row.pm25_avg ? Number(row.pm25_avg) : null,
         dominant_pollutant: null, // TODO: Calcular con MODE() si es necesario
       }))
     } else {
-      console.log(`   Granularidad: POR DÍA (SQL GROUP BY)`)
-
-      // Agregación SQL nativa por día
+      // Agregación para daily, weekly, monthly
       const rawData = await ctx.db.execute<{
         timestamp: string
         aqi_avg: number
@@ -117,7 +135,7 @@ export const obtenerHistoricoAqiProcedure = publicProcedure
         unhealthy_hours: number
       }>(sql`
         SELECT
-          DATE_TRUNC('day', timestamp)::text as timestamp,
+          DATE_TRUNC('${sql.raw(datetruncExpression)}', timestamp)::text as timestamp,
           AVG(aqi)::numeric as aqi_avg,
           MIN(aqi)::numeric as aqi_min,
           MAX(aqi)::numeric as aqi_max,
@@ -135,21 +153,21 @@ export const obtenerHistoricoAqiProcedure = publicProcedure
           AND lng BETWEEN ${lngMin} AND ${lngMax}
           AND timestamp >= ${startDate.toISOString()}
           AND timestamp <= ${endDate.toISOString()}
-        GROUP BY DATE_TRUNC('day', timestamp)
-        ORDER BY DATE_TRUNC('day', timestamp) ASC
-        LIMIT 365
+        GROUP BY DATE_TRUNC('${sql.raw(datetruncExpression)}', timestamp)
+        ORDER BY DATE_TRUNC('${sql.raw(datetruncExpression)}', timestamp) ASC
+        LIMIT 1000
       `)
 
-      console.log(`   ✓ ${rawData.length} días agregados encontrados`)
+      console.log(`   ✓ ${rawData.length} registros agregados encontrados`)
 
       data = rawData.map(row => ({
         timestamp: row.timestamp,
-        aqi_avg: row.aqi_avg,
-        aqi_min: row.aqi_min,
-        aqi_max: row.aqi_max,
-        o3_avg: row.o3_avg,
-        no2_avg: row.no2_avg,
-        pm25_avg: row.pm25_avg,
+        aqi_avg: Number(row.aqi_avg),
+        aqi_min: Number(row.aqi_min),
+        aqi_max: Number(row.aqi_max),
+        o3_avg: row.o3_avg ? Number(row.o3_avg) : null,
+        no2_avg: row.no2_avg ? Number(row.no2_avg) : null,
+        pm25_avg: row.pm25_avg ? Number(row.pm25_avg) : null,
         dominant_pollutant: null,
         good_hours: row.good_hours,
         moderate_hours: row.moderate_hours,
@@ -164,7 +182,7 @@ export const obtenerHistoricoAqiProcedure = publicProcedure
     if (data.length === 0) {
       console.log(`   ⚠️  No hay datos históricos para esta ubicación`)
       return {
-        granularity: useHourly ? 'hourly' : 'daily',
+        granularity: granularity as 'hourly' | 'daily' | 'weekly' | 'monthly',
         data: [],
         stats: null,
         trend: null,
@@ -193,13 +211,13 @@ export const obtenerHistoricoAqiProcedure = publicProcedure
     if (trendPct < -5) trendDirection = 'improving'
     else if (trendPct > 5) trendDirection = 'worsening'
 
-    console.log(`✅ Histórico obtenido:`)
+    console.log(`✅ Histórico obtenido (${granularity}):`)
     console.log(`   Registros: ${data.length}`)
     console.log(`   AQI promedio: ${stats.avg.toFixed(1)}`)
     console.log(`   Tendencia: ${trendDirection} (${trendPct > 0 ? '+' : ''}${trendPct.toFixed(1)}%)`)
 
     return {
-      granularity: useHourly ? 'hourly' as const : 'daily' as const,
+      granularity: granularity as 'hourly' | 'daily' | 'weekly' | 'monthly',
       data,
       stats,
       trend: {
@@ -211,5 +229,8 @@ export const obtenerHistoricoAqiProcedure = publicProcedure
             ? `La calidad del aire ha empeorado un ${trendPct.toFixed(1)}% en el período`
             : 'La calidad del aire se mantiene estable'
       },
+    }
+    } catch (e) {
+        console.error(e)
     }
   })

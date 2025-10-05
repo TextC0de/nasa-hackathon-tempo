@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Download, FileText, Calendar as CalendarIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -38,22 +38,34 @@ export function HistoryView({
   longitude = -119.4179
 }: HistoryViewProps) {
   // Estado de filtros (edición)
-  const [startDate, setStartDate] = useState<Date>(subDays(new Date(), 30))
-  const [endDate, setEndDate] = useState<Date>(new Date())
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined)
   const [granularity, setGranularity] = useState<Granularity>('daily')
 
   // Estado de filtros aplicados (los que realmente se usan)
-  const [appliedStartDate, setAppliedStartDate] = useState<Date>(subDays(new Date(), 30))
-  const [appliedEndDate, setAppliedEndDate] = useState<Date>(new Date())
+  const [appliedStartDate, setAppliedStartDate] = useState<Date | undefined>(undefined)
+  const [appliedEndDate, setAppliedEndDate] = useState<Date | undefined>(undefined)
   const [appliedGranularity, setAppliedGranularity] = useState<Granularity>('daily')
+
+  // Inicializar fechas en el cliente
+  useEffect(() => {
+    const now = new Date()
+    const thirtyDaysAgo = subDays(now, 30)
+    setStartDate(thirtyDaysAgo)
+    setEndDate(now)
+    setAppliedStartDate(thirtyDaysAgo)
+    setAppliedEndDate(now)
+  }, [])
 
   // Calcular días entre fechas aplicadas
   const daysDiff = useMemo(() => {
+    if (!appliedStartDate || !appliedEndDate) return 0
     return differenceInDays(appliedEndDate, appliedStartDate)
   }, [appliedStartDate, appliedEndDate])
 
   // Detectar si hay cambios sin aplicar
   const hasUnappliedChanges = useMemo(() => {
+    if (!startDate || !endDate || !appliedStartDate || !appliedEndDate) return false
     return (
       startDate.getTime() !== appliedStartDate.getTime() ||
       endDate.getTime() !== appliedEndDate.getTime() ||
@@ -63,6 +75,7 @@ export function HistoryView({
 
   // Aplicar filtros
   const handleApplyFilters = () => {
+    if (!startDate || !endDate) return
     setAppliedStartDate(startDate)
     setAppliedEndDate(endDate)
     setAppliedGranularity(granularity)
@@ -70,6 +83,7 @@ export function HistoryView({
 
   // Resetear filtros a los aplicados
   const handleResetFilters = () => {
+    if (!appliedStartDate || !appliedEndDate) return
     setStartDate(appliedStartDate)
     setEndDate(appliedEndDate)
     setGranularity(appliedGranularity)
@@ -315,11 +329,15 @@ export function HistoryView({
         </Card>
 
         {/* Chart principal - Ahora con fechas personalizadas */}
-        <HistoryChart
-          latitude={latitude}
-          longitude={longitude}
-          days={daysDiff}
-        />
+        {appliedStartDate && appliedEndDate && (
+          <HistoryChart
+            latitude={latitude}
+            longitude={longitude}
+            startDate={appliedStartDate}
+            endDate={appliedEndDate}
+            granularity={appliedGranularity}
+          />
+        )}
 
         {/* Insights y análisis */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

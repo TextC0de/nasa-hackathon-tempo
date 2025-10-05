@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Loader2, TrendingDown, TrendingUp, Minus, Calendar, Clock } from "lucide-react"
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend } from "recharts"
-import { useState } from "react"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
 
 // Función para obtener color basado en AQI
 function getAQIColor(aqi: number): string {
@@ -72,17 +73,28 @@ function CustomTooltip({ active, payload }: any) {
 interface HistoryChartProps {
   latitude: number
   longitude: number
+  startDate: Date
+  endDate: Date
+  granularity: 'hourly' | 'daily' | 'weekly' | 'monthly'
+  radiusKm?: number
   className?: string
 }
 
-export function HistoryChart({ latitude, longitude, className }: HistoryChartProps) {
-  const [days, setDays] = useState(7)
-  const [radiusKm, setRadiusKm] = useState(50)
-
+export function HistoryChart({
+  latitude,
+  longitude,
+  startDate,
+  endDate,
+  granularity,
+  radiusKm = 50,
+  className
+}: HistoryChartProps) {
   const { data, isLoading, error } = trpc.obtenerHistoricoAqi.useQuery({
     latitude,
     longitude,
-    days,
+    startDate: startDate.toISOString(),
+    endDate: endDate.toISOString(),
+    granularity,
     radiusKm,
   })
 
@@ -94,7 +106,9 @@ export function HistoryChart({ latitude, longitude, className }: HistoryChartPro
             <Calendar className="h-5 w-5" />
             Histórico de Calidad del Aire
           </CardTitle>
-          <CardDescription>Últimos {days} días</CardDescription>
+          <CardDescription>
+            {format(startDate, 'PP', { locale: es })} - {format(endDate, 'PP', { locale: es })}
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-64">
           <div className="flex flex-col items-center space-y-2">
@@ -133,13 +147,15 @@ export function HistoryChart({ latitude, longitude, className }: HistoryChartPro
             <Calendar className="h-5 w-5" />
             Histórico de Calidad del Aire
           </CardTitle>
-          <CardDescription>Últimos {days} días</CardDescription>
+          <CardDescription>
+            {format(startDate, 'PP', { locale: es })} - {format(endDate, 'PP', { locale: es })}
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-64">
           <div className="text-center">
             <p className="text-sm text-muted-foreground">No hay datos históricos disponibles</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Intenta aumentar el radio de búsqueda
+              Intenta aumentar el radio de búsqueda o cambiar el rango de fechas
             </p>
           </div>
         </CardContent>
@@ -176,6 +192,13 @@ export function HistoryChart({ latitude, longitude, className }: HistoryChartPro
       ? 'bg-red-50 dark:bg-red-950'
       : 'bg-yellow-50 dark:bg-yellow-950'
 
+  const granularityLabels = {
+    hourly: 'Datos por hora',
+    daily: 'Datos diarios',
+    weekly: 'Datos semanales',
+    monthly: 'Datos mensuales'
+  }
+
   return (
     <Card className={className}>
       <CardHeader>
@@ -190,31 +213,8 @@ export function HistoryChart({ latitude, longitude, className }: HistoryChartPro
               Histórico de Calidad del Aire
             </CardTitle>
             <CardDescription>
-              {data.granularity === 'hourly' ? 'Datos por hora' : 'Datos diarios'} - Últimos {days} días
+              {granularityLabels[data.granularity]} • {format(startDate, 'PP', { locale: es })} - {format(endDate, 'PP', { locale: es })}
             </CardDescription>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant={days === 7 ? "default" : "outline"}
-              size="sm"
-              onClick={() => setDays(7)}
-            >
-              7d
-            </Button>
-            <Button
-              variant={days === 30 ? "default" : "outline"}
-              size="sm"
-              onClick={() => setDays(30)}
-            >
-              30d
-            </Button>
-            <Button
-              variant={days === 90 ? "default" : "outline"}
-              size="sm"
-              onClick={() => setDays(90)}
-            >
-              90d
-            </Button>
           </div>
         </div>
       </CardHeader>

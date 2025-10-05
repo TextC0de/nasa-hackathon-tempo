@@ -221,6 +221,73 @@ def get_meteo_for_time(meteo_index, timestamp, lat, lon):
 
     return meteo_data
 
+def calculate_epa_historical_features(epa_df):
+    """
+    Pre-calcula features históricas de NO2 por estación EPA
+
+    Calcula rolling averages y tendencias para cada estación, que se usarán
+    como features en el modelo ML.
+
+    Args:
+        epa_df: DataFrame con datos EPA (debe tener: State Code, County Code, Site Num, timestamp, value)
+
+    Returns:
+        dict: {station_id: {timestamp_str: {'no2_avg_24h': X, 'no2_avg_7d': Y, 'no2_trend_24h': Z}}}
+    """
+    print("📊 Calculando features históricas de NO2 por estación...")
+
+    # Crear ID único de estación: State_County_SiteNum
+    epa_df = epa_df.copy()
+    epa_df['station_id'] = (
+        epa_df['State Code'].astype(str) + '_' +
+        epa_df['County Code'].astype(str).str.zfill(3) + '_' +  # Pad con ceros
+        epa_df['Site Num'].astype(str).str.zfill(4)
+    )
+
+    historical_cache = {}
+    unique_stations = epa_df['station_id'].unique()
+
+    for i, station_id in enumerate(unique_stations):
+        if i % 50 == 0:
+            print(f"   Procesando estación {i+1}/{len(unique_stations)}...", end='\r')
+
+        # Filtrar y ordenar por timestamp
+        station_data = epa_df[epa_df['station_id'] == station_id].copy()
+        station_data = station_data.sort_values('timestamp')
+
+        # Asegurar que timestamp es el índice
+        station_data = station_data.set_index('timestamp')
+
+        # Calcular rolling windows
+        # rolling('24H') usa ventana de tiempo real (no N observaciones)
+        station_data['no2_avg_24h'] = station_data['value'].rolling('24H', min_periods=1).mean()
+        station_data['no2_avg_7d'] = station_data['value'].rolling('7D', min_periods=1).mean()
+
+        # Calcular tendencia (cambio porcentual en 24h)
+        # shift(24) asume mediciones horarias
+        station_data['no2_trend_24h'] = (
+            (station_data['value'] - station_data['value'].shift(24)) /
+            (station_data['value'].shift(24) + 0.1)  # +0.1 para evitar división por 0
+        ).fillna(0)
+
+        # Convertir a diccionario: {timestamp_str: {features}}
+        station_dict = {}
+        for ts, row in station_data.iterrows():
+            timestamp_str = ts.strftime('%Y-%m-%d %H:%M:%S')
+            station_dict[timestamp_str] = {
+                'no2_avg_24h': row['no2_avg_24h'] if pd.notna(row['no2_avg_24h']) else 0,
+                'no2_avg_7d': row['no2_avg_7d'] if pd.notna(row['no2_avg_7d']) else 0,
+                'no2_trend_24h': row['no2_trend_24h'] if pd.notna(row['no2_trend_24h']) else 0,
+            }
+
+        historical_cache[station_id] = station_dict
+
+    print(f"\n   ✓ {len(historical_cache)} estaciones con histórico calculado")
+    total_points = sum(len(v) for v in historical_cache.values())
+    print(f"   ✓ {total_points:,} puntos históricos totales\n")
+
+    return historical_cache
+
 def find_nearest_cell(cells, lat, lon):
     """Encuentra celda más cercana"""
     min_dist = float('inf')
@@ -253,7 +320,8 @@ def convert_no2_to_surface(no2_column, pbl_height):
 # ============================================================================
 
 def extract_features(cells, epa_lat, epa_lon, wind_speed, wind_dir, pbl_height,
-                     temp, precip, hour, day_of_week, month, meteo=None):
+                     temp, precip, hour, day_of_week, month, meteo=None,
+                     station_id=None, timestamp=None, epa_historical=None):
     """
     Extrae ~65 features espaciales de un grid TEMPO
 
@@ -388,34 +456,41 @@ def extract_features(cells, epa_lat, epa_lon, wind_speed, wind_dir, pbl_height,
         'precipitation': precip,
         'pbl_normalized': pbl_height / 800,
 
-        # Meteorología adicional (CRÍTICAS para dispersión)
-        'surface_pressure': meteo.get('surface_pressure', 1013.0) if meteo else 1013.0,
-        'relative_humidity': meteo.get('relative_humidity', 60.0) if meteo else 60.0,
-        'cloud_cover': meteo.get('cloud_cover', 50.0) if meteo else 50.0,
-
-        # Features derivadas meteorológicas
-        'is_high_pressure': 1 if (meteo.get('surface_pressure', 1013) if meteo else 1013) > 1015 else 0,  # Alta presión = poca dispersión
-        'is_humid': 1 if (meteo.get('relative_humidity', 60) if meteo else 60) > 70 else 0,  # Alta humedad = más química
-        'is_rainy': 1 if precip > 0.1 else 0,  # Lluvia limpia el aire
-
-        # Estabilidad atmosférica (combinación de factores que atrapan contaminantes)
-        # Valores altos = condiciones estables = mala dispersión = alto NO2
-        'atmospheric_stability': (
-            ((meteo.get('surface_pressure', 1013) if meteo else 1013) - 1013) / 10  # Alta presión
-            - (wind_speed - 5) / 5  # Poco viento
-            - (pbl_height - 800) / 400  # PBL bajo
-        ),
-
-        # Temporal
+        # Temporal (valores continuos, XGBoost aprenderá los patrones)
         'hour': local_hour,
         'day_of_week': day_of_week,
-        'is_weekend': 1 if day_of_week >= 5 else 0,
-        'is_rush_hour': 1 if (6 <= local_hour <= 9) or (16 <= local_hour <= 19) else 0,
         'month': month,
 
         # Predicción física (MUY IMPORTANTE)
         'physics_prediction': physics_pred,
     }
+
+    # ====== FEATURES HISTÓRICAS (NO2 de las últimas 24h y 7 días) ======
+    timestamp_str = timestamp.strftime('%Y-%m-%d %H:%M:%S') if timestamp else None
+    historical = {}
+    if epa_historical and station_id and timestamp_str:
+        historical = epa_historical.get(station_id, {}).get(timestamp_str, {})
+
+    features['no2_avg_24h'] = historical.get('no2_avg_24h', 0)
+    features['no2_avg_7d'] = historical.get('no2_avg_7d', 0)
+    features['no2_trend_24h'] = historical.get('no2_trend_24h', 0)
+
+    # ====== FEATURES DE INTERACCIÓN ======
+    features['wind_speed_x_upwind_no2'] = wind_speed * safe_avg(no2_upwind_30)
+    features['hour_x_urban'] = local_hour * geo_features['urban_proximity_index']  # Tráfico urbano varía por hora
+    features['pbl_x_center_no2'] = pbl_height * center_cell.get('no2_column', 0)
+
+    # ====== FEATURES TEMPORALES AVANZADAS ======
+    if timestamp:
+        # Estacionalidad (continua)
+        features['day_of_year'] = timestamp.timetuple().tm_yday
+        # Codificación cíclica de mes para capturar estacionalidad
+        features['month_sin'] = np.sin(2 * np.pi * month / 12)
+        features['month_cos'] = np.cos(2 * np.pi * month / 12)
+    else:
+        features['day_of_year'] = 0
+        features['month_sin'] = 0
+        features['month_cos'] = 0
 
     return features
 
@@ -447,6 +522,9 @@ def main():
     # 2.5. Cargar datos meteorológicos
     print("🌤️  Cargando datos meteorológicos...")
     meteo_cache = load_openmeteo_data()
+
+    # 2.6. Calcular features históricas de NO2
+    epa_historical = calculate_epa_historical_features(epa_df)
 
     # 3. Usar TODOS los archivos TEMPO disponibles (o limitar con argumento)
     max_files = int(sys.argv[1]) if len(sys.argv) > 1 else len(tempo_files)
@@ -556,6 +634,13 @@ def main():
                 # Obtener meteorología interpolada para esta ubicación y tiempo
                 meteo = get_meteo_for_time(meteo_cache, timestamp, epa_row['latitude'], epa_row['longitude'])
 
+                # Crear station_id para lookup de features históricas
+                station_id = (
+                    str(epa_row['State Code']) + '_' +
+                    str(epa_row['County Code']).zfill(3) + '_' +
+                    str(epa_row['Site Num']).zfill(4)
+                )
+
                 features = extract_features(
                     cells,
                     epa_row['latitude'],
@@ -568,7 +653,10 @@ def main():
                     timestamp.hour,
                     timestamp.weekday(),
                     timestamp.month,
-                    meteo  # Pasar diccionario completo para nuevas features
+                    meteo,  # Pasar diccionario completo
+                    station_id,  # Para lookup de features históricas
+                    timestamp,  # Para calcular day_of_year, etc
+                    epa_historical  # Cache de features históricas
                 )
 
                 if features is None:
@@ -665,19 +753,20 @@ def main():
         device = 'cpu'
 
     model = xgb.XGBRegressor(
-        n_estimators=100,
-        max_depth=6,
-        learning_rate=0.1,
+        n_estimators=200,       # Más árboles para capturar patrones temporales
+        max_depth=7,            # Aumentado para capturar interacciones complejas
+        learning_rate=0.05,     # Menor para aprender más despacio y evitar overfitting
         random_state=42,
         n_jobs=-1,  # Usa todos los cores
         tree_method=tree_method,
         device=device,
-        # Regularización para evitar overfitting
-        reg_alpha=0.5,        # L1 regularization (Lasso)
-        reg_lambda=2.0,       # L2 regularization (Ridge)
-        colsample_bytree=0.8, # Usa 80% de features por árbol
-        subsample=0.8,        # Usa 80% de samples por árbol
-        min_child_weight=3    # Evita splits en nodos pequeños
+        # Regularización más agresiva con features históricas
+        reg_alpha=1.0,          # L1 regularization aumentado
+        reg_lambda=3.0,         # L2 regularization aumentado
+        colsample_bytree=0.75,  # Reduce features por árbol (más diversidad)
+        subsample=0.8,          # Mantener 80% de samples
+        min_child_weight=5,     # Aumentado para evitar splits en nodos pequeños
+        gamma=0.1               # Minimum loss reduction para split (nuevo)
     )
 
     print(f"   Tree method: {tree_method}")
