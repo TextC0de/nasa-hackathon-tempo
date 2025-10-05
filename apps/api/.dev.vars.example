@@ -13,3 +13,16 @@ AIRNOW_API_KEY=your_airnow_api_key_here
 # NASA FIRMS API Key (Fire and thermal anomaly data)
 # Get it from: https://firms.modaps.eosdis.nasa.gov/api/
 FIRMS_API_KEY=your_firms_api_key_here
+
+# U.S. Census Bureau API Key (population data)
+# Get it from: https://api.census.gov/data/key_signup.html
+CENSUS_API_KEY=your_census_api_key_here
+
+# PostgreSQL Database URL
+DATABASE_URL=postgresql://postgres:postgres@localhost:5434/tempos_dev
+
+# ML Service Configuration (OPTIONAL)
+# Set ML_ENABLED=true to enable XGBoost ML predictions for NO2
+# Requires ML service running (pnpm dev:ml)
+ML_ENABLED=false
+ML_SERVICE_URL=http://localhost:8000
