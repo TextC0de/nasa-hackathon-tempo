@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useMemo, useCallback, useState } from 'react'
+import React, { useEffect, useMemo, useCallback, useRef } from 'react'
 import { useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet.markercluster'
@@ -504,8 +504,8 @@ export const MonitoringStationsLayer = React.memo(function MonitoringStationsLay
   // Hook para obtener datos de estaciones (usar groupedStations)
   const { groupedStations, isLoading, error } = useMonitoringStations(CALIFORNIA_CONFIG)
 
-  // Estado para clustering
-  const [clusterGroup, setClusterGroup] = useState<L.MarkerClusterGroup | null>(null)
+  // Ref para clustering (usar ref en lugar de state para evitar problemas en cleanup)
+  const clusterGroupRef = useRef<L.MarkerClusterGroup | null>(null)
 
 // Memoizar estaciones válidas (con coordenadas) - Optimizado
   const validStations = useMemo(() => {
@@ -583,10 +583,10 @@ export const MonitoringStationsLayer = React.memo(function MonitoringStationsLay
 
     try {
       // Limpiar cluster group existente
-      if (clusterGroup) {
+      if (clusterGroupRef.current) {
         console.log('🧹 [LAYER] Limpiando cluster group anterior')
-        map.removeLayer(clusterGroup)
-        setClusterGroup(null)
+        map.removeLayer(clusterGroupRef.current)
+        clusterGroupRef.current = null
       }
 
       // Crear nuevo grupo de clustering
@@ -646,7 +646,7 @@ export const MonitoringStationsLayer = React.memo(function MonitoringStationsLay
 
       // Agregar cluster group al mapa
       map.addLayer(newClusterGroup)
-      setClusterGroup(newClusterGroup)
+      clusterGroupRef.current = newClusterGroup
       console.log('🗺️  [LAYER] Cluster group agregado al mapa')
 
       // Ajustar vista del mapa para mostrar todas las estaciones
@@ -689,12 +689,12 @@ export const MonitoringStationsLayer = React.memo(function MonitoringStationsLay
 
     // Cleanup function
     return () => {
-      if (clusterGroup) {
-        map.removeLayer(clusterGroup)
-        setClusterGroup(null)
+      if (clusterGroupRef.current) {
+        map.removeLayer(clusterGroupRef.current)
+        clusterGroupRef.current = null
       }
     }
-  }, [handleMarkers])
+  }, [handleMarkers, map])
 
   // Manejo de errores
   useEffect(() => {

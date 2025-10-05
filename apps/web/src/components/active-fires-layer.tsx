@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useMemo, useCallback, useState } from 'react'
+import React, { useEffect, useMemo, useCallback, useRef } from 'react'
 import { useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet.markercluster'
@@ -512,7 +512,8 @@ export const ActiveFiresLayer = React.memo(function ActiveFiresLayer({
   onFireClick
 }: ActiveFiresLayerProps) {
   const map = useMap()
-  const [clusterGroup, setClusterGroup] = useState<L.MarkerClusterGroup | null>(null)
+  // Ref para clustering (usar ref en lugar de state para evitar problemas en cleanup)
+  const clusterGroupRef = useRef<L.MarkerClusterGroup | null>(null)
 
   // Validar y filtrar fuegos con coordenadas válidas
   const validFires = useMemo(() => {
@@ -588,10 +589,10 @@ export const ActiveFiresLayer = React.memo(function ActiveFiresLayer({
 
     try {
       // Limpiar cluster group existente
-      if (clusterGroup) {
+      if (clusterGroupRef.current) {
         console.log('🧹 [FIRES LAYER] Limpiando cluster group anterior')
-        map.removeLayer(clusterGroup)
-        setClusterGroup(null)
+        map.removeLayer(clusterGroupRef.current)
+        clusterGroupRef.current = null
       }
 
       // Crear nuevo grupo de clustering
@@ -641,7 +642,7 @@ export const ActiveFiresLayer = React.memo(function ActiveFiresLayer({
 
       // Agregar al mapa
       map.addLayer(newClusterGroup)
-      setClusterGroup(newClusterGroup)
+      clusterGroupRef.current = newClusterGroup
       console.log('🗺️  [FIRES LAYER] Cluster group agregado al mapa')
 
       console.log('🎉 [FIRES LAYER] === RENDERIZADO COMPLETADO ===')
@@ -655,12 +656,12 @@ export const ActiveFiresLayer = React.memo(function ActiveFiresLayer({
     handleMarkers()
 
     return () => {
-      if (clusterGroup) {
-        map.removeLayer(clusterGroup)
-        setClusterGroup(null)
+      if (clusterGroupRef.current) {
+        map.removeLayer(clusterGroupRef.current)
+        clusterGroupRef.current = null
       }
     }
-  }, [handleMarkers])
+  }, [handleMarkers, map])
 
   return null
 })
