@@ -37,14 +37,43 @@ export function HistoryView({
   latitude = 36.7783,
   longitude = -119.4179
 }: HistoryViewProps) {
+  // Estado de filtros (edición)
   const [startDate, setStartDate] = useState<Date>(subDays(new Date(), 30))
   const [endDate, setEndDate] = useState<Date>(new Date())
   const [granularity, setGranularity] = useState<Granularity>('daily')
 
-  // Calcular días entre fechas
+  // Estado de filtros aplicados (los que realmente se usan)
+  const [appliedStartDate, setAppliedStartDate] = useState<Date>(subDays(new Date(), 30))
+  const [appliedEndDate, setAppliedEndDate] = useState<Date>(new Date())
+  const [appliedGranularity, setAppliedGranularity] = useState<Granularity>('daily')
+
+  // Calcular días entre fechas aplicadas
   const daysDiff = useMemo(() => {
-    return differenceInDays(endDate, startDate)
-  }, [startDate, endDate])
+    return differenceInDays(appliedEndDate, appliedStartDate)
+  }, [appliedStartDate, appliedEndDate])
+
+  // Detectar si hay cambios sin aplicar
+  const hasUnappliedChanges = useMemo(() => {
+    return (
+      startDate.getTime() !== appliedStartDate.getTime() ||
+      endDate.getTime() !== appliedEndDate.getTime() ||
+      granularity !== appliedGranularity
+    )
+  }, [startDate, endDate, granularity, appliedStartDate, appliedEndDate, appliedGranularity])
+
+  // Aplicar filtros
+  const handleApplyFilters = () => {
+    setAppliedStartDate(startDate)
+    setAppliedEndDate(endDate)
+    setAppliedGranularity(granularity)
+  }
+
+  // Resetear filtros a los aplicados
+  const handleResetFilters = () => {
+    setStartDate(appliedStartDate)
+    setEndDate(appliedEndDate)
+    setGranularity(appliedGranularity)
+  }
 
   // Presets rápidos
   const handlePreset = (preset: '7d' | '30d' | '90d' | '1y') => {
@@ -257,6 +286,31 @@ export function HistoryView({
                 {granularity === 'monthly' && '✓ Granularidad mensual ideal para rangos > 365 días'}
               </p>
             </div>
+
+            {/* Botones de acción */}
+            <div className="flex gap-2 pt-4 border-t">
+              <Button
+                onClick={handleApplyFilters}
+                disabled={!hasUnappliedChanges}
+                className="flex-1"
+              >
+                Aplicar Filtros
+              </Button>
+              <Button
+                onClick={handleResetFilters}
+                variant="outline"
+                disabled={!hasUnappliedChanges}
+              >
+                Cancelar
+              </Button>
+            </div>
+
+            {hasUnappliedChanges && (
+              <p className="text-xs text-orange-600 dark:text-orange-400 flex items-center gap-1">
+                <span className="inline-block w-2 h-2 rounded-full bg-orange-600 dark:bg-orange-400"></span>
+                Tienes cambios sin aplicar
+              </p>
+            )}
           </CardContent>
         </Card>
 
