@@ -40,6 +40,13 @@ const envSchema = z.object({
    * Get it from: https://api.census.gov/data/key_signup.html
    */
   CENSUS_API_KEY: z.string().min(1, 'CENSUS_API_KEY is required'),
+
+  /**
+   * ML Service URL
+   * URL of the Python ML service that serves XGBoost NO2 predictions
+   * Local: http://localhost:8000 | Production: https://your-ml-service.workers.dev
+   */
+  ML_SERVICE_URL: z.string().url('ML_SERVICE_URL must be a valid URL'),
 })
 
 export type Env = z.infer<typeof envSchema>
