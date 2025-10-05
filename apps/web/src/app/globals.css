@@ -150,6 +150,21 @@
   z-index: 1 !important;
 }
 
+/* Pane personalizado para límites de ciudades - debe estar debajo de overlays */
+.leaflet-cityBoundariesPane-pane {
+  z-index: 200 !important;
+}
+
+/* Pane para TEMPO satellite overlay - entre límites de ciudades y marcadores */
+.leaflet-tempoPane-pane {
+  z-index: 400 !important;
+}
+
+/* Overlay pane por defecto - para GeoJSON y otros overlays */
+.leaflet-overlay-pane {
+  z-index: 400 !important;
+}
+
 .leaflet-popup-pane {
   z-index: 700 !important;
 }

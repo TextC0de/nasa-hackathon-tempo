@@ -657,7 +657,7 @@ export const MonitoringStationsLayer = React.memo(function MonitoringStationsLay
           east: mapBounds.getEast().toFixed(4),
           west: mapBounds.getWest().toFixed(4)
         })
-        map.fitBounds(mapBounds.pad(0.1))
+        map.fitBounds(mapBounds.pad(0.1), { maxZoom: 12 })
       }
 
       console.log('🎉 [LAYER] === RENDERIZADO COMPLETADO ===')

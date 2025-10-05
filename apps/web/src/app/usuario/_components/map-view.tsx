@@ -352,6 +352,8 @@ export function MapView({
         <MapContainer
           center={mapCenter}
           zoom={10}
+          minZoom={5}
+          maxZoom={18}
           style={{ height: "100%", width: "100%" }}
           key={`${searchLat}-${searchLng}`}
         >

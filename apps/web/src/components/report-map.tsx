@@ -162,6 +162,8 @@ export function ReportMap({ onMapClick, selectedLocation, className }: ReportMap
       <MapContainer
         center={MAP_CONFIG.center}
         zoom={MAP_CONFIG.zoom}
+        minZoom={5}
+        maxZoom={18}
         style={{ height: "100%", width: "100%" }}
         bounds={MAP_CONFIG.bounds}
         boundsOptions={MAP_CONFIG.boundsOptions}

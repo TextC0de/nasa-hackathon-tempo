@@ -99,6 +99,8 @@ function ReportsMapComponent({
       <MapContainer
         center={CALIFORNIA_CENTER}
         zoom={CALIFORNIA_ZOOM}
+        minZoom={5}
+        maxZoom={18}
         className="h-full w-full z-0"
         maxBounds={CALIFORNIA_BOUNDS}
         maxBoundsViscosity={1.0}

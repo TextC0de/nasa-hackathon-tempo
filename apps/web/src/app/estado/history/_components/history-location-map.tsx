@@ -322,6 +322,8 @@ export function HistoryLocationMap({
           <MapContainer
             center={position}
             zoom={isExpanded ? 10 : 9}
+            minZoom={5}
+            maxZoom={18}
             style={{ height: '100%', width: '100%' }}
             zoomControl={isExpanded}
             dragging={true}
