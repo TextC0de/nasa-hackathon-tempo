@@ -55,7 +55,27 @@ export const obtenerPoblacionAfectadaProcedure = publicProcedure
   .query(async ({ input, ctx }) => {
     const airnowApiKey = ctx.env.AIRNOW_API_KEY
 
+    // Generar cache key única basada en la hora (datos de AirNow se actualizan cada hora)
+    const now = new Date()
+    const hourTimestamp = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}T${String(now.getUTCHours()).padStart(2, '0')}`
+    const cacheKey = `poblacion-afectada-v1:${hourTimestamp}:${input.minimoNivelAQI || 0}`
+    const cacheUrl = new URL(`https://cache.internal/${cacheKey}`)
+
     console.log('📊 [POBLACIÓN AFECTADA] Obteniendo datos de AQI para ciudades principales...')
+    console.log('🔑 Cache key:', cacheKey)
+
+    // Intentar leer del cache de Cloudflare primero
+    try {
+      const cachedResponse = await ctx.cache.match(cacheUrl)
+      if (cachedResponse) {
+        const cachedData = await cachedResponse.json()
+        console.log('✅ [POBLACIÓN AFECTADA] Datos obtenidos del cache de Cloudflare')
+        return cachedData
+      }
+      console.log('⚠️  [POBLACIÓN AFECTADA] No hay cache, consultando AirNow API...')
+    } catch (error) {
+      console.warn('⚠️  [POBLACIÓN AFECTADA] Error al leer cache, continuando con API:', error)
+    }
 
     // Obtener AQI para cada ciudad
     const ciudadesConAQI = await Promise.allSettled(
@@ -171,10 +191,35 @@ export const obtenerPoblacionAfectadaProcedure = publicProcedure
       `   Población total monitoreada: ${estadisticas.poblacionTotal.toLocaleString()}`
     )
 
-    return {
+    const result = {
       ciudades: ciudadesFiltradas,
       estadisticas,
       timestamp: new Date().toISOString(),
       totalCiudades: ciudadesFiltradas.length,
     }
+
+    // Guardar en cache de Cloudflare (TTL: 1 hora = 3600 segundos)
+    try {
+      const cacheResponse = new Response(JSON.stringify(result), {
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'public, max-age=3600', // 1 hora
+          'CDN-Cache-Control': 'public, max-age=3600',
+        },
+      })
+
+      // waitUntil permite guardar en cache sin bloquear la respuesta
+      if (ctx.waitUntil) {
+        ctx.waitUntil(ctx.cache.put(cacheUrl, cacheResponse.clone()))
+        console.log('💾 [POBLACIÓN AFECTADA] Datos guardados en cache de Cloudflare (async)')
+      } else {
+        await ctx.cache.put(cacheUrl, cacheResponse)
+        console.log('💾 [POBLACIÓN AFECTADA] Datos guardados en cache de Cloudflare (sync)')
+      }
+    } catch (error) {
+      console.warn('⚠️  [POBLACIÓN AFECTADA] Error al guardar en cache:', error)
+      // No fallar si el cache no funciona, solo logear el error
+    }
+
+    return result
   })
