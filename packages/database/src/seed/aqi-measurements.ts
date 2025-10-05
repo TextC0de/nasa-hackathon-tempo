@@ -89,20 +89,37 @@ function getAQICategory(aqi: number): number {
 export async function seedAqiMeasurements(db: PostgresJsDatabase<Record<string, unknown>>) {
   console.log('\n📊 Seeding AQI Measurements from EPA CSV files...')
 
-  const basePath = resolve(process.cwd(), '../../scripts/downloads-uncompressed/epa/2025-ene-jun')
+  const baseDir = resolve(process.cwd(), '../../scripts/downloads-uncompressed/epa')
 
-  // Verificar que exista el directorio
-  if (!existsSync(basePath)) {
-    console.log(`   ❌ Directorio no encontrado: ${basePath}`)
+  // Directorios a procesar (2024 completo y 2025 parcial)
+  const dataSets = [
+    { dir: resolve(baseDir, '2024-full'), year: 2024 },
+    { dir: resolve(baseDir, '2025-ene-jun'), year: 2025 },
+  ]
+
+  const allFiles: Array<{ path: string; parameter: string; year: number }> = []
+
+  // Construir lista de archivos a procesar
+  for (const dataSet of dataSets) {
+    if (!existsSync(dataSet.dir)) {
+      console.log(`   ⚠️  Directorio no encontrado: ${dataSet.dir}`)
+      continue
+    }
+
+    allFiles.push(
+      { path: resolve(dataSet.dir, 'o3.csv'), parameter: 'O3', year: dataSet.year },
+      { path: resolve(dataSet.dir, 'no2.csv'), parameter: 'NO2', year: dataSet.year },
+      { path: resolve(dataSet.dir, 'pm25.csv'), parameter: 'PM25', year: dataSet.year }
+    )
+  }
+
+  if (allFiles.length === 0) {
+    console.log(`   ❌ No se encontraron archivos para procesar`)
     console.log(`   ℹ️  Descarga primero los archivos EPA`)
     return
   }
 
-  const files = [
-    { path: resolve(basePath, 'o3.csv'), parameter: 'O3' },
-    { path: resolve(basePath, 'no2.csv'), parameter: 'NO2' },
-    { path: resolve(basePath, 'pm25.csv'), parameter: 'PM25' },
-  ]
+  const files = allFiles
 
   // 1. Cargar estaciones de California en memoria para mapeo rápido
   console.log('\n   📍 Cargando estaciones de California...')
@@ -137,7 +154,7 @@ export async function seedAqiMeasurements(db: PostgresJsDatabase<Record<string, 
       continue
     }
 
-    console.log(`\n   🔄 Procesando ${file.parameter}...`)
+    console.log(`\n   🔄 Procesando ${file.parameter} (${file.year})...`)
     console.log(`      Archivo: ${file.path}`)
 
     let totalRows = 0
@@ -223,7 +240,7 @@ export async function seedAqiMeasurements(db: PostgresJsDatabase<Record<string, 
       insertedRows += batch.length
     }
 
-    console.log(`   ✅ ${file.parameter} completado:`)
+    console.log(`   ✅ ${file.parameter} (${file.year}) completado:`)
     console.log(`      Total filas: ${totalRows.toLocaleString()}`)
     console.log(`      California: ${californiaRows.toLocaleString()}`)
     console.log(`      Insertadas: ${insertedRows.toLocaleString()}`)

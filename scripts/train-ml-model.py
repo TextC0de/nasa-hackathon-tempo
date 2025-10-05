@@ -264,10 +264,11 @@ def calculate_epa_historical_features(epa_df):
         station_data['no2_avg_7d'] = station_data['value'].rolling('7D', min_periods=1).mean()
 
         # Calcular tendencia (cambio porcentual en 24h)
-        # shift(24) asume mediciones horarias
+        # Usar shift con freq para desplazamiento temporal real (no por filas)
+        value_24h_ago = station_data['value'].shift(freq=pd.Timedelta(hours=24))
         station_data['no2_trend_24h'] = (
-            (station_data['value'] - station_data['value'].shift(24)) /
-            (station_data['value'].shift(24) + 0.1)  # +0.1 para evitar división por 0
+            (station_data['value'] - value_24h_ago) /
+            (value_24h_ago.abs() + 0.1)  # +0.1 para evitar división por 0
         ).fillna(0)
 
         # Convertir a diccionario: {timestamp_str: {features}}
@@ -456,10 +457,16 @@ def extract_features(cells, epa_lat, epa_lon, wind_speed, wind_dir, pbl_height,
         'precipitation': precip,
         'pbl_normalized': pbl_height / 800,
 
-        # Temporal (valores continuos, XGBoost aprenderá los patrones)
+        # Temporal (valores continuos + codificación cíclica)
         'hour': local_hour,
         'day_of_week': day_of_week,
         'month': month,
+        # Codificación cíclica de hora (23 está cerca de 0)
+        'hour_sin': np.sin(2 * np.pi * local_hour / 24),
+        'hour_cos': np.cos(2 * np.pi * local_hour / 24),
+        # Codificación cíclica de día de semana (domingo=6 está cerca de lunes=0)
+        'day_sin': np.sin(2 * np.pi * day_of_week / 7),
+        'day_cos': np.cos(2 * np.pi * day_of_week / 7),
 
         # Predicción física (MUY IMPORTANTE)
         'physics_prediction': physics_pred,

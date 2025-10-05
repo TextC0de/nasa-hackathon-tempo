@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Loader2, TrendingDown, TrendingUp, Minus, Calendar, Clock } from "lucide-react"
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend } from "recharts"
+import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend, PieChart, Pie, Cell } from "recharts"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 
@@ -169,9 +169,27 @@ export function HistoryChart({
     aqi_avg: Math.round(d.aqi_avg),
     aqi_min: d.aqi_min ? Math.round(d.aqi_min) : undefined,
     aqi_max: d.aqi_max ? Math.round(d.aqi_max) : undefined,
+    o3_avg: d.o3_avg,
+    no2_avg: d.no2_avg,
+    pm25_avg: d.pm25_avg,
     dominant_pollutant: d.dominant_pollutant,
     hour: data.granularity === 'hourly' ? new Date(d.timestamp).getHours() : undefined
   }))
+
+  // Calcular porcentaje de contribución por contaminante
+  const pollutantStats = chartData.reduce((acc, point) => {
+    if (point.o3_avg) acc.o3_total += point.o3_avg
+    if (point.no2_avg) acc.no2_total += point.no2_avg
+    if (point.pm25_avg) acc.pm25_total += point.pm25_avg
+    return acc
+  }, { o3_total: 0, no2_total: 0, pm25_total: 0 })
+
+  const totalPollution = pollutantStats.o3_total + pollutantStats.no2_total + pollutantStats.pm25_total
+  const pollutantPercentages = totalPollution > 0 ? {
+    o3: (pollutantStats.o3_total / totalPollution) * 100,
+    no2: (pollutantStats.no2_total / totalPollution) * 100,
+    pm25: (pollutantStats.pm25_total / totalPollution) * 100,
+  } : { o3: 0, no2: 0, pm25: 0 }
 
   // Determinar icono de tendencia
   const TrendIcon = data.trend?.direction === 'improving'
@@ -266,16 +284,92 @@ export function HistoryChart({
           </div>
         )}
 
-        {/* Chart */}
-        <div className="h-64 sm:h-80">
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Chart Principal - AQI */}
+          <div className="lg:col-span-2 h-64 sm:h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                <defs>
+                  <linearGradient id="aqiGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={getAQIColor(data.stats?.avg ?? 50)} stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor={getAQIColor(data.stats?.avg ?? 50)} stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis
+                  dataKey="timestamp"
+                  tickFormatter={(value) => {
+                    const date = new Date(value)
+                    if (data.granularity === 'hourly') {
+                      return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+                    }
+                    return date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })
+                  }}
+                  className="text-xs"
+                  stroke="hsl(var(--muted-foreground))"
+                />
+                <YAxis
+                  className="text-xs"
+                  stroke="hsl(var(--muted-foreground))"
+                  label={{ value: 'AQI', angle: -90, position: 'insideLeft', className: 'text-xs fill-muted-foreground' }}
+                />
+                <Tooltip content={<CustomTooltip />} />
+
+                {/* Líneas de referencia para categorías AQI */}
+                <ReferenceLine y={50} stroke="#10b981" strokeDasharray="3 3" opacity={0.3} />
+                <ReferenceLine y={100} stroke="#f59e0b" strokeDasharray="3 3" opacity={0.3} />
+                <ReferenceLine y={150} stroke="#f97316" strokeDasharray="3 3" opacity={0.3} />
+                <ReferenceLine y={200} stroke="#ef4444" strokeDasharray="3 3" opacity={0.3} />
+
+                <Area
+                  type="monotone"
+                  dataKey="aqi_avg"
+                  stroke={getAQIColor(data.stats?.avg ?? 50)}
+                  strokeWidth={2}
+                  fill="url(#aqiGradient)"
+                  dot={false}
+                  activeDot={{ r: 6 }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Pie Chart - Contribución por Contaminante */}
+          <div className="h-64 sm:h-80 flex flex-col">
+            <h4 className="text-sm font-semibold mb-2">Contribución por Contaminante</h4>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={[
+                    { name: 'O₃ (Ozono)', value: pollutantPercentages.o3, color: '#3b82f6' },
+                    { name: 'NO₂ (Dióxido de Nitrógeno)', value: pollutantPercentages.no2, color: '#ef4444' },
+                    { name: 'PM2.5 (Partículas)', value: pollutantPercentages.pm25, color: '#8b5cf6' },
+                  ]}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={40}
+                  outerRadius={80}
+                  paddingAngle={2}
+                  dataKey="value"
+                  label={({ name, percent }) => `${name.split(' ')[0]} ${(percent * 100).toFixed(0)}%`}
+                  labelLine={false}
+                >
+                  <Cell fill="#3b82f6" />
+                  <Cell fill="#ef4444" />
+                  <Cell fill="#8b5cf6" />
+                </Pie>
+                <Tooltip formatter={(value: number) => `${value.toFixed(1)}%`} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Chart de Contaminantes Individuales */}
+        <div className="h-64 sm:h-80 mt-4">
+          <h4 className="text-sm font-semibold mb-2">Tendencias por Contaminante (ppb / μg/m³)</h4>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-              <defs>
-                <linearGradient id="aqiGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={getAQIColor(data.stats?.avg ?? 50)} stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor={getAQIColor(data.stats?.avg ?? 50)} stopOpacity={0}/>
-                </linearGradient>
-              </defs>
+            <LineChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
               <XAxis
                 dataKey="timestamp"
@@ -292,26 +386,35 @@ export function HistoryChart({
               <YAxis
                 className="text-xs"
                 stroke="hsl(var(--muted-foreground))"
-                label={{ value: 'AQI', angle: -90, position: 'insideLeft', className: 'text-xs fill-muted-foreground' }}
+                label={{ value: 'Concentración', angle: -90, position: 'insideLeft', className: 'text-xs fill-muted-foreground' }}
               />
-              <Tooltip content={<CustomTooltip />} />
-
-              {/* Líneas de referencia para categorías AQI */}
-              <ReferenceLine y={50} stroke="#10b981" strokeDasharray="3 3" opacity={0.3} />
-              <ReferenceLine y={100} stroke="#f59e0b" strokeDasharray="3 3" opacity={0.3} />
-              <ReferenceLine y={150} stroke="#f97316" strokeDasharray="3 3" opacity={0.3} />
-              <ReferenceLine y={200} stroke="#ef4444" strokeDasharray="3 3" opacity={0.3} />
-
-              <Area
+              <Tooltip />
+              <Legend />
+              <Line
                 type="monotone"
-                dataKey="aqi_avg"
-                stroke={getAQIColor(data.stats?.avg ?? 50)}
+                dataKey="o3_avg"
+                stroke="#3b82f6"
                 strokeWidth={2}
-                fill="url(#aqiGradient)"
                 dot={false}
-                activeDot={{ r: 6 }}
+                name="O₃ (Ozono)"
               />
-            </AreaChart>
+              <Line
+                type="monotone"
+                dataKey="no2_avg"
+                stroke="#ef4444"
+                strokeWidth={2}
+                dot={false}
+                name="NO₂"
+              />
+              <Line
+                type="monotone"
+                dataKey="pm25_avg"
+                stroke="#8b5cf6"
+                strokeWidth={2}
+                dot={false}
+                name="PM2.5"
+              />
+            </LineChart>
           </ResponsiveContainer>
         </div>
 
