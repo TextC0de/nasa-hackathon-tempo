@@ -20,7 +20,7 @@ export function createContext(opts: FetchCreateContextFnOptions & { env?: any; e
 
   // Cloudflare Cache API para cachear respuestas de APIs externas
   // Esto evita rate limits (ej: AirNow 500 req/hora)
-  const cache = caches.default
+  const cache = (caches as any).default as any;
 
   return {
     req: opts.req,
