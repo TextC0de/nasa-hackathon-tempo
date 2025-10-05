@@ -64,99 +64,129 @@ export const obtenerPoblacionAfectadaProcedure = publicProcedure
     console.log('📊 [POBLACIÓN AFECTADA] Obteniendo datos de AQI para ciudades principales...')
     console.log('🔑 Cache key:', cacheKey)
 
+    const startTime = Date.now()
+
     // Intentar leer del cache de Cloudflare primero
     try {
       const cachedResponse = await ctx.cache.match(cacheUrl)
       if (cachedResponse) {
         const cachedData = await cachedResponse.json()
-        console.log('✅ [POBLACIÓN AFECTADA] Datos obtenidos del cache de Cloudflare')
+        const cacheTime = Date.now() - startTime
+        console.log(`✅ [POBLACIÓN AFECTADA] Datos obtenidos del cache de Cloudflare en ${cacheTime}ms`)
+        console.log(`   ${(cachedData as any).ciudades?.length || 0} ciudades en cache`)
         return cachedData
       }
       console.log('⚠️  [POBLACIÓN AFECTADA] No hay cache, consultando AirNow API...')
+      console.log('   ⏱️  Esto tomará ~7 segundos (15 ciudades con delay de 500ms)')
     } catch (error) {
       console.warn('⚠️  [POBLACIÓN AFECTADA] Error al leer cache, continuando con API:', error)
     }
 
-    // Obtener AQI para cada ciudad
-    const ciudadesConAQI = await Promise.allSettled(
-      CIUDADES_CALIFORNIA.map(async (ciudad) => {
-        try {
-          // Llamar a AirNow API para obtener AQI actual
-          const url = `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${ciudad.lat}&longitude=${ciudad.lng}&distance=50&API_KEY=${airnowApiKey}`
+    // Función helper para delay
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
-          console.log(`🔄 [POBLACIÓN] Consultando AQI para ${ciudad.nombre}...`)
-          console.log(`   URL: ${url.replace(airnowApiKey, 'API_KEY_HIDDEN')}`)
+    // Obtener AQI para cada ciudad CON DELAY para respetar rate limit
+    // AirNow permite ~500 req/hora = ~8 req/minuto = 1 req cada 7-8 segundos
+    // Usamos 500ms de delay para ser conservadores
+    const ciudadesConAQI: PromiseSettledResult<any>[] = []
 
-          const response = await fetch(url)
+    for (let i = 0; i < CIUDADES_CALIFORNIA.length; i++) {
+      const ciudad = CIUDADES_CALIFORNIA[i]
 
-          console.log(`📡 [POBLACIÓN] Respuesta para ${ciudad.nombre}: ${response.status} ${response.statusText}`)
+      // Agregar delay entre llamadas (excepto la primera)
+      if (i > 0) {
+        await delay(500) // 500ms entre llamadas = máximo 2 req/segundo
+      }
 
-          if (!response.ok) {
-            const errorText = await response.text()
-            console.warn(`⚠️  [POBLACIÓN] No se pudo obtener AQI para ${ciudad.nombre}`)
-            console.warn(`   Status: ${response.status} ${response.statusText}`)
-            console.warn(`   Error body: ${errorText.substring(0, 200)}`)
-            return {
+      try {
+        // Llamar a AirNow API para obtener AQI actual
+        const url = `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${ciudad.lat}&longitude=${ciudad.lng}&distance=50&API_KEY=${airnowApiKey}`
+
+        console.log(`🔄 [POBLACIÓN] Consultando AQI para ${ciudad.nombre}...`)
+
+        const response = await fetch(url)
+
+        console.log(`📡 [POBLACIÓN] Respuesta para ${ciudad.nombre}: ${response.status} ${response.statusText}`)
+
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.warn(`⚠️  [POBLACIÓN] No se pudo obtener AQI para ${ciudad.nombre} (${response.status})`)
+          if (response.status === 429) {
+            console.warn(`   ⏱️  Rate limit excedido, esperando...`)
+          }
+          ciudadesConAQI.push({
+            status: 'fulfilled',
+            value: {
               ...ciudad,
               aqi: null,
               categoria: null,
               color: null,
               severidad: null,
             }
-          }
+          })
+          continue
+        }
 
-          const data = (await response.json()) as Array<{
-            AQI: number
-            Category: { Name: string }
-            ParameterName: string
-          }>
+        const data = (await response.json()) as Array<{
+          AQI: number
+          Category: { Name: string }
+          ParameterName: string
+        }>
 
-          console.log(`✅ [POBLACIÓN] Datos recibidos para ${ciudad.nombre}: ${data.length} parámetros`)
-          if (data.length > 0) {
-            console.log(`   AQI values: ${data.map(d => `${d.ParameterName}=${d.AQI}`).join(', ')}`)
-          }
+        console.log(`✅ [POBLACIÓN] Datos recibidos para ${ciudad.nombre}: ${data.length} parámetros`)
+        if (data.length > 0) {
+          console.log(`   AQI values: ${data.map(d => `${d.ParameterName}=${d.AQI}`).join(', ')}`)
+        }
 
-          // Tomar el AQI más alto de todos los parámetros
-          const aqiMax = data.length > 0 ? Math.max(...data.map((d) => d.AQI)) : null
+        // Tomar el AQI más alto de todos los parámetros
+        const aqiMax = data.length > 0 ? Math.max(...data.map((d) => d.AQI)) : null
 
-          if (aqiMax === null) {
-            console.warn(`⚠️  [POBLACIÓN] No hay datos de AQI para ${ciudad.nombre}`)
-            return {
+        if (aqiMax === null) {
+          console.warn(`⚠️  [POBLACIÓN] No hay datos de AQI para ${ciudad.nombre}`)
+          ciudadesConAQI.push({
+            status: 'fulfilled',
+            value: {
               ...ciudad,
               aqi: null,
               categoria: null,
               color: null,
               severidad: null,
             }
-          }
+          })
+          continue
+        }
 
-          const clasificacion = categorizarAQI(aqiMax)
+        const clasificacion = categorizarAQI(aqiMax)
 
-          console.log(`✅ [POBLACIÓN] ${ciudad.nombre}: AQI ${aqiMax} (${clasificacion.categoria})`)
+        console.log(`✅ [POBLACIÓN] ${ciudad.nombre}: AQI ${aqiMax} (${clasificacion.categoria})`)
 
-          return {
+        ciudadesConAQI.push({
+          status: 'fulfilled',
+          value: {
             ...ciudad,
             aqi: aqiMax,
             categoria: clasificacion.categoria,
             color: clasificacion.color,
             severidad: clasificacion.severidad,
           }
-        } catch (error) {
-          console.error(`❌ [POBLACIÓN] Error obteniendo AQI para ${ciudad.nombre}:`, error)
-          if (error instanceof Error) {
-            console.error(`   Message: ${error.message}`)
-            console.error(`   Stack: ${error.stack?.substring(0, 300)}`)
-          }
-          return {
+        })
+      } catch (error) {
+        console.error(`❌ [POBLACIÓN] Error obteniendo AQI para ${ciudad.nombre}:`, error)
+        if (error instanceof Error) {
+          console.error(`   Message: ${error.message}`)
+        }
+        ciudadesConAQI.push({
+          status: 'fulfilled',
+          value: {
             ...ciudad,
             aqi: null,
             categoria: null,
             color: null,
             severidad: null,
           }
-        }
-      })
-    )
+        })
+      }
+    }
 
     // Procesar resultados
     const ciudadesValidas = ciudadesConAQI
@@ -206,7 +236,8 @@ export const obtenerPoblacionAfectadaProcedure = publicProcedure
       )
     }
 
-    console.log(`✅ [POBLACIÓN AFECTADA] ${ciudadesValidas.length} ciudades procesadas`)
+    const elapsedTime = Date.now() - startTime
+    console.log(`✅ [POBLACIÓN AFECTADA] ${ciudadesValidas.length} ciudades procesadas en ${elapsedTime}ms`)
     console.log(
       `   Población total monitoreada: ${estadisticas.poblacionTotal.toLocaleString()}`
     )

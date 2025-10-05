@@ -1,10 +1,8 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import dynamic from "next/dynamic"
 
-// Forzar rendering del lado del cliente solamente (evitar SSR/SSG)
-export const dynamic = 'force-dynamic'
-export const fetchCache = 'force-no-store'
 import { trpc } from "@/lib/trpc"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -30,7 +28,19 @@ import {
 import { toast } from "sonner"
 import { UserReport } from "@/lib/report-types"
 import { formatDate, formatCoordinates, getSeverityConfig, getTypeConfig } from "@/lib/report-utils"
-import { ReportsMap } from "@/components/reports-map"
+
+// Importar el componente del mapa dinámicamente para evitar problemas de SSR
+const ReportsMap = dynamic(() => import("@/components/reports-map").then(mod => ({ default: mod.ReportsMap })), {
+  ssr: false,
+  loading: () => (
+    <div className="h-full w-full flex items-center justify-center bg-muted">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+        <p className="text-sm text-muted-foreground">Cargando mapa...</p>
+      </div>
+    </div>
+  )
+})
 
 // Alias para compatibilidad con el código existente
 type AdminReport = UserReport
