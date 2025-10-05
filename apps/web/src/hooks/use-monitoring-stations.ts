@@ -62,8 +62,8 @@ export interface GroupedStation {
   FullAQSCode: string
   Status: string
   measurements: ParameterMeasurement[]
-  worstAQI: number // El peor AQI de todos los parámetros
-  worstParameter: string // El parámetro con peor AQI
+  dominantAQI: number // El AQI predominante de todos los parámetros
+  dominantParameter: string // El parámetro predominante
   lastUpdate: string // UTC del dato más reciente
 }
 
@@ -235,8 +235,8 @@ export function useMonitoringStations({
                 FullAQSCode: station.FullAQSCode,
                 Status: station.Status,
                 measurements: [],
-                worstAQI: -Infinity,
-                worstParameter: '',
+                dominantAQI: -Infinity,
+                dominantParameter: '',
                 lastUpdate: station.UTC
               })
             }
@@ -271,11 +271,11 @@ export function useMonitoringStations({
               }
             }
 
-            // Actualizar el peor AQI (ignorar valores negativos = sin datos)
+            // Actualizar el AQI predominante (ignorar valores negativos = sin datos)
             group.measurements.forEach(m => {
-              if (m.AQI > 0 && m.AQI > group.worstAQI) {
-                group.worstAQI = m.AQI
-                group.worstParameter = m.Parameter
+              if (m.AQI > 0 && m.AQI > group.dominantAQI) {
+                group.dominantAQI = m.AQI
+                group.dominantParameter = m.Parameter
               }
             })
 
@@ -310,8 +310,8 @@ export function useMonitoringStations({
               coords: [station.Latitude, station.Longitude],
               measurements: station.measurements.length,
               parameters: station.measurements.map(m => `${m.Parameter}(${m.AQI})`).join(', '),
-              worstAQI: station.worstAQI,
-              worstParameter: station.worstParameter
+              dominantAQI: station.dominantAQI,
+              dominantParameter: station.dominantParameter
             })
           })
 

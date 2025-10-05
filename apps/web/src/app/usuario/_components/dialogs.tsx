@@ -3,6 +3,8 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { useState } from "react"
 import {
   TrendingUp,
   Cloud,
@@ -10,7 +12,11 @@ import {
   Loader2,
   Thermometer,
   Wind,
-  Droplets
+  Droplets,
+  ChevronDown,
+  ChevronUp,
+  Satellite,
+  BrainCircuit
 } from "lucide-react"
 import { getAQIBadge } from "./utils"
 
@@ -61,30 +67,114 @@ export function MetricsDialog({ open, onOpenChange, currentLocation, prediction 
             </Card>
           )}
 
-          {/* Estación */}
+          {/* Estaciones por Parámetro */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Estación de Monitoreo</CardTitle>
+              <CardTitle className="text-base">Estaciones de Monitoreo por Parámetro</CardTitle>
+              <CardDescription className="text-xs">
+                💡 Cada contaminante puede tener una estación diferente - se usa la más cercana con datos
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Proveedor</p>
-                  <p className="font-medium">{prediction.station.provider}</p>
+            <CardContent className="space-y-4">
+              {/* O3 Station */}
+              {prediction.stations?.O3 && (
+                <div className="p-3 border rounded-lg bg-gradient-to-r from-blue-50/50 to-transparent dark:from-blue-950/30">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold text-sm flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">O3</Badge>
+                      Ozono
+                    </h4>
+                    <span className="text-xs text-muted-foreground">
+                      📍 {prediction.stations.O3.distanceKm.toFixed(2)} km
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <p className="text-muted-foreground">Coordenadas</p>
+                      <p className="font-mono">{prediction.stations.O3.latitude.toFixed(4)}°, {prediction.stations.O3.longitude.toFixed(4)}°</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Proveedor</p>
+                      <p className="font-medium">{prediction.stations.O3.provider}</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Distancia</p>
-                  <p className="font-medium">{prediction.station.distanceKm?.toFixed(2)} km</p>
+              )}
+
+              {/* NO2 Station */}
+              {prediction.stations?.NO2 && (
+                <div className="p-3 border rounded-lg bg-gradient-to-r from-orange-50/50 to-transparent dark:from-orange-950/30">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold text-sm flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">NO2</Badge>
+                      Dióxido de Nitrógeno
+                      {prediction.NO2?.forecast?.mlUsed && (
+                        <Badge className="text-[10px] bg-purple-500">🤖 ML</Badge>
+                      )}
+                    </h4>
+                    <span className="text-xs text-muted-foreground">
+                      📍 {prediction.stations.NO2.distanceKm.toFixed(2)} km
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <p className="text-muted-foreground">Coordenadas</p>
+                      <p className="font-mono">{prediction.stations.NO2.latitude.toFixed(4)}°, {prediction.stations.NO2.longitude.toFixed(4)}°</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Proveedor</p>
+                      <p className="font-medium">{prediction.stations.NO2.provider}</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Latitud</p>
-                  <p className="font-medium">{prediction.station.latitude.toFixed(4)}</p>
+              )}
+
+              {/* PM25 Station */}
+              {prediction.stations?.PM25 && (
+                <div className="p-3 border rounded-lg bg-gradient-to-r from-purple-50/50 to-transparent dark:from-purple-950/30">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold text-sm flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">PM2.5</Badge>
+                      Material Particulado
+                    </h4>
+                    <span className="text-xs text-muted-foreground">
+                      📍 {prediction.stations.PM25.distanceKm.toFixed(2)} km
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <p className="text-muted-foreground">Coordenadas</p>
+                      <p className="font-mono">{prediction.stations.PM25.latitude.toFixed(4)}°, {prediction.stations.PM25.longitude.toFixed(4)}°</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Proveedor</p>
+                      <p className="font-medium">{prediction.stations.PM25.provider}</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Longitud</p>
-                  <p className="font-medium">{prediction.station.longitude.toFixed(4)}</p>
+              )}
+
+              {/* Fallback: Si no hay stations separadas, mostrar station general */}
+              {!prediction.stations && prediction.station && (
+                <div className="p-3 border rounded-lg">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-muted-foreground">Proveedor</p>
+                      <p className="font-medium">{prediction.station.provider}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Distancia</p>
+                      <p className="font-medium">{prediction.station.distanceKm?.toFixed(2)} km</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Coordenadas</p>
+                      <p className="font-mono text-xs">
+                        {prediction.station.latitude.toFixed(4)}°, {prediction.station.longitude.toFixed(4)}°
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 
@@ -512,6 +602,10 @@ interface PollutantsDialogProps {
 }
 
 export function PollutantsDialog({ open, onOpenChange, prediction }: PollutantsDialogProps) {
+  const [expandedO3, setExpandedO3] = useState(false)
+  const [expandedNO2, setExpandedNO2] = useState(false)
+  const [expandedPM25, setExpandedPM25] = useState(false)
+
   if (!prediction) return null
 
   return (
@@ -520,8 +614,11 @@ export function PollutantsDialog({ open, onOpenChange, prediction }: PollutantsD
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5" />
-            Análisis de Contaminantes AirNow
+            Análisis Completo de Contaminantes
           </DialogTitle>
+          <CardDescription className="text-xs pt-1">
+            Datos EPA (ground truth) + TEMPO (satélite) + Predicciones ML
+          </CardDescription>
         </DialogHeader>
         <div className="space-y-4">
           {/* O3 */}
@@ -537,9 +634,10 @@ export function PollutantsDialog({ open, onOpenChange, prediction }: PollutantsD
                 <CardDescription>{prediction.O3.currentData.category}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
+                {/* EPA Data */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-sm text-muted-foreground">Concentración</p>
+                    <p className="text-sm text-muted-foreground">Concentración EPA</p>
                     <p className="font-medium">{prediction.O3.currentData.value} {prediction.O3.currentData.unit}</p>
                   </div>
                   <div>
@@ -547,26 +645,56 @@ export function PollutantsDialog({ open, onOpenChange, prediction }: PollutantsD
                     <p className="font-medium text-sm">{prediction.O3.currentData.siteName}</p>
                   </div>
                 </div>
+
+                {/* TEMPO Data - Collapsible */}
                 {prediction.O3.tempo && (
-                  <div className="pt-3 border-t">
-                    <p className="text-sm font-semibold mb-2">Datos TEMPO (Satélite)</p>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <p className="text-muted-foreground">En estación</p>
-                        <p className="font-medium">{prediction.O3.tempo.station?.toFixed(2)} DU</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">En tu ubicación</p>
-                        <p className="font-medium">{prediction.O3.tempo.user?.toFixed(2)} DU</p>
-                      </div>
-                      {prediction.O3.tempo.estimatedUserValue && (
-                        <div className="col-span-2">
-                          <p className="text-muted-foreground">Estimación para tu ubicación</p>
-                          <p className="font-medium text-base">{prediction.O3.tempo.estimatedUserValue.toFixed(2)} {prediction.O3.currentData.unit}</p>
+                  <Collapsible open={expandedO3} onOpenChange={setExpandedO3}>
+                    <CollapsibleTrigger className="w-full">
+                      <div className="flex items-center justify-between w-full pt-3 border-t hover:bg-muted/50 px-2 py-2 rounded">
+                        <div className="flex items-center gap-2">
+                          <Satellite className="h-4 w-4 text-blue-500" />
+                          <p className="text-sm font-semibold">Datos TEMPO (Satélite NASA)</p>
                         </div>
-                      )}
-                    </div>
-                  </div>
+                        {expandedO3 ?
+                          <ChevronUp className="h-4 w-4" /> :
+                          <ChevronDown className="h-4 w-4" />
+                        }
+                      </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pt-2">
+                      <div className="grid grid-cols-2 gap-3 text-sm bg-blue-50/50 dark:bg-blue-950/20 p-3 rounded-lg">
+                        <div>
+                          <p className="text-muted-foreground">Columna en estación</p>
+                          <p className="font-medium">{prediction.O3.tempo.station?.toFixed(2)} DU</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Columna en tu ubicación</p>
+                          <p className="font-medium">{prediction.O3.tempo.user?.toFixed(2)} DU</p>
+                        </div>
+                        {prediction.O3.tempo.ratio && (
+                          <div>
+                            <p className="text-muted-foreground">Ratio Ground/TEMPO</p>
+                            <p className="font-medium">{prediction.O3.tempo.ratio.toFixed(6)}</p>
+                          </div>
+                        )}
+                        {prediction.O3.tempo.timestamp && (
+                          <div>
+                            <p className="text-muted-foreground">Timestamp TEMPO</p>
+                            <p className="font-medium text-xs">{new Date(prediction.O3.tempo.timestamp).toLocaleTimeString('es-ES')}</p>
+                          </div>
+                        )}
+                        {prediction.O3.tempo.estimatedUserValue && (
+                          <div className="col-span-2 pt-2 border-t">
+                            <p className="text-muted-foreground">Estimación física para tu ubicación</p>
+                            <p className="font-medium text-base">{prediction.O3.tempo.estimatedUserValue.toFixed(2)} {prediction.O3.currentData.unit}</p>
+                            <p className="text-xs text-muted-foreground italic mt-1">
+                              Basado en ratio calibrado TEMPO-EPA
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
                 )}
               </CardContent>
             </Card>
@@ -577,7 +705,15 @@ export function PollutantsDialog({ open, onOpenChange, prediction }: PollutantsD
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center justify-between">
-                  <span>Dióxido de Nitrógeno (NO2)</span>
+                  <span className="flex items-center gap-2">
+                    Dióxido de Nitrógeno (NO2)
+                    {prediction.NO2.forecast?.mlUsed && (
+                      <Badge className="text-[10px] bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+                        <BrainCircuit className="h-3 w-3 mr-1" />
+                        XGBoost ML
+                      </Badge>
+                    )}
+                  </span>
                   <Badge className={getAQIBadge(prediction.NO2.currentData.aqi).color}>
                     AQI: {prediction.NO2.currentData.aqi}
                   </Badge>
@@ -585,9 +721,10 @@ export function PollutantsDialog({ open, onOpenChange, prediction }: PollutantsD
                 <CardDescription>{prediction.NO2.currentData.category}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
+                {/* EPA Data */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-sm text-muted-foreground">Concentración</p>
+                    <p className="text-sm text-muted-foreground">Concentración EPA</p>
                     <p className="font-medium">{prediction.NO2.currentData.value} {prediction.NO2.currentData.unit}</p>
                   </div>
                   <div>
@@ -595,26 +732,81 @@ export function PollutantsDialog({ open, onOpenChange, prediction }: PollutantsD
                     <p className="font-medium text-sm">{prediction.NO2.currentData.siteName}</p>
                   </div>
                 </div>
-                {prediction.NO2.tempo && (
-                  <div className="pt-3 border-t">
-                    <p className="text-sm font-semibold mb-2">Datos TEMPO (Satélite)</p>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <p className="text-muted-foreground">En estación</p>
-                        <p className="font-medium">{prediction.NO2.tempo.station?.toExponential(2)} molec/cm²</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">En tu ubicación</p>
-                        <p className="font-medium">{prediction.NO2.tempo.user?.toExponential(2)} molec/cm²</p>
-                      </div>
-                      {prediction.NO2.tempo.estimatedUserValue && (
-                        <div className="col-span-2">
-                          <p className="text-muted-foreground">Estimación para tu ubicación</p>
-                          <p className="font-medium text-base">{prediction.NO2.tempo.estimatedUserValue.toFixed(2)} {prediction.NO2.currentData.unit}</p>
-                        </div>
-                      )}
+
+                {/* ML Prediction */}
+                {prediction.NO2.forecast?.mlUsed && prediction.NO2.forecast?.mlPredictionPpb && (
+                  <div className="p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 rounded-lg border border-purple-200 dark:border-purple-800">
+                    <div className="flex items-center gap-2 mb-2">
+                      <BrainCircuit className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      <p className="text-sm font-semibold">Predicción XGBoost (Machine Learning)</p>
                     </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Valor predicho</p>
+                        <p className="font-bold text-purple-700 dark:text-purple-300">
+                          {prediction.NO2.forecast.mlPredictionPpb.toFixed(2)} ppb
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Modelo</p>
+                        <p className="font-medium text-xs">R²=0.404, MAE=3.03ppb</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2 italic">
+                      💡 Predicción basada en 64 features (TEMPO + meteorología + temporal)
+                    </p>
                   </div>
+                )}
+
+                {/* TEMPO Data - Collapsible */}
+                {prediction.NO2.tempo && (
+                  <Collapsible open={expandedNO2} onOpenChange={setExpandedNO2}>
+                    <CollapsibleTrigger className="w-full">
+                      <div className="flex items-center justify-between w-full pt-3 border-t hover:bg-muted/50 px-2 py-2 rounded">
+                        <div className="flex items-center gap-2">
+                          <Satellite className="h-4 w-4 text-blue-500" />
+                          <p className="text-sm font-semibold">Datos TEMPO (Satélite NASA)</p>
+                        </div>
+                        {expandedNO2 ?
+                          <ChevronUp className="h-4 w-4" /> :
+                          <ChevronDown className="h-4 w-4" />
+                        }
+                      </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pt-2">
+                      <div className="grid grid-cols-2 gap-3 text-sm bg-blue-50/50 dark:bg-blue-950/20 p-3 rounded-lg">
+                        <div>
+                          <p className="text-muted-foreground">Columna en estación</p>
+                          <p className="font-medium font-mono text-xs">{prediction.NO2.tempo.stationValue?.toExponential(2)} molec/cm²</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Columna en tu ubicación</p>
+                          <p className="font-medium font-mono text-xs">{prediction.NO2.tempo.userValue?.toExponential(2)} molec/cm²</p>
+                        </div>
+                        {prediction.NO2.tempo.ratio && (
+                          <div>
+                            <p className="text-muted-foreground">Ratio Ground/TEMPO</p>
+                            <p className="font-medium">{prediction.NO2.tempo.ratio.toFixed(6)}</p>
+                          </div>
+                        )}
+                        {prediction.NO2.tempo.timestamp && (
+                          <div>
+                            <p className="text-muted-foreground">Timestamp TEMPO</p>
+                            <p className="font-medium text-xs">{new Date(prediction.NO2.tempo.timestamp).toLocaleTimeString('es-ES')}</p>
+                          </div>
+                        )}
+                        {prediction.NO2.tempo.estimatedUserValue && (
+                          <div className="col-span-2 pt-2 border-t">
+                            <p className="text-muted-foreground">Estimación física para tu ubicación</p>
+                            <p className="font-medium text-base">{prediction.NO2.tempo.estimatedUserValue.toFixed(2)} {prediction.NO2.currentData.unit}</p>
+                            <p className="text-xs text-muted-foreground italic mt-1">
+                              Basado en ratio calibrado TEMPO-EPA
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
                 )}
               </CardContent>
             </Card>

@@ -219,7 +219,7 @@ async function predictNO2WithML(mlServiceUrl: string, features: Record<string, n
       return null
     }
 
-    const data = await response.json()
+    const data = await response.json() as any;
     return data.predicted_no2_ppb
   } catch (error) {
     console.error(`❌ ML Service call failed:`, error)
@@ -528,7 +528,7 @@ export const predecirAqiProcedure = publicProcedure
     }
 
     // =====================================================
-    // 5. CALCULAR AQI GENERAL (EL PEOR DE TODOS)
+    // 5. CALCULAR AQI GENERAL (EL PARÁMETRO PREDOMINANTE)
     // =====================================================
     const allAqis = [
       parameterResults.O3?.data.AQI,
@@ -537,12 +537,12 @@ export const predecirAqiProcedure = publicProcedure
     ].filter((aqi) => aqi != null) as number[]
 
     const generalAqi = allAqis.length > 0 ? Math.max(...allAqis) : null
-    let worstParameter = null
+    let dominantParameter = null
 
     if (generalAqi) {
-      if (parameterResults.O3?.data.AQI === generalAqi) worstParameter = parameterResults.O3.data
-      else if (parameterResults.NO2?.data.AQI === generalAqi) worstParameter = parameterResults.NO2.data
-      else if (parameterResults.PM25?.data.AQI === generalAqi) worstParameter = parameterResults.PM25.data
+      if (parameterResults.O3?.data.AQI === generalAqi) dominantParameter = parameterResults.O3.data
+      else if (parameterResults.NO2?.data.AQI === generalAqi) dominantParameter = parameterResults.NO2.data
+      else if (parameterResults.PM25?.data.AQI === generalAqi) dominantParameter = parameterResults.PM25.data
     }
 
     // Helper para mapear categorías
@@ -606,8 +606,8 @@ export const predecirAqiProcedure = publicProcedure
       general: generalAqi
         ? {
             aqi: generalAqi,
-            category: getCategoryName(worstParameter?.Category ?? 0),
-            dominantParameter: worstParameter?.Parameter,
+            category: getCategoryName(dominantParameter?.Category ?? 0),
+            dominantParameter: dominantParameter?.Parameter,
           }
         : null,
       O3: parameterResults.O3

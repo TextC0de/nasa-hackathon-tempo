@@ -78,8 +78,8 @@ export function StationWeatherDialog({
 
   if (!station) return null
 
-  const worstAqiColor = getAQIColor(station.worstAQI)
-  const worstAqiCategory = getAQICategory(station.worstAQI)
+  const dominantAqiColor = getAQIColor(station.dominantAQI)
+  const dominantAqiCategory = getAQICategory(station.dominantAQI)
 
   // Formatear timestamp
   const formatTimestamp = (timestamp: string) => {
@@ -189,13 +189,13 @@ export function StationWeatherDialog({
                 </p>
               </div>
 
-              {/* Worst AQI Badge */}
+              {/* Dominant AQI Badge */}
               <div className="text-center">
                 <div
                   className="text-3xl font-bold mb-1"
-                  style={{ color: worstAqiColor }}
+                  style={{ color: dominantAqiColor }}
                 >
-                  {station.worstAQI > 0 ? station.worstAQI : 'N/A'}
+                  {station.dominantAQI > 0 ? station.dominantAQI : 'N/A'}
                 </div>
                 <Badge variant="outline" className="text-xs">
                   AQI
@@ -219,20 +219,20 @@ export function StationWeatherDialog({
             <div
               className="p-3 rounded-lg"
               style={{
-                backgroundColor: `${worstAqiColor}15`,
-                borderLeft: `4px solid ${worstAqiColor}`
+                backgroundColor: `${dominantAqiColor}15`,
+                borderLeft: `4px solid ${dominantAqiColor}`
               }}
             >
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-xs text-gray-600 mb-1">Estado General</div>
-                  <div className="font-semibold" style={{ color: worstAqiColor }}>
-                    {worstAqiCategory.emoji} {worstAqiCategory.category}
+                  <div className="font-semibold" style={{ color: dominantAqiColor }}>
+                    {dominantAqiCategory.emoji} {dominantAqiCategory.category}
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-gray-600 mb-1">Peor Parámetro</div>
-                  <div className="font-semibold text-gray-900">{station.worstParameter}</div>
+                  <div className="text-xs text-gray-600 mb-1">Parámetro Predominante</div>
+                  <div className="font-semibold text-gray-900">{station.dominantParameter}</div>
                 </div>
               </div>
             </div>
