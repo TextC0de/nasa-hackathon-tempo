@@ -59,19 +59,21 @@ export function HistoryView({
   // Estado de filtros
   const [startDate, setStartDate] = useState<Date | undefined>(undefined)
   const [endDate, setEndDate] = useState<Date | undefined>(undefined)
-  const [granularity, setGranularity] = useState<Granularity>('daily')
+  const [granularity, setGranularity] = useState<Granularity>('weekly')
   const [appliedStartDate, setAppliedStartDate] = useState<Date | undefined>(undefined)
   const [appliedEndDate, setAppliedEndDate] = useState<Date | undefined>(undefined)
-  const [appliedGranularity, setAppliedGranularity] = useState<Granularity>('daily')
+  const [appliedGranularity, setAppliedGranularity] = useState<Granularity>('weekly')
 
-  // Inicializar fechas
+  // Inicializar fechas con 1 año por defecto
   useEffect(() => {
     const now = new Date()
-    const thirtyDaysAgo = subDays(now, 30)
-    setStartDate(thirtyDaysAgo)
+    const oneYearAgo = subYears(now, 1)
+    setStartDate(oneYearAgo)
     setEndDate(now)
-    setAppliedStartDate(thirtyDaysAgo)
+    setAppliedStartDate(oneYearAgo)
     setAppliedEndDate(now)
+    setGranularity('weekly')
+    setAppliedGranularity('weekly')
   }, [])
 
   // Datos históricos
@@ -239,27 +241,19 @@ DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format
                   Período de Análisis
                 </h2>
 
-                {/* Presets Mejorados */}
+                {/* Preset: Solo 1 año */}
                 <div className="space-y-2">
-                  {[
-                    { label: 'Última semana', value: '7d', days: '7 días', icon: CalendarIcon },
-                    { label: 'Último mes', value: '30d', days: '30 días', icon: CalendarIcon },
-                    { label: 'Últimos 3 meses', value: '90d', days: '90 días', icon: CalendarDays },
-                    { label: 'Último año', value: '1y', days: '365 días', icon: CalendarRange },
-                  ].map((preset) => (
-                    <Button
-                      key={preset.value}
-                      variant="outline"
-                      onClick={() => handlePreset(preset.value as '7d' | '30d' | '90d' | '1y')}
-                      className="w-full h-auto py-2 px-3 justify-start"
-                    >
-                      <preset.icon className="h-4 w-4 mr-3 shrink-0" />
-                      <div className="text-left flex-1">
-                        <div className="font-semibold text-sm">{preset.label}</div>
-                        <div className="text-[10px] text-muted-foreground">{preset.days}</div>
-                      </div>
-                    </Button>
-                  ))}
+                  <Button
+                    variant="default"
+                    onClick={() => handlePreset('1y')}
+                    className="w-full h-auto py-2 px-3 justify-start"
+                  >
+                    <CalendarRange className="h-4 w-4 mr-3 shrink-0" />
+                    <div className="text-left flex-1">
+                      <div className="font-semibold text-sm">Último año</div>
+                      <div className="text-[10px] opacity-70">365 días</div>
+                    </div>
+                  </Button>
                 </div>
 
                 {/* O personalizado */}
