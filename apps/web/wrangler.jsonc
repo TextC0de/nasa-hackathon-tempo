@@ -12,5 +12,9 @@
       "binding": "NEXT_INC_CACHE_R2_BUCKET",
       "bucket_name": "atmos-web-cache"
     }
-  ]
+  ],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  }
 }
