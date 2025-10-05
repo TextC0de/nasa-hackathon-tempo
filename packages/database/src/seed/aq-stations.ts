@@ -43,7 +43,7 @@ export async function seedAqStations(db: PostgresJsDatabase) {
 
   console.log('Reading CSV file...');
   const content = fs.readFileSync(CSV_PATH, 'utf-8');
-  const records = parseCSV(content) as StationCSVRow[];
+  const records = parseCSV(content) as any as StationCSVRow[];
 
   console.log(`Found ${records.length} stations to seed`);
 

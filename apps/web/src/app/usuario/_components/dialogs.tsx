@@ -112,11 +112,19 @@ export function MetricsDialog({ open, onOpenChange, currentLocation, prediction 
                       <p className="text-muted-foreground">Categoría</p>
                       <p className="font-medium">{prediction.O3.currentData.category}</p>
                     </div>
-                    {prediction.O3.tempo?.estimatedUserValue && (
-                      <div className="col-span-2">
-                        <p className="text-muted-foreground">Estimación TEMPO</p>
-                        <p className="font-medium">{prediction.O3.tempo.estimatedUserValue.toFixed(2)} {prediction.O3.currentData.unit}</p>
-                      </div>
+                    {prediction.O3.tempo?.stationValue && (
+                      <>
+                        <div>
+                          <p className="text-muted-foreground">TEMPO Estación</p>
+                          <p className="font-medium">{prediction.O3.tempo.stationValue.toExponential(2)}</p>
+                        </div>
+                        {prediction.O3.tempo.ratio && (
+                          <div>
+                            <p className="text-muted-foreground">Ratio</p>
+                            <p className="font-medium">{prediction.O3.tempo.ratio.toFixed(3)}</p>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -140,11 +148,19 @@ export function MetricsDialog({ open, onOpenChange, currentLocation, prediction 
                       <p className="text-muted-foreground">Categoría</p>
                       <p className="font-medium">{prediction.NO2.currentData.category}</p>
                     </div>
-                    {prediction.NO2.tempo?.estimatedUserValue && (
-                      <div className="col-span-2">
-                        <p className="text-muted-foreground">Estimación TEMPO</p>
-                        <p className="font-medium">{prediction.NO2.tempo.estimatedUserValue.toFixed(2)} {prediction.NO2.currentData.unit}</p>
-                      </div>
+                    {prediction.NO2.tempo?.stationValue && (
+                      <>
+                        <div>
+                          <p className="text-muted-foreground">TEMPO Estación</p>
+                          <p className="font-medium">{prediction.NO2.tempo.stationValue.toExponential(2)}</p>
+                        </div>
+                        {prediction.NO2.tempo.ratio && (
+                          <div>
+                            <p className="text-muted-foreground">Ratio</p>
+                            <p className="font-medium">{prediction.NO2.tempo.ratio.toFixed(3)}</p>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

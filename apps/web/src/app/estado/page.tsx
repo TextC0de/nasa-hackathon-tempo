@@ -27,7 +27,7 @@ const CaliforniaMap = dynamic(() => import("@/components/california-map").then(m
 
 type MapType = "streetmap" | "topographic" | "hybrid" | "physical"
 
-export default function Dashboard() {
+export default function EstadoOverviewPage() {
   const [mapType, setMapType] = useState<MapType>("streetmap")
   const [openDialog, setOpenDialog] = useState<string | null>(null)
   const [showMonitoringStations, setShowMonitoringStations] = useState(true)
@@ -43,7 +43,7 @@ export default function Dashboard() {
   const [fireDialogOpen, setFireDialogOpen] = useState(false)
 
   // Hook para obtener datos de estaciones de monitoreo
-  const { stations, airQuality, isLoading, error, stats } = useMonitoringStations({
+  const { isLoading, error, stats } = useMonitoringStations({
     centerLat: 36.7783, // Centro de California
     centerLng: -119.4179,
     radiusKm: 200,
@@ -51,12 +51,7 @@ export default function Dashboard() {
   })
 
   // Hook para obtener datos de incendios activos
-  const {
-    fires,
-    statistics: fireStats,
-    isLoading: firesLoading,
-    error: firesError
-  } = useActiveFires({
+  const { fires, statistics: fireStats } = useActiveFires({
     centerLat: 36.7783, // Centro de California
     centerLng: -119.4179,
     radiusKm: 200,
@@ -64,12 +59,11 @@ export default function Dashboard() {
   })
 
   // Hook para manejar alertas
-  const { 
-    alerts, 
-    addAlert, 
-    updateAlertStatus, 
-    removeAlert, 
-    getActiveAlerts 
+  const {
+    alerts,
+    addAlert,
+    updateAlertStatus,
+    getActiveAlerts
   } = useAlerts()
 
   // Funciones para manejar alertas
@@ -90,10 +84,10 @@ export default function Dashboard() {
       }
       
       addAlert(alertWithCoords)
-      
+
       // Cerrar diálogo
       setOpenDialog(null)
-      
+
       // Mostrar mensaje de éxito
       alert("¡Alerta enviada exitosamente! Se ha agregado al mapa.")
       
@@ -128,74 +122,66 @@ export default function Dashboard() {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-background text-foreground">
-        <div className="flex h-screen">
-          {/* Main Content */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <DashboardHeader
-              isLoading={isLoading}
-              error={error}
-              stats={stats}
-              getAQIColor={getAQIColor}
-              getAQILevel={getAQILevel}
-              getAQIDetails={getAQIDetails}
-              setOpenDialog={setOpenDialog}
-            />
+      <div className="flex flex-col h-full overflow-hidden">
+        <DashboardHeader
+          isLoading={isLoading}
+          error={error}
+          stats={stats}
+          getAQIColor={getAQIColor}
+          getAQILevel={getAQILevel}
+          getAQIDetails={getAQIDetails}
+          setOpenDialog={setOpenDialog}
+        />
 
-            <DashboardDialogs
-              openDialog={openDialog}
-              setOpenDialog={setOpenDialog}
-              showMonitoringStations={showMonitoringStations}
-              setShowMonitoringStations={setShowMonitoringStations}
-              showActiveFires={showActiveFires}
-              setShowActiveFires={setShowActiveFires}
-              isLoading={isLoading}
-              error={error}
-              stats={stats}
-              fireStats={fireStats}
-              getAQIColor={getAQIColor}
-              getAQILevel={getAQILevel}
-              handleSubmitAlert={handleSubmitAlert}
-              isSubmittingAlert={isSubmittingAlert}
-              getActiveAlerts={getActiveAlerts}
-              handleResolveAlert={handleResolveAlert}
-              handleDismissAlert={handleDismissAlert}
-            />
+        <DashboardDialogs
+          openDialog={openDialog}
+          setOpenDialog={setOpenDialog}
+          showMonitoringStations={showMonitoringStations}
+          setShowMonitoringStations={setShowMonitoringStations}
+          showActiveFires={showActiveFires}
+          setShowActiveFires={setShowActiveFires}
+          isLoading={isLoading}
+          error={error}
+          stats={stats}
+          fireStats={fireStats}
+          getAQIColor={getAQIColor}
+          getAQILevel={getAQILevel}
+          handleSubmitAlert={handleSubmitAlert}
+          isSubmittingAlert={isSubmittingAlert}
+          getActiveAlerts={getActiveAlerts}
+          handleResolveAlert={handleResolveAlert}
+          handleDismissAlert={handleDismissAlert}
+        />
 
-            {/* Map Content - Solo el mapa limpio */}
-            <main className="flex-1 overflow-hidden relative z-[1]">
-              <div className="h-full w-full">
-                <CaliforniaMap
-                  className="h-full w-full"
-                  mapType={mapType}
-                  onMapTypeChange={(type) => setMapType(type as MapType)}
-                  showMonitoringStations={showMonitoringStations}
-                  showActiveFires={showActiveFires}
-                  alerts={getActiveAlerts()}
-                  fires={fires}
-                  onStationClick={handleStationClick}
-                  onFireClick={handleFireClick}
-                />
-              </div>
-            </main>
-          </div>
+        <div className="flex-1 overflow-hidden">
+          <CaliforniaMap
+            className="h-full w-full"
+            mapType={mapType}
+            onMapTypeChange={(type) => setMapType(type as MapType)}
+            showMonitoringStations={showMonitoringStations}
+            showActiveFires={showActiveFires}
+            alerts={getActiveAlerts()}
+            fires={fires}
+            onStationClick={handleStationClick}
+            onFireClick={handleFireClick}
+          />
         </div>
 
-        {/* Dialog de Estación con Clima */}
-        <StationWeatherDialog
-          station={selectedStation}
-          open={stationDialogOpen}
-          onOpenChange={setStationDialogOpen}
-          getAQIColor={getAQIColor}
-          getAQICategory={getAQIDetails}
-        />
+      {/* Dialog de Estación con Clima */}
+      <StationWeatherDialog
+        station={selectedStation}
+        open={stationDialogOpen}
+        onOpenChange={setStationDialogOpen}
+        getAQIColor={getAQIColor}
+        getAQICategory={getAQIDetails}
+      />
 
-        {/* Dialog de Incendio */}
-        <FireDialog
-          fire={selectedFire}
-          open={fireDialogOpen}
-          onOpenChange={setFireDialogOpen}
-        />
+      {/* Dialog de Incendio */}
+      <FireDialog
+        fire={selectedFire}
+        open={fireDialogOpen}
+        onOpenChange={setFireDialogOpen}
+      />
       </div>
     </TooltipProvider>
   )

@@ -2,6 +2,7 @@ import { config } from "dotenv";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { seedAqStations } from "./aq-stations";
+import { seedAqiMeasurements } from "./aqi-measurements";
 
 const main = async () => {
     config({ path: process.cwd() + "/.dev.vars", override: true });
@@ -17,7 +18,11 @@ const main = async () => {
 
     const db = drizzle(client);
 
+    // Seed stations first
     await seedAqStations(db);
+
+    // Seed measurements (optional - populated in runtime via predecirAqi)
+    await seedAqiMeasurements(db);
 
     await client.end();
 }

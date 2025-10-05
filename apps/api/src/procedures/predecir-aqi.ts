@@ -26,269 +26,308 @@ export const predecirAqiProcedure = publicProcedure
     const { latitude, longitude } = input
 
     // =====================================================
-    // 1. BUSCAR ESTACIÓN MÁS CERCANA
+    // 1. BUSCAR TOP ESTACIONES POR CADA PARÁMETRO
     // =====================================================
-    console.log(`📍 Buscando estación más cercana a (${latitude}, ${longitude})...`)
+    console.log(`📍 Buscando estaciones por parámetro cerca de (${latitude}, ${longitude})...`)
 
-    // Usar PostGIS ST_Distance para encontrar la estación más cercana
-    // ST_Distance con geography devuelve metros
-    const nearestStation = await ctx.db
-      .select({
-        id: aqStations.id,
-        provider: aqStations.provider,
-        parameter: aqStations.parameter,
-        // Extraer lat/lon de la columna geometry
-        latitude: sql<number>`ST_Y(${aqStations.location})`.as('latitude'),
-        longitude: sql<number>`ST_X(${aqStations.location})`.as('longitude'),
-        // Calcular distancia en kilómetros usando PostGIS ST_Distance con geography
-        // geography cast convierte automáticamente a esfera y devuelve metros
-        distance: sql<number>`
-          ST_Distance(
-            ${aqStations.location}::geography,
-            ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::geography
-          ) / 1000
-        `.as('distance'),
-      })
-      .from(aqStations)
-      .orderBy(sql`distance ASC`)
-      .limit(1)
+    const MAX_STATIONS_PER_PARAM = 5
 
-    if (!nearestStation || nearestStation.length === 0) {
-      throw new Error('No se encontró ninguna estación en la base de datos')
+    // Configuración de parámetros
+    const PARAMETERS_CONFIG = [
+      { key: 'O3', dbParam: 'ozone', airNowParams: ['O3', 'OZONE'] },
+      { key: 'NO2', dbParam: 'no2', airNowParams: ['NO2'] },
+      // AirNow API usa 'PM25' sin punto (no 'PM2.5')
+      { key: 'PM25', dbParam: 'pm2.5', airNowParams: ['PM25'] }
+    ] as const
+
+    // Helper para buscar estaciones por parámetro
+    const findStationsByParameter = async (dbParameter: string) => {
+      return await ctx.db
+        .select({
+          id: aqStations.id,
+          provider: aqStations.provider,
+          parameter: aqStations.parameter,
+          latitude: sql<number>`ST_Y(${aqStations.location})`.as('latitude'),
+          longitude: sql<number>`ST_X(${aqStations.location})`.as('longitude'),
+          distance: sql<number>`
+            ST_Distance(
+              ${aqStations.location}::geography,
+              ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::geography
+            ) / 1000
+          `.as('distance'),
+        })
+        .from(aqStations)
+        .where(sql`${aqStations.parameter} = ${dbParameter}`)
+        .orderBy(sql`distance ASC`)
+        .limit(MAX_STATIONS_PER_PARAM)
     }
 
-    const station = nearestStation[0]
-    console.log(`   ✓ Estación encontrada: ${station.provider} a ${station.distance?.toFixed(2)} km`)
-
     // =====================================================
-    // 2. OBTENER DATOS ACTUALES DE AIRNOW (MONITORING SITES)
+    // 2. BUSCAR DATOS POR PARÁMETRO CON FALLBACK
     // =====================================================
-    console.log(`📊 Obteniendo datos de AirNow...`)
+    console.log(`📊 Buscando datos de AirNow por parámetro con fallback...`)
 
     const airNowClient = new AirNowClient({
       apiKey: ctx.env.AIRNOW_API_KEY,
     })
-
-    // Obtener hora actual para el rango de tiempo
+    const tempoService = new TEMPOService()
     const now = new Date()
 
-    // Intentar con diferentes rangos de tiempo (últimas 6 horas)
-    let currentAirQuality: any[] = []
     const timeRanges = [
-      { start: 0, end: 1 },   // Hora actual
-      { start: -1, end: 1 },  // Última hora hasta próxima
-      { start: -3, end: 1 },  // Últimas 3 horas
-      { start: -6, end: 1 },  // Últimas 6 horas
+      { start: 0, end: 1 },
+      { start: -1, end: 1 },
+      { start: -3, end: 1 },
+      { start: -6, end: 1 },
     ]
 
-    const bbox = {
-      minLongitude: station.longitude - 1.5,
-      minLatitude: station.latitude - 1.5,
-      maxLongitude: station.longitude + 1.5,
-      maxLatitude: station.latitude + 1.5,
-    }
+    // Helper para intentar obtener datos de una estación
+    const tryGetStationData = async (station: any, airNowParamNames: string[]) => {
+      const bbox = {
+        minLongitude: station.longitude - 1.5,
+        minLatitude: station.latitude - 1.5,
+        maxLongitude: station.longitude + 1.5,
+        maxLatitude: station.latitude + 1.5,
+      }
 
-    for (const range of timeRanges) {
-      const startTime = new Date(now.getTime() + range.start * 60 * 60 * 1000)
-      const endTime = new Date(now.getTime() + range.end * 60 * 60 * 1000)
-
-      const startDate = `${startTime.getUTCFullYear()}-${String(startTime.getUTCMonth() + 1).padStart(2, '0')}-${String(startTime.getUTCDate()).padStart(2, '0')}T${String(startTime.getUTCHours()).padStart(2, '0')}`
-      const endDate = `${endTime.getUTCFullYear()}-${String(endTime.getUTCMonth() + 1).padStart(2, '0')}-${String(endTime.getUTCDate()).padStart(2, '0')}T${String(endTime.getUTCHours()).padStart(2, '0')}`
-
-      console.log(`   🔍 Intentando rango de tiempo: ${startDate} a ${endDate}...`)
-
-      currentAirQuality = await airNowClient.getMonitoringSites(bbox, {
-        startDate,
-        endDate,
-        parameters: 'O3,NO2,PM25',
-        dataType: 'B',
-        verbose: 1,
-        monitorType: 2,
-        includerawconcentrations: 1,
+      console.log(`      🔎 Buscando datos en bbox:`, {
+        station: { lat: station.latitude, lng: station.longitude },
+        bbox,
+        params: airNowParamNames
       })
 
-      // Verificar si tenemos O3 o NO2
-      const hasO3 = currentAirQuality.some(obs => obs.Parameter.toUpperCase().includes('O3'))
-      const hasNO2 = currentAirQuality.some(obs => obs.Parameter.toUpperCase().includes('NO2'))
+      for (const range of timeRanges) {
+        const startTime = new Date(now.getTime() + range.start * 60 * 60 * 1000)
+        const endTime = new Date(now.getTime() + range.end * 60 * 60 * 1000)
 
-      console.log(`      → ${currentAirQuality.length} obs (O3: ${hasO3 ? '✓' : '✗'}, NO2: ${hasNO2 ? '✓' : '✗'})`)
+        const startDate = `${startTime.getUTCFullYear()}-${String(startTime.getUTCMonth() + 1).padStart(2, '0')}-${String(startTime.getUTCDate()).padStart(2, '0')}T${String(startTime.getUTCHours()).padStart(2, '0')}`
+        const endDate = `${endTime.getUTCFullYear()}-${String(endTime.getUTCMonth() + 1).padStart(2, '0')}-${String(endTime.getUTCDate()).padStart(2, '0')}T${String(endTime.getUTCHours()).padStart(2, '0')}`
 
-      if (hasO3 || hasNO2) {
-        console.log(`   ✓ Encontrados datos de O3/NO2 con rango ${startDate} a ${endDate}`)
-        break
+        console.log(`      ⏰ Time range: ${startDate} - ${endDate}, params: ${airNowParamNames.join(',')}`)
+
+        const data = await airNowClient.getMonitoringSites(bbox, {
+          startDate,
+          endDate,
+          parameters: airNowParamNames.join(','),
+          dataType: 'B',
+          verbose: 1,
+          monitorType: 2,
+          includerawconcentrations: 1,
+        })
+
+        // Verificar si tenemos datos del parámetro buscado
+        // IMPORTANTE: AirNow devuelve "PM2.5" pero la query usa "PM25"
+        const foundData = data.find(obs => {
+          const paramUpper = obs.Parameter.toUpperCase().replace('.', '')
+          return airNowParamNames.some(param =>
+            paramUpper.includes(param.toUpperCase()) ||
+            obs.Parameter.toUpperCase().includes(param.toUpperCase())
+          )
+        })
+
+        if (foundData) {
+          console.log(`   ✓ Datos encontrados para ${station.parameter} en estación a ${station.distance.toFixed(2)} km`)
+          return foundData
+        }
       }
+
+      return null
     }
 
-    console.log(`   ✓ ${currentAirQuality.length} observaciones obtenidas`)
+    // Resultados por parámetro
+    type ParameterResult = {
+      station: any
+      data: any
+      tempo: { station: number | null; user: number | null; ratio: number | null; timestamp?: string | undefined }
+    } | null
 
-    // Log detallado de parámetros recibidos
-    if (currentAirQuality.length > 0) {
-      console.log(`   📋 Parámetros disponibles:`)
-      const uniqueParams = [...new Set(currentAirQuality.map(obs => obs.Parameter))]
-      uniqueParams.forEach(param => {
-        const count = currentAirQuality.filter(obs => obs.Parameter === param).length
-        console.log(`      - ${param}: ${count} observación(es)`)
-      })
+    const parameterResults: {
+      O3: ParameterResult
+      NO2: ParameterResult
+      PM25: ParameterResult
+    } = {
+      O3: null,
+      NO2: null,
+      PM25: null
     }
 
     // =====================================================
-    // 3. OBTENER DATOS DE TEMPO (O3 y NO2)
+    // 3. BUSCAR ESTACIÓN + DATOS + TEMPO POR CADA PARÁMETRO
     // =====================================================
-    console.log(`🛰️  Obteniendo datos de TEMPO...`)
+    console.log(`🔄 Procesando cada parámetro con fallback...`)
 
-    const tempoService = new TEMPOService()
+    for (const config of PARAMETERS_CONFIG) {
+      try {
+        console.log(`\n   📋 Buscando ${config.key}...`)
 
-    // Obtener TEMPO en la estación y en la ubicación del usuario
-    let o3Tempo: { station: number | null; user: number | null; ratio: number | null } = {
-      station: null,
-      user: null,
-      ratio: null,
-    }
-    let no2Tempo: { station: number | null; user: number | null; ratio: number | null } = {
-      station: null,
-      user: null,
-      ratio: null,
-    }
+        // Obtener top estaciones para este parámetro
+        const stations = await findStationsByParameter(config.dbParam)
 
-    // Obtener el último timestamp disponible para cada contaminante
-    try {
-      console.log(`   🔍 Obteniendo último timestamp disponible de O3...`)
-      const o3Extent = await tempoService.getTemporalExtent('O3')
-      const o3Timestamp = o3Extent.end // Usar el último tiempo disponible
+        if (stations.length === 0) {
+          console.log(`   ⚠️  No hay estaciones de ${config.key} en la DB`)
+          continue
+        }
 
-      const hourDiff = Math.round((now.getTime() - o3Timestamp.getTime()) / (60 * 60 * 1000))
-      console.log(`   📅 Usando O3 TEMPO de: ${o3Timestamp.toISOString()} (${hourDiff}h atrás)`)
+        console.log(`   🔍 Encontradas ${stations.length} estaciones de ${config.key}`)
 
-      const [o3Station, o3User] = await Promise.all([
-        tempoService.getO3AtPoint({
-          location: { latitude: station.latitude, longitude: station.longitude },
-          timestamp: o3Timestamp,
-        }).catch(() => null),
-        tempoService.getO3AtPoint({
-          location: { latitude, longitude },
-          timestamp: o3Timestamp,
-        }).catch(() => null),
-      ])
+        // Intentar cada estación hasta encontrar datos
+        for (let i = 0; i < stations.length; i++) {
+          const station = stations[i]
+          console.log(`   → Intentando estación ${i + 1}/${stations.length} a ${station.distance.toFixed(2)} km...`)
 
-      o3Tempo.station = o3Station?.value ?? null
-      o3Tempo.user = o3User?.value ?? null
+          const airNowData = await tryGetStationData(station, [...config.airNowParams])
 
-      if (o3Tempo.station || o3Tempo.user) {
-        console.log(`   ✓ O3 TEMPO - Estación: ${o3Tempo.station ? o3Tempo.station.toExponential(2) : 'N/A'}, Usuario: ${o3Tempo.user ? o3Tempo.user.toExponential(2) : 'N/A'}`)
-      } else {
-        console.log(`   ⚠ O3 TEMPO - Sin datos en las ubicaciones consultadas`)
+        if (airNowData) {
+          console.log(`   📊 AirNow data:`, {
+            Parameter: airNowData.Parameter,
+            AQI: airNowData.AQI,
+            Value: airNowData.Value,
+            Unit: airNowData.Unit,
+            RawConcentration: airNowData.RawConcentration
+          })
+
+          // ¡Datos encontrados! Ahora obtener TEMPO (solo para O3 y NO2)
+          let tempo: { station: number | null; user: number | null; ratio: number | null; timestamp?: string | undefined } = {
+            station: null,
+            user: null,
+            ratio: null,
+            timestamp: undefined
+          }
+
+          if (config.key === 'O3' || config.key === 'NO2') {
+            try {
+              console.log(`   🛰️  Obteniendo datos TEMPO para ${config.key}...`)
+
+              const extent = await (config.key === 'O3'
+                ? tempoService.getTemporalExtent('O3')
+                : tempoService.getTemporalExtent('NO2'))
+
+              const timestamp = extent.end
+              tempo.timestamp = timestamp.toISOString()
+
+              const [stationValue, userValue] = await Promise.all([
+                (config.key === 'O3'
+                  ? tempoService.getO3AtPoint({
+                      location: { latitude: station.latitude, longitude: station.longitude },
+                      timestamp
+                    })
+                  : tempoService.getNO2AtPoint({
+                      location: { latitude: station.latitude, longitude: station.longitude },
+                      timestamp
+                    })
+                ).catch(() => null),
+                (config.key === 'O3'
+                  ? tempoService.getO3AtPoint({
+                      location: { latitude, longitude },
+                      timestamp
+                    })
+                  : tempoService.getNO2AtPoint({
+                      location: { latitude, longitude },
+                      timestamp
+                    })
+                ).catch(() => null)
+              ])
+
+              tempo.station = stationValue?.value ?? null
+              tempo.user = userValue?.value ?? null
+
+              // Calcular ratio si tenemos ambos valores
+              // Usar RawConcentration porque Value puede ser -999 o 0
+              const groundValue = airNowData.RawConcentration > 0 ? airNowData.RawConcentration : airNowData.Value
+
+              if (tempo.station && tempo.station > 0 && groundValue > 0) {
+                tempo.ratio = groundValue / tempo.station
+                console.log(`   ✓ Ratio ${config.key}: ${tempo.ratio.toFixed(6)} (${groundValue} / ${tempo.station.toExponential(2)})`)
+              } else {
+                console.log(`   ⚠️  No se pudo calcular ratio: ground=${groundValue}, tempo=${tempo.station}`)
+              }
+
+              console.log(`   ✓ TEMPO ${config.key} - Estación: ${tempo.station?.toExponential(2) ?? 'N/A'}, Usuario: ${tempo.user?.toExponential(2) ?? 'N/A'}`)
+            } catch (err) {
+              console.log(`   ⚠️  TEMPO ${config.key} error: ${err instanceof Error ? err.message : 'Unknown'}`)
+            }
+          }
+
+          // Guardar resultado
+          parameterResults[config.key] = {
+            station,
+            data: airNowData,
+            tempo
+          }
+
+          console.log(`   ✅ ${config.key} completo - Estación a ${station.distance.toFixed(2)} km`)
+          break // Encontramos datos, siguiente parámetro
+        }
       }
-    } catch (err) {
-      console.log(`   ⚠ O3 TEMPO - Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
-    }
 
-    try {
-      console.log(`   🔍 Obteniendo último timestamp disponible de NO2...`)
-      const no2Extent = await tempoService.getTemporalExtent('NO2')
-      const no2Timestamp = no2Extent.end // Usar el último tiempo disponible
-
-      const hourDiff = Math.round((now.getTime() - no2Timestamp.getTime()) / (60 * 60 * 1000))
-      console.log(`   📅 Usando NO2 TEMPO de: ${no2Timestamp.toISOString()} (${hourDiff}h atrás)`)
-
-      const [no2Station, no2User] = await Promise.all([
-        tempoService.getNO2AtPoint({
-          location: { latitude: station.latitude, longitude: station.longitude },
-          timestamp: no2Timestamp,
-        }).catch(() => null),
-        tempoService.getNO2AtPoint({
-          location: { latitude, longitude },
-          timestamp: no2Timestamp,
-        }).catch(() => null),
-      ])
-
-      no2Tempo.station = no2Station?.value ?? null
-      no2Tempo.user = no2User?.value ?? null
-
-      if (no2Tempo.station || no2Tempo.user) {
-        console.log(`   ✓ NO2 TEMPO - Estación: ${no2Tempo.station ? no2Tempo.station.toExponential(2) : 'N/A'}, Usuario: ${no2Tempo.user ? no2Tempo.user.toExponential(2) : 'N/A'}`)
-      } else {
-        console.log(`   ⚠ NO2 TEMPO - Sin datos en las ubicaciones consultadas`)
+        if (!parameterResults[config.key]) {
+          console.log(`   ❌ No se encontraron datos activos de ${config.key}`)
+        }
+      } catch (error) {
+        console.error(`   ❌ ERROR procesando ${config.key}:`, error)
+        console.error(`   Stack:`, error instanceof Error ? error.stack : 'No stack trace')
+        // Continuar con el siguiente parámetro en caso de error
       }
-    } catch (err) {
-      console.log(`   ⚠ NO2 TEMPO - Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
+
+    console.log(`\n📊 Resumen de parámetros encontrados:`)
+    console.log(`   O3: ${parameterResults.O3 ? '✅' : '❌'}`)
+    console.log(`   NO2: ${parameterResults.NO2 ? '✅' : '❌'}`)
+    console.log(`   PM25: ${parameterResults.PM25 ? '✅' : '❌'}`)
 
     // =====================================================
-    // 4. OBTENER DATOS METEOROLÓGICOS DE OPENMETEO
+    // 4. OBTENER DATOS METEOROLÓGICOS
     // =====================================================
     console.log(`🌤️  Obteniendo datos meteorológicos...`)
 
     const openMeteoClient = new OpenMeteoClient()
 
-    const forecastData = await openMeteoClient.getForecast(
-      {
-        latitude: station.latitude,
-        longitude: station.longitude,
-      },
-      {
-        hourly: [
-          HourlyVariable.TEMPERATURE_2M,
-          HourlyVariable.WIND_SPEED_10M,
-          HourlyVariable.WIND_DIRECTION_10M,
-          HourlyVariable.RELATIVE_HUMIDITY_2M,
-          HourlyVariable.PRECIPITATION,
-        ],
-      }
-    )
+    // Usar la primera estación que encontramos para el clima
+    const firstStation = parameterResults.O3?.station || parameterResults.NO2?.station || parameterResults.PM25?.station
 
-    const weather = openMeteoClient.getWeatherAtTime(forecastData, new Date())
+    let weather = null
+    if (firstStation) {
+      const forecastData = await openMeteoClient.getForecast(
+        {
+          latitude: firstStation.latitude,
+          longitude: firstStation.longitude,
+        },
+        {
+          hourly: [
+            HourlyVariable.TEMPERATURE_2M,
+            HourlyVariable.WIND_SPEED_10M,
+            HourlyVariable.WIND_DIRECTION_10M,
+            HourlyVariable.RELATIVE_HUMIDITY_2M,
+            HourlyVariable.PRECIPITATION,
+          ],
+        }
+      )
 
-    if (!weather) {
-      throw new Error('No se pudo obtener el clima actual')
+      weather = openMeteoClient.getWeatherAtTime(forecastData, now)
+      console.log(`   ✓ Clima obtenido: ${weather?.temperature}°C`)
     }
 
-    console.log(`   ✓ Clima obtenido: ${weather.temperature}°C, viento ${weather.windSpeed} m/s`)
-
     // =====================================================
-    // 5. ORGANIZAR DATOS POR PARÁMETRO Y CALCULAR PROPORCIÓN TEMPO
+    // 5. CALCULAR AQI GENERAL (EL PEOR DE TODOS)
     // =====================================================
+    const allAqis = [
+      parameterResults.O3?.data.AQI,
+      parameterResults.NO2?.data.AQI,
+      parameterResults.PM25?.data.AQI
+    ].filter((aqi) => aqi != null) as number[]
 
-    // Buscar datos para cada parámetro (MonitoringSite usa 'Parameter' no 'ParameterName')
-    // AirNow puede devolver "OZONE" o "O3", "NO2", "PM2.5" o "PM25"
-    const o3Data = currentAirQuality.find((obs) => {
-      const param = obs.Parameter.toUpperCase()
-      return param.includes('O3') || param.includes('OZONE')
-    })
-    const no2Data = currentAirQuality.find((obs) => obs.Parameter.toUpperCase().includes('NO2'))
-    const pm25Data = currentAirQuality.find((obs) => {
-      const param = obs.Parameter.toUpperCase()
-      return param.includes('PM2.5') || param.includes('PM25')
-    })
+    const generalAqi = allAqis.length > 0 ? Math.max(...allAqis) : null
+    let worstParameter = null
 
-    console.log(`   🔍 Búsqueda de parámetros:`)
-    console.log(`      - O3/OZONE encontrado: ${o3Data ? 'Sí (' + o3Data.Parameter + ')' : 'No'}`)
-    console.log(`      - NO2 encontrado: ${no2Data ? 'Sí (' + no2Data.Parameter + ')' : 'No'}`)
-    console.log(`      - PM2.5 encontrado: ${pm25Data ? 'Sí (' + pm25Data.Parameter + ')' : 'No'}`)
-
-    // NOTA IMPORTANTE: Las proporciones tienen sentido limitado porque:
-    // - TEMPO mide columna troposférica (integral vertical)
-    // - AirNow mide concentración superficial (ground level)
-    // La proporción solo sirve como proxy aproximado para downscaling espacial
-
-    // Calcular proporción O3: estación_real / tempo_estación
-    if (o3Data && o3Tempo.station && o3Tempo.station > 0) {
-      // Usar Value (concentración real) si está disponible y > 0, sino usar AQI
-      // TEMPO O3 está en DU (columna), AirNow en ppb/ppm (superficie)
-      // La proporción es dimensional pero sirve para downscaling espacial relativo
-      const o3_station_value = o3Data.Value > 0 ? o3Data.Value : o3Data.AQI
-      o3Tempo.ratio = o3_station_value / o3Tempo.station
-      const unit = o3Data.Value > 0 ? o3Data.Unit : 'AQI'
-      console.log(`   ✓ Proporción O3: ${o3Tempo.ratio.toFixed(6)} (${unit}/DU - proxy espacial)`)
+    if (generalAqi) {
+      if (parameterResults.O3?.data.AQI === generalAqi) worstParameter = parameterResults.O3.data
+      else if (parameterResults.NO2?.data.AQI === generalAqi) worstParameter = parameterResults.NO2.data
+      else if (parameterResults.PM25?.data.AQI === generalAqi) worstParameter = parameterResults.PM25.data
     }
 
-    // Calcular proporción NO2: estación_real / tempo_estación
-    if (no2Data && no2Tempo.station && no2Tempo.station > 0) {
-      // TEMPO NO2 está en moléculas/cm² (columna), AirNow en ppb/ugm3 (superficie)
-      // Usar Value (concentración real) si está disponible y > 0, sino usar AQI
-      const no2_station_value = no2Data.Value > 0 ? no2Data.Value : no2Data.AQI
-      no2Tempo.ratio = no2_station_value / no2Tempo.station
-      const unit = no2Data.Value > 0 ? no2Data.Unit : 'AQI'
-      console.log(`   ✓ Proporción NO2: ${no2Tempo.ratio.toFixed(6)} (${unit}/molec·cm⁻² - proxy espacial)`)
+    // Helper para mapear categorías
+    const getCategoryName = (categoryNum: number): string => {
+      const categories = ['Good', 'Moderate', 'Unhealthy for Sensitive Groups', 'Unhealthy', 'Very Unhealthy', 'Hazardous']
+      return categories[categoryNum - 1] || 'Unknown'
     }
 
     // Helper para crear forecast mock
@@ -298,41 +337,51 @@ export const predecirAqiProcedure = publicProcedure
       t3h: currentValue,
     })
 
-    console.log(`✅ Predicción generada`)
+    console.log(`✅ Predicción generada con ${allAqis.length} parámetro(s)`)
 
     // =====================================================
-    // 6. CALCULAR AQI GENERAL (EL PEOR DE TODOS)
-    // =====================================================
-    const allAqis = [o3Data?.AQI, no2Data?.AQI, pm25Data?.AQI].filter((aqi) => aqi != null) as number[]
-    const generalAqi = allAqis.length > 0 ? Math.max(...allAqis) : null
-    const worstParameter = generalAqi
-      ? currentAirQuality.find((obs) => obs.AQI === generalAqi)
-      : null
-
-    // Mapeo de categorías AQI (1-6 a nombres)
-    const getCategoryName = (categoryNum: number): string => {
-      const categories = ['Good', 'Moderate', 'Unhealthy for Sensitive Groups', 'Unhealthy', 'Very Unhealthy', 'Hazardous']
-      return categories[categoryNum - 1] || 'Unknown'
-    }
-
-    // =====================================================
-    // 7. RETORNAR RESULTADO
+    // 6. RETORNAR RESULTADO CON ESTACIONES SEPARADAS
     // =====================================================
     return {
-      station: {
-        id: station.id,
-        provider: station.provider,
-        latitude: station.latitude,
-        longitude: station.longitude,
-        distanceKm: station.distance,
+      // Estaciones por parámetro (pueden ser diferentes)
+      stations: {
+        O3: parameterResults.O3?.station ? {
+          id: parameterResults.O3.station.id,
+          provider: parameterResults.O3.station.provider,
+          latitude: parameterResults.O3.station.latitude,
+          longitude: parameterResults.O3.station.longitude,
+          distanceKm: parameterResults.O3.station.distance,
+        } : null,
+        NO2: parameterResults.NO2?.station ? {
+          id: parameterResults.NO2.station.id,
+          provider: parameterResults.NO2.station.provider,
+          latitude: parameterResults.NO2.station.latitude,
+          longitude: parameterResults.NO2.station.longitude,
+          distanceKm: parameterResults.NO2.station.distance,
+        } : null,
+        PM25: parameterResults.PM25?.station ? {
+          id: parameterResults.PM25.station.id,
+          provider: parameterResults.PM25.station.provider,
+          latitude: parameterResults.PM25.station.latitude,
+          longitude: parameterResults.PM25.station.longitude,
+          distanceKm: parameterResults.PM25.station.distance,
+        } : null,
       },
-      weather: {
+      // Estación primaria (para retrocompatibilidad) - la más cercana
+      station: firstStation ? {
+        id: firstStation.id,
+        provider: firstStation.provider,
+        latitude: firstStation.latitude,
+        longitude: firstStation.longitude,
+        distanceKm: firstStation.distance,
+      } : null,
+      weather: weather ? {
         temperature: weather.temperature,
         windSpeed: weather.windSpeed,
         windDirection: weather.windDirection,
         relativeHumidity: weather.relativeHumidity,
         precipitation: weather.precipitation,
-      },
+      } : null,
       general: generalAqi
         ? {
             aqi: generalAqi,
@@ -340,84 +389,86 @@ export const predecirAqiProcedure = publicProcedure
             dominantParameter: worstParameter?.Parameter,
           }
         : null,
-      O3: o3Data
+      O3: parameterResults.O3
         ? {
             currentData: {
-              aqi: o3Data.AQI,
-              category: getCategoryName(o3Data.Category),
-              value: o3Data.Value,
-              unit: o3Data.Unit,
-              rawConcentration: o3Data.RawConcentration,
-              utc: o3Data.UTC,
-              parameterName: o3Data.Parameter,
-              siteName: o3Data.SiteName,
+              aqi: parameterResults.O3.data.AQI,
+              category: getCategoryName(parameterResults.O3.data.Category),
+              value: parameterResults.O3.data.Value,
+              unit: parameterResults.O3.data.Unit,
+              rawConcentration: parameterResults.O3.data.RawConcentration,
+              utc: parameterResults.O3.data.UTC,
+              parameterName: parameterResults.O3.data.Parameter,
+              siteName: parameterResults.O3.data.SiteName,
             },
             tempo: {
-              station: o3Tempo.station,
-              user: o3Tempo.user,
-              ratio: o3Tempo.ratio,
+              stationValue: parameterResults.O3.tempo.station,
+              userValue: parameterResults.O3.tempo.user,
+              ratio: parameterResults.O3.tempo.ratio,
+              timestamp: parameterResults.O3.tempo.timestamp ?? undefined,
               // Estimación basada en TEMPO si hay proporción
-              estimatedUserValue: o3Tempo.ratio && o3Tempo.user
-                ? o3Tempo.ratio * o3Tempo.user
+              estimatedUserValue: parameterResults.O3.tempo.ratio && parameterResults.O3.tempo.user
+                ? parameterResults.O3.tempo.ratio * parameterResults.O3.tempo.user
                 : null,
             },
             forecast: {
               horizons: [
-                { hoursAhead: 1, predictedAQI: createForecast(o3Data.AQI).t1h },
-                { hoursAhead: 2, predictedAQI: createForecast(o3Data.AQI).t2h },
-                { hoursAhead: 3, predictedAQI: createForecast(o3Data.AQI).t3h },
+                { hoursAhead: 1, predictedAQI: createForecast(parameterResults.O3.data.AQI).t1h },
+                { hoursAhead: 2, predictedAQI: createForecast(parameterResults.O3.data.AQI).t2h },
+                { hoursAhead: 3, predictedAQI: createForecast(parameterResults.O3.data.AQI).t3h },
               ],
             },
           }
         : null,
-      NO2: no2Data
+      NO2: parameterResults.NO2
         ? {
             currentData: {
-              aqi: no2Data.AQI,
-              category: getCategoryName(no2Data.Category),
-              value: no2Data.Value,
-              unit: no2Data.Unit,
-              rawConcentration: no2Data.RawConcentration,
-              utc: no2Data.UTC,
-              parameterName: no2Data.Parameter,
-              siteName: no2Data.SiteName,
+              aqi: parameterResults.NO2.data.AQI,
+              category: getCategoryName(parameterResults.NO2.data.Category),
+              value: parameterResults.NO2.data.Value,
+              unit: parameterResults.NO2.data.Unit,
+              rawConcentration: parameterResults.NO2.data.RawConcentration,
+              utc: parameterResults.NO2.data.UTC,
+              parameterName: parameterResults.NO2.data.Parameter,
+              siteName: parameterResults.NO2.data.SiteName,
             },
             tempo: {
-              station: no2Tempo.station,
-              user: no2Tempo.user,
-              ratio: no2Tempo.ratio,
+              stationValue: parameterResults.NO2.tempo.station,
+              userValue: parameterResults.NO2.tempo.user,
+              ratio: parameterResults.NO2.tempo.ratio,
+              timestamp: parameterResults.NO2.tempo.timestamp ?? undefined,
               // Estimación basada en TEMPO si hay proporción
-              estimatedUserValue: no2Tempo.ratio && no2Tempo.user
-                ? no2Tempo.ratio * no2Tempo.user
+              estimatedUserValue: parameterResults.NO2.tempo.ratio && parameterResults.NO2.tempo.user
+                ? parameterResults.NO2.tempo.ratio * parameterResults.NO2.tempo.user
                 : null,
             },
             forecast: {
               horizons: [
-                { hoursAhead: 1, predictedAQI: createForecast(no2Data.AQI).t1h },
-                { hoursAhead: 2, predictedAQI: createForecast(no2Data.AQI).t2h },
-                { hoursAhead: 3, predictedAQI: createForecast(no2Data.AQI).t3h },
+                { hoursAhead: 1, predictedAQI: createForecast(parameterResults.NO2.data.AQI).t1h },
+                { hoursAhead: 2, predictedAQI: createForecast(parameterResults.NO2.data.AQI).t2h },
+                { hoursAhead: 3, predictedAQI: createForecast(parameterResults.NO2.data.AQI).t3h },
               ],
             },
           }
         : null,
-      PM25: pm25Data
+      PM25: parameterResults.PM25
         ? {
             currentData: {
-              aqi: pm25Data.AQI,
-              category: getCategoryName(pm25Data.Category),
-              value: pm25Data.Value,
-              unit: pm25Data.Unit,
-              rawConcentration: pm25Data.RawConcentration,
-              utc: pm25Data.UTC,
-              parameterName: pm25Data.Parameter,
-              siteName: pm25Data.SiteName,
+              aqi: parameterResults.PM25.data.AQI,
+              category: getCategoryName(parameterResults.PM25.data.Category),
+              value: parameterResults.PM25.data.Value,
+              unit: parameterResults.PM25.data.Unit,
+              rawConcentration: parameterResults.PM25.data.RawConcentration,
+              utc: parameterResults.PM25.data.UTC,
+              parameterName: parameterResults.PM25.data.Parameter,
+              siteName: parameterResults.PM25.data.SiteName,
             },
             tempo: null, // PM2.5 no tiene datos TEMPO
             forecast: {
               horizons: [
-                { hoursAhead: 1, predictedAQI: createForecast(pm25Data.AQI).t1h },
-                { hoursAhead: 2, predictedAQI: createForecast(pm25Data.AQI).t2h },
-                { hoursAhead: 3, predictedAQI: createForecast(pm25Data.AQI).t3h },
+                { hoursAhead: 1, predictedAQI: createForecast(parameterResults.PM25.data.AQI).t1h },
+                { hoursAhead: 2, predictedAQI: createForecast(parameterResults.PM25.data.AQI).t2h },
+                { hoursAhead: 3, predictedAQI: createForecast(parameterResults.PM25.data.AQI).t3h },
               ],
             },
           }

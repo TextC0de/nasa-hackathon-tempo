@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Activity, Loader2, AlertCircle } from "lucide-react"
-import type { GroupedStation } from "@/hooks/use-monitoring-stations"
 
 // Importar el mapa dinámicamente
 const MapContainer = dynamic(
@@ -45,14 +44,6 @@ const Polyline = dynamic(
 
 const Circle = dynamic(
   () => import("react-leaflet").then((mod) => mod.Circle),
-  { ssr: false }
-)
-
-// Importar MonitoringStationsLayer dinámicamente
-const MonitoringStationsLayer = dynamic(
-  () => import("@/components/monitoring-stations-layer").then((mod) => ({
-    default: mod.MonitoringStationsLayer
-  })),
   { ssr: false }
 )
 
@@ -298,8 +289,6 @@ interface MapViewProps {
   onDialogOpen: (dialog: string) => void
   getAQIColor: (aqi: number) => string
   getAQIBadge: (aqi: number) => { color: string; label: string }
-  groupedStations?: GroupedStation[]
-  onStationClick?: (station: GroupedStation) => void
 }
 
 export function MapView({
@@ -311,9 +300,7 @@ export function MapView({
   error,
   onDialogOpen,
   getAQIColor,
-  getAQIBadge,
-  groupedStations = [],
-  onStationClick
+  getAQIBadge
 }: MapViewProps) {
   // Calcular el centro del mapa para mostrar tanto el usuario como la estación
   const stationLat = prediction?.station?.latitude
@@ -417,6 +404,82 @@ export function MapView({
                       </div>
                     </div>
                   )}
+                </div>
+              </Popup>
+            </Marker>
+          )}
+
+          {/* Mostrar las 3 estaciones separadas (O3, NO2, PM2.5) si existen */}
+          {prediction?.stations?.O3 && (
+            <Marker
+              position={[prediction.stations.O3.latitude, prediction.stations.O3.longitude]}
+              icon={createStationMarkerIcon(
+                prediction.O3?.currentData?.aqi ?? null,
+                prediction.stations.O3.distanceKm,
+                prediction.stations.O3.provider
+              )}
+            >
+              <Popup>
+                <div className="text-sm space-y-2">
+                  <p className="font-semibold text-orange-600">📡 Estación O₃</p>
+                  <p className="font-medium">{prediction.stations.O3.provider}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {prediction.stations.O3.latitude.toFixed(4)}, {prediction.stations.O3.longitude.toFixed(4)}
+                  </p>
+                  <div className="pt-2 border-t">
+                    <p className="text-xs text-muted-foreground">Distancia</p>
+                    <p className="font-semibold">{prediction.stations.O3.distanceKm.toFixed(2)} km</p>
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+          )}
+
+          {prediction?.stations?.NO2 && (
+            <Marker
+              position={[prediction.stations.NO2.latitude, prediction.stations.NO2.longitude]}
+              icon={createStationMarkerIcon(
+                prediction.NO2?.currentData?.aqi ?? null,
+                prediction.stations.NO2.distanceKm,
+                prediction.stations.NO2.provider
+              )}
+            >
+              <Popup>
+                <div className="text-sm space-y-2">
+                  <p className="font-semibold text-orange-600">📡 Estación NO₂</p>
+                  <p className="font-medium">{prediction.stations.NO2.provider}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {prediction.stations.NO2.latitude.toFixed(4)}, {prediction.stations.NO2.longitude.toFixed(4)}
+                  </p>
+                  <div className="pt-2 border-t">
+                    <p className="text-xs text-muted-foreground">Distancia</p>
+                    <p className="font-semibold">{prediction.stations.NO2.distanceKm.toFixed(2)} km</p>
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+          )}
+
+          {prediction?.stations?.PM25 && (
+            <Marker
+              position={[prediction.stations.PM25.latitude, prediction.stations.PM25.longitude]}
+              icon={createStationMarkerIcon(
+                prediction.PM25?.currentData?.aqi ?? null,
+                prediction.stations.PM25.distanceKm,
+                prediction.stations.PM25.provider
+              )}
+            >
+              <Popup>
+                <div className="text-sm space-y-2">
+                  <p className="font-semibold text-orange-600">📡 Estación PM2.5</p>
+                  <p className="font-medium">{prediction.stations.PM25.provider}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {prediction.stations.PM25.latitude.toFixed(4)}, {prediction.stations.PM25.longitude.toFixed(4)}
+                  </p>
+                  <div className="pt-2 border-t">
+                    <p className="text-xs text-muted-foreground">Distancia</p>
+                    <p className="font-semibold">{prediction.stations.PM25.distanceKm.toFixed(2)} km</p>
+                  </div>
                 </div>
               </Popup>
             </Marker>

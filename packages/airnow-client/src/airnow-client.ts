@@ -369,9 +369,21 @@ export class AirNowClient {
 
     const url = `${this.baseUrl}/aq/data/?${params}`;
 
+    console.log(`[AirNow] GET ${url}`);
+
     const response = await fetch(url);
     if (!response.ok) {
-      const data = await response.json();
+      console.error(`[AirNow] ERROR ${response.status}`, {
+        status: response.status,
+        statusText: response.statusText,
+        url: url
+      });
+      try {
+        const errorData = await response.text();
+        console.error(`[AirNow] Response body:`, errorData);
+      } catch (e) {
+        console.error(`[AirNow] Could not read response body`);
+      }
       throw new Error(`AirNow API error: ${response.status} ${response.statusText}`);
     }
 

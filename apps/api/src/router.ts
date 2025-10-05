@@ -10,6 +10,10 @@ import { obtenerPrediccionMeteorologicaProcedure } from './procedures/obtener-pr
 import { obtenerClimaActualProcedure } from './procedures/obtener-clima-actual'
 import { obtenerAlturaDelTerrenoProcedure } from './procedures/obtener-altura-del-terreno'
 import { obtenerDatosTEMPOProcedure } from './procedures/obtener-datos-tempo'
+import { obtenerHistoricoAqiProcedure } from './procedures/obtener-historico-aqi'
+import { crearAlertaProcedure } from './procedures/crear-alerta'
+import { listarAlertasProcedure } from './procedures/listar-alertas'
+import { actualizarAlertaProcedure } from './procedures/actualizar-alerta'
 
 export const appRouter = router({
   hello: helloProcedure,
@@ -23,6 +27,10 @@ export const appRouter = router({
   predecirAqi: predecirAqiProcedure,
   obtenerAlturaDelTerreno: obtenerAlturaDelTerrenoProcedure,
   obtenerDatosTEMPO: obtenerDatosTEMPOProcedure,
+  obtenerHistoricoAqi: obtenerHistoricoAqiProcedure,
+  crearAlerta: crearAlertaProcedure,
+  listarAlertas: listarAlertasProcedure,
+  actualizarAlerta: actualizarAlertaProcedure,
 })
 
 export type AppRouter = typeof appRouter

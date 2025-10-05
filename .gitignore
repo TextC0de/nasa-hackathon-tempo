@@ -40,3 +40,4 @@ pnpm-debug.log*
 scripts/data/
 scripts/downloads*/
 temp/
+venv/

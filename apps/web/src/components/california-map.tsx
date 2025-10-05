@@ -519,6 +519,9 @@ interface CaliforniaMapProps {
   fires?: FireDataPoint[]
   onStationClick?: (station: any) => void
   onFireClick?: (fire: FireDataPoint) => void
+  onMapClick?: (e: L.LeafletMouseEvent) => void
+  initialCenter?: [number, number]
+  initialZoom?: number
 }
 
 // Optimización: Memoización del componente principal
@@ -531,7 +534,10 @@ export const CaliforniaMap = React.memo(function CaliforniaMap({
   alerts = [],
   fires = [],
   onStationClick,
-  onFireClick
+  onFireClick,
+  onMapClick,
+  initialCenter,
+  initialZoom
 }: CaliforniaMapProps) {
   // Memoización de configuraciones para evitar re-renders innecesarios
   const currentMapType = useMemo(() => MAP_TYPES[mapType], [mapType])
@@ -552,15 +558,29 @@ export const CaliforniaMap = React.memo(function CaliforniaMap({
     onMapTypeChange?.(type as keyof typeof MAP_TYPES)
   }, [onMapTypeChange])
 
+  // Map event handlers
+  const MapClickHandler = useCallback(() => {
+    const { useMapEvents } = require('react-leaflet')
+    useMapEvents({
+      click: (e: L.LeafletMouseEvent) => {
+        if (onMapClick) {
+          onMapClick(e)
+        }
+      }
+    })
+    return null
+  }, [onMapClick])
+
   return (
     <div className={cn("relative w-full h-full overflow-hidden z-[1]", className)}>
       <MapContainer
-        center={CALIFORNIA_CONFIG.center}
-        zoom={LEAFLET_CONFIG.zoom.DEFAULT}
+        center={initialCenter || CALIFORNIA_CONFIG.center}
+        zoom={initialZoom || LEAFLET_CONFIG.zoom.DEFAULT}
         style={mapContainerStyle}
-        bounds={CALIFORNIA_CONFIG.boundsArray}
+        bounds={initialCenter ? undefined : CALIFORNIA_CONFIG.boundsArray}
         boundsOptions={boundsOptions}
       >
+        {onMapClick && <MapClickHandler />}
         <TileLayer
           key={mapType}
           attribution={currentMapType.attribution}

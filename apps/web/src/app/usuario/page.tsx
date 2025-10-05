@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { trpc } from "@/lib/trpc"
-import { useMonitoringStations, type GroupedStation } from "@/hooks/use-monitoring-stations"
 import { Header } from "./_components/header"
 import { MapView } from "./_components/map-view"
 import { DebugDialog } from "./_components/debug-dialog"
 import { MetricsDialog, TEMPODialog, WeatherDialog, PollutantsDialog } from "./_components/dialogs"
-import { StationDetailDialog } from "./_components/station-detail-dialog"
+import { RecommendationsPanel, RecommendationsPanelCompact } from "./_components/recommendations-panel"
 import { getAQIColor, getAQIBadge, getAQILevel } from "./_components/utils"
+import { Button } from "@/components/ui/button"
+import { ChevronLeft, ChevronRight, Lightbulb } from "lucide-react"
 
 import "leaflet/dist/leaflet.css"
 
@@ -34,17 +35,8 @@ export default function UsuarioPage() {
   const [debugLng, setDebugLng] = useState<string>(CALIFORNIA_LOCATIONS[0].lng.toString())
   const [openDialog, setOpenDialog] = useState<string | null>(null)
 
-  // Estado para estación seleccionada
-  const [selectedStation, setSelectedStation] = useState<GroupedStation | null>(null)
-  const [stationDialogOpen, setStationDialogOpen] = useState(false)
-
-  // Hook para obtener todas las estaciones de monitoreo
-  const { groupedStations, isLoading: stationsLoading } = useMonitoringStations({
-    centerLat: 36.7783,
-    centerLng: -119.4179,
-    radiusKm: 200,
-    enabled: true
-  })
+  // Estado para mostrar/ocultar panel de recomendaciones en desktop
+  const [showRecommendations, setShowRecommendations] = useState(true)
 
   // Query para obtener predicción de AQI
   const { data: prediction, isLoading, error, refetch } = trpc.predecirAqi.useQuery(
@@ -60,33 +52,15 @@ export default function UsuarioPage() {
     }
   )
 
-  // Query para obtener datos TEMPO completos
-  const { data: tempoData, isLoading: tempoLoading } = trpc.obtenerDatosTEMPO.useQuery(
-    {
-      latitud: searchLat,
-      longitud: searchLng,
-      usarUltimoDisponible: true
-    },
-    {
-      enabled: true,
-      retry: 2,
-      staleTime: 5 * 60 * 1000,
-    }
-  )
+  // NOTA: Los datos TEMPO ahora vienen incluidos en prediction.O3.tempo y prediction.NO2.tempo
+  const tempoData = null
+  const tempoLoading = false
 
   // Query para obtener datos meteorológicos completos
-  const { data: weatherData, isLoading: weatherLoading } = trpc.obtenerDatosMeteorologicos.useQuery(
-    {
-      latitud: searchLat,
-      longitud: searchLng,
-      diasPrediccion: 7
-    },
-    {
-      enabled: true,
-      retry: 2,
-      staleTime: 5 * 60 * 1000,
-    }
-  )
+  // NOTA: Esta query fue comentada porque la procedure fue eliminada
+  // Los datos meteorológicos ahora vienen incluidos en prediction.weather
+  const weatherData = null
+  const weatherLoading = false
 
   // Cargar predicción inicial
   useEffect(() => {
@@ -128,35 +102,32 @@ export default function UsuarioPage() {
     setOpenDialog(null)
   }
 
-  // Handler para click en estación
-  const handleStationClick = (station: GroupedStation) => {
-    console.log('📍 Estación seleccionada:', station.SiteName)
-    setSelectedStation(station)
-    setStationDialogOpen(true)
-  }
-
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background text-foreground">
-        <div className="flex h-screen">
-          {/* Main Content */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Header */}
-            <Header
-              currentLocation={currentLocation}
-              isLoading={isLoading}
-              error={error}
-              prediction={prediction}
-              onLocationChange={handleLocationChange}
-              onDialogOpen={setOpenDialog}
-              onRefetch={refetch}
-              getAQIColor={getAQIColor}
-              getAQILevel={getAQILevel}
-              locations={CALIFORNIA_LOCATIONS}
-            />
+        {/* Header */}
+        <Header
+          currentLocation={currentLocation}
+          isLoading={isLoading}
+          error={error}
+          prediction={prediction}
+          onLocationChange={handleLocationChange}
+          onDialogOpen={setOpenDialog}
+          onRefetch={refetch}
+          getAQIColor={getAQIColor}
+          getAQILevel={getAQILevel}
+          locations={CALIFORNIA_LOCATIONS}
+        />
 
-            {/* Map Content */}
-            <main className="flex-1 overflow-hidden relative z-[1]">
+        {/* Main Layout: Desktop = Side by Side, Mobile = Stacked */}
+        <div className="h-[calc(100vh-60px)]">
+          <div className="h-full flex flex-col lg:flex-row">
+            {/* Mapa - Ocupa todo en móvil, lado izquierdo en desktop */}
+            <div className={`
+              h-[50vh] lg:h-full
+              ${showRecommendations ? 'lg:w-[60%]' : 'lg:w-full'}
+              transition-all duration-300 relative
+            `}>
               <MapView
                 searchLat={searchLat}
                 searchLng={searchLng}
@@ -167,19 +138,65 @@ export default function UsuarioPage() {
                 onDialogOpen={setOpenDialog}
                 getAQIColor={getAQIColor}
                 getAQIBadge={getAQIBadge}
-                groupedStations={groupedStations}
-                onStationClick={handleStationClick}
               />
-            </main>
+
+              {/* Botón toggle para panel de recomendaciones (solo desktop) */}
+              {prediction?.general && (
+                <Button
+                  onClick={() => setShowRecommendations(!showRecommendations)}
+                  className="hidden lg:flex absolute top-4 right-4 z-[1001] shadow-lg"
+                  size="sm"
+                  variant="default"
+                >
+                  {showRecommendations ? (
+                    <>
+                      <ChevronRight className="h-4 w-4 mr-1" />
+                      Ocultar Ayuda
+                    </>
+                  ) : (
+                    <>
+                      <Lightbulb className="h-4 w-4 mr-1" />
+                      Ver Recomendaciones
+                      <ChevronLeft className="h-4 w-4 ml-1" />
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+
+            {/* Panel de Recomendaciones */}
+            {prediction?.general && (
+              <>
+                {/* Desktop: Sidebar derecho */}
+                <div className={`
+                  hidden lg:block
+                  ${showRecommendations ? 'lg:w-[40%]' : 'lg:w-0'}
+                  overflow-hidden transition-all duration-300
+                  bg-muted/30 border-l border-border
+                `}>
+                  <div className="h-full overflow-y-auto p-6">
+                    <RecommendationsPanel
+                      aqi={prediction.general.aqi}
+                      dominantPollutant={prediction.general.dominantParameter}
+                      category={prediction.general.category}
+                    />
+                  </div>
+                </div>
+
+                {/* Mobile: Panel inferior */}
+                <div className="lg:hidden h-[50vh] overflow-y-auto bg-background border-t border-border">
+                  <div className="p-4">
+                    <RecommendationsPanel
+                      aqi={prediction.general.aqi}
+                      dominantPollutant={prediction.general.dominantParameter}
+                      category={prediction.general.category}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
-
-        {/* Dialog de estación con datos TEMPO */}
-        <StationDetailDialog
-          station={selectedStation}
-          open={stationDialogOpen}
-          onOpenChange={setStationDialogOpen}
-        />
 
         {/* Diálogos */}
         <DebugDialog
