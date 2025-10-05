@@ -151,11 +151,13 @@
 }
 
 .leaflet-popup-pane {
-  z-index: 200 !important;
+  z-index: 700 !important;
 }
 
+/* Mantener el z-index por defecto de Leaflet para marcadores (600) */
+/* Esto asegura que los marcadores estén por encima de overlays y límites */
 .leaflet-marker-pane {
-  z-index: 150 !important;
+  z-index: 600 !important;
 }
 
 /* Ensure dialogs and UI elements appear above Leaflet */
