@@ -104,14 +104,16 @@ export function FloatingAIChat({ context }: FloatingAIChatProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const { messages, sendMessage, status, error } = useChat({
-    transport: new DefaultChatTransport({
-      api: '/api/chat',
-      body: () => {
-        console.log('🤖 Enviando contexto al chat:', context ? 'Con datos' : 'Sin datos')
-        return { context }
-      },
-    }),
+    api: '/api/chat',
+    body: {
+      context: context ?? null,
+    },
   })
+
+  // Log cuando cambia el contexto
+  useEffect(() => {
+    console.log('🔄 Contexto actualizado:', context ? `${context.length} caracteres` : 'Sin datos')
+  }, [context])
 
   // Auto-scroll optimizado - solo durante streaming
   useEffect(() => {
