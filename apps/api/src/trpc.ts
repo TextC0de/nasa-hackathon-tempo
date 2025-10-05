@@ -4,7 +4,7 @@ import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import * as schema from '@atmos/database'
 
-export function createContext(opts: FetchCreateContextFnOptions & { env?: any; executionCtx?: ExecutionContext }) {
+export function createContext(opts: FetchCreateContextFnOptions & { env?: any; executionCtx?: { waitUntil: (promise: Promise<any>) => void } }) {
   // Get DATABASE_URL from env (Cloudflare Workers binding)
   const databaseUrl = opts.env?.DATABASE_URL;
 
