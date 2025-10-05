@@ -39,7 +39,7 @@ jobs:
             ${{ runner.os }}-turbo-
 
       - name: 📥 Build
-        run: pnpm build:api
+        run: pnpm build:packages
 
       - name: 📥️ Deploy Backend
         working-directory: ./apps/api

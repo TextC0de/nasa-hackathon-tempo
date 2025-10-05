@@ -436,7 +436,7 @@ export class TEMPOService {
     return {
       pollutant,
       location,
-      timeRange: { start, end },
+      timeRange: new TimeRange({ start, end }),
       data,
       unit: TEMPO_UNITS[pollutant],
       statistics,

@@ -59,6 +59,7 @@ export function calculateTemporalTrends(
     // No hay suficientes datos para calcular tendencia
     return {
       no2_trend: 0,
+      no2_surface_trend: 0,
       pm25_trend: 0,
       wind_stability: 0.5,
       fire_growth_rate: 0,
