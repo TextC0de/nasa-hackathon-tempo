@@ -37,14 +37,16 @@ export function EstadoSidebar({ className }: EstadoSidebarProps) {
       )}
     >
       {/* Logo */}
-      <div className="flex h-16 shrink-0 items-center justify-center group-hover:justify-start group-hover:px-6 transition-all duration-200">
-        <Avatar className="h-8 w-8 shrink-0">
-          <AvatarImage src="/atmos.svg" alt="AtmOS" />
-          <AvatarFallback className="text-xs font-semibold">AT</AvatarFallback>
-        </Avatar>
-        <div className="flex flex-col ml-3 opacity-0 group-hover:opacity-100 transition-opacity duration-150 overflow-hidden whitespace-nowrap">
-          <span className="text-sm font-semibold text-foreground">AtmOS</span>
-          <span className="text-xs text-muted-foreground">Estado</span>
+      <div className="px-2 py-4">
+        <div className="flex items-center gap-x-3 px-3">
+          <img
+            src="/atmos.svg"
+            alt="AtmOS"
+            className="h-5 w-5 shrink-0"
+          />
+          <div className="flex flex-col opacity-0 group-hover:opacity-100 transition-opacity duration-150 overflow-hidden whitespace-nowrap">
+            <span className="text-sm font-semibold text-foreground">AtmOS</span>
+          </div>
         </div>
       </div>
 
