@@ -9,8 +9,6 @@ import { DebugDialog } from "./_components/debug-dialog"
 import { MetricsDialog, TEMPODialog, WeatherDialog, PollutantsDialog } from "./_components/dialogs"
 import { RecommendationsPanel, RecommendationsPanelCompact } from "./_components/recommendations-panel"
 import { getAQIColor, getAQIBadge, getAQILevel } from "./_components/utils"
-import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, Lightbulb } from "lucide-react"
 
 import "leaflet/dist/leaflet.css"
 
@@ -35,8 +33,6 @@ export default function UsuarioPage() {
   const [debugLng, setDebugLng] = useState<string>(CALIFORNIA_LOCATIONS[0].lng.toString())
   const [openDialog, setOpenDialog] = useState<string | null>(null)
 
-  // Estado para mostrar/ocultar panel de recomendaciones en desktop
-  const [showRecommendations, setShowRecommendations] = useState(true)
 
   // Query para obtener predicción de AQI
   const { data: prediction, isLoading, error, refetch } = trpc.predecirAqi.useQuery(
@@ -123,11 +119,7 @@ export default function UsuarioPage() {
         <div className="h-[calc(100vh-60px)]">
           <div className="h-full flex flex-col lg:flex-row">
             {/* Mapa - Ocupa todo en móvil, lado izquierdo en desktop */}
-            <div className={`
-              h-[50vh] lg:h-full
-              ${showRecommendations ? 'lg:w-[60%]' : 'lg:w-full'}
-              transition-all duration-300 relative
-            `}>
+            <div className="h-[50vh] lg:h-full lg:w-[60%] relative">
               <MapView
                 searchLat={searchLat}
                 searchLng={searchLng}
@@ -139,41 +131,13 @@ export default function UsuarioPage() {
                 getAQIColor={getAQIColor}
                 getAQIBadge={getAQIBadge}
               />
-
-              {/* Botón toggle para panel de recomendaciones (solo desktop) */}
-              {prediction?.general && (
-                <Button
-                  onClick={() => setShowRecommendations(!showRecommendations)}
-                  className="hidden lg:flex absolute top-4 right-4 z-[1001] shadow-lg"
-                  size="sm"
-                  variant="default"
-                >
-                  {showRecommendations ? (
-                    <>
-                      <ChevronRight className="h-4 w-4 mr-1" />
-                      Ocultar Ayuda
-                    </>
-                  ) : (
-                    <>
-                      <Lightbulb className="h-4 w-4 mr-1" />
-                      Ver Recomendaciones
-                      <ChevronLeft className="h-4 w-4 ml-1" />
-                    </>
-                  )}
-                </Button>
-              )}
             </div>
 
             {/* Panel de Recomendaciones */}
             {prediction?.general && (
               <>
                 {/* Desktop: Sidebar derecho */}
-                <div className={`
-                  hidden lg:block
-                  ${showRecommendations ? 'lg:w-[40%]' : 'lg:w-0'}
-                  overflow-hidden transition-all duration-300
-                  bg-muted/30 border-l border-border
-                `}>
+                <div className="hidden lg:block lg:w-[40%] bg-muted/30 border-l border-border">
                   <div className="h-full overflow-y-auto p-6">
                     <RecommendationsPanel
                       aqi={prediction.general.aqi}

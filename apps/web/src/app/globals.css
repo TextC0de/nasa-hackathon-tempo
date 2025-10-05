@@ -168,12 +168,6 @@
   z-index: 1000 !important;
 }
 
-/* Header should be above everything */
-header {
-  z-index: 10000 !important;
-  position: relative;
-}
-
 /* Ensure all shadcn/ui components are above map */
 [data-slot="dialog-overlay"] {
   z-index: 10000 !important;

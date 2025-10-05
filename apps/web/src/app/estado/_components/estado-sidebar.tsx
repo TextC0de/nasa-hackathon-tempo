@@ -3,12 +3,10 @@
 import { cn } from "@/lib/utils"
 import {
   LayoutDashboard,
-  TrendingUp,
   Clock,
   Bell,
   Settings
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import Link from "next/link"
@@ -19,54 +17,62 @@ interface EstadoSidebarProps {
 }
 
 const navigation = [
-  { href: "/estado", name: "Overview", icon: LayoutDashboard, description: "Mapa y estado general" },
-  { href: "/estado/history", name: "History", icon: Clock, description: "Análisis histórico" },
-  { href: "/estado/alerts", name: "Alerts", icon: Bell, description: "Gestión de alertas" },
+  { href: "/estado", name: "Overview", icon: LayoutDashboard },
+  { href: "/estado/history", name: "History", icon: Clock },
+  { href: "/estado/alerts", name: "Alerts", icon: Bell },
 ]
 
 export function EstadoSidebar({ className }: EstadoSidebarProps) {
   const pathname = usePathname()
+
   return (
-    <div className={cn("flex h-full w-64 flex-col bg-background border-r border-border", className)}>
+    <div
+      className={cn(
+        "group fixed left-0 top-0 h-screen z-50",
+        "w-16 hover:w-64",
+        "bg-background border-r border-border",
+        "transition-all duration-200 ease-in-out",
+        "hover:shadow-xl",
+        className
+      )}
+    >
       {/* Logo */}
-      <div className="flex h-16 shrink-0 items-center px-6">
-        <div className="flex items-center space-x-3">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src="/atmos.svg" alt="AtmOS" />
-            <AvatarFallback className="text-xs font-semibold">AT</AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold text-foreground">AtmOS</span>
-            <span className="text-xs text-muted-foreground">Estado Dashboard</span>
-          </div>
+      <div className="flex h-16 shrink-0 items-center justify-center group-hover:justify-start group-hover:px-6 transition-all duration-200">
+        <Avatar className="h-8 w-8 shrink-0">
+          <AvatarImage src="/atmos.svg" alt="AtmOS" />
+          <AvatarFallback className="text-xs font-semibold">AT</AvatarFallback>
+        </Avatar>
+        <div className="flex flex-col ml-3 opacity-0 group-hover:opacity-100 transition-opacity duration-150 overflow-hidden whitespace-nowrap">
+          <span className="text-sm font-semibold text-foreground">AtmOS</span>
+          <span className="text-xs text-muted-foreground">Estado</span>
         </div>
       </div>
 
       <Separator />
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4">
+      <nav className="flex-1 px-2 py-4">
         <div className="flex flex-col gap-y-1">
           {navigation.map((item) => {
             const isActive = pathname === item.href
+            const Icon = item.icon
+
             return (
-              <Button
+              <Link
                 key={item.href}
-                variant={isActive ? "secondary" : "ghost"}
+                href={item.href}
                 className={cn(
-                  "w-full justify-start gap-x-3 px-3 py-2 h-auto font-normal",
-                  isActive && "bg-secondary"
+                  "flex items-center gap-x-3 px-3 py-3 rounded-md",
+                  "transition-colors duration-150",
+                  "hover:bg-accent hover:text-accent-foreground",
+                  isActive && "bg-secondary text-secondary-foreground"
                 )}
-                asChild
               >
-                <Link href={item.href}>
-                  <item.icon className="h-4 w-4 shrink-0" />
-                  <div className="flex flex-col items-start">
-                    <span className="text-sm font-medium">{item.name}</span>
-                    <span className="text-xs text-muted-foreground">{item.description}</span>
-                  </div>
-                </Link>
-              </Button>
+                <Icon className="h-5 w-5 shrink-0" />
+                <span className="text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-150 overflow-hidden whitespace-nowrap">
+                  {item.name}
+                </span>
+              </Link>
             )
           })}
         </div>
@@ -75,14 +81,19 @@ export function EstadoSidebar({ className }: EstadoSidebarProps) {
       <Separator />
 
       {/* Bottom actions */}
-      <div className="px-3 py-4">
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-x-3 px-3 py-2 h-auto"
+      <div className="px-2 py-4">
+        <button
+          className={cn(
+            "flex items-center gap-x-3 px-3 py-3 rounded-md w-full",
+            "transition-colors duration-150",
+            "hover:bg-accent hover:text-accent-foreground"
+          )}
         >
-          <Settings className="h-4 w-4 shrink-0" />
-          <span className="text-sm">Settings</span>
-        </Button>
+          <Settings className="h-5 w-5 shrink-0" />
+          <span className="text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-150 overflow-hidden whitespace-nowrap">
+            Settings
+          </span>
+        </button>
       </div>
     </div>
   )

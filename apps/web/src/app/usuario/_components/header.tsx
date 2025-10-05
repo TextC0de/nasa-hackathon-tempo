@@ -53,7 +53,7 @@ export function Header({
 }: HeaderProps) {
   return (
     <TooltipProvider>
-      <header className="bg-background border-b border-border px-2 py-2 sm:px-4 sm:py-3 relative z-[10000]">
+      <header className="bg-background border-b border-border px-2 py-2 sm:px-4 sm:py-3 relative z-50">
         <div className="flex items-center justify-between gap-2">
           {/* Logo y métricas principales */}
           <div className="flex items-center space-x-2 sm:space-x-4 lg:space-x-6 min-w-0 flex-1">

@@ -70,78 +70,77 @@ export function RecommendationsPanel({
   return (
     <div className={className}>
       {/* Explicación Principal del AQI */}
-      <Card className="border-2 shadow-lg">
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xl flex items-center gap-2">
-              <span className="text-3xl">{explanation.emoji}</span>
-              <div>
-                <div className="text-2xl font-bold">{explanation.level}</div>
-                <CardDescription className="text-sm mt-1">
-                  {explanation.shortDescription}
-                </CardDescription>
-              </div>
-            </CardTitle>
-            <Badge
-              variant="outline"
-              className={`text-lg px-4 py-2 font-bold ${
-                aqi <= 50 ? 'bg-green-100 text-green-800 border-green-300' :
-                aqi <= 100 ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
-                aqi <= 150 ? 'bg-orange-100 text-orange-800 border-orange-300' :
-                aqi <= 200 ? 'bg-red-100 text-red-800 border-red-300' :
-                aqi <= 300 ? 'bg-purple-100 text-purple-800 border-purple-300' :
-                'bg-maroon-100 text-maroon-800 border-maroon-300'
-              }`}
-            >
-              AQI {aqi}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <p className="text-base text-muted-foreground leading-relaxed">
-            {explanation.detailedDescription}
-          </p>
-
-          {explanation.affectedGroups && explanation.affectedGroups.length > 0 && (
-            <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-              <p className="text-sm font-semibold mb-2 flex items-center gap-2">
-                <Activity className="h-4 w-4" />
-                Grupos que deben tener precaución:
+      <div className="pb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">{explanation.emoji}</span>
+            <div>
+              <div className="text-2xl font-bold">{explanation.level}</div>
+              <p className="text-sm text-muted-foreground mt-1">
+                {explanation.shortDescription}
               </p>
-              <div className="flex flex-wrap gap-2">
-                {explanation.affectedGroups.map((group, idx) => (
-                  <Badge
-                    key={idx}
-                    variant="secondary"
-                    className="text-xs"
-                  >
-                    {group}
-                  </Badge>
-                ))}
-              </div>
             </div>
-          )}
+          </div>
+          <Badge
+            variant="outline"
+            className={`text-lg px-4 py-2 font-bold ${
+              aqi <= 50 ? 'bg-green-100 text-green-800 border-green-300' :
+              aqi <= 100 ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
+              aqi <= 150 ? 'bg-orange-100 text-orange-800 border-orange-300' :
+              aqi <= 200 ? 'bg-red-100 text-red-800 border-red-300' :
+              aqi <= 300 ? 'bg-purple-100 text-purple-800 border-purple-300' :
+              'bg-maroon-100 text-maroon-800 border-maroon-300'
+            }`}
+          >
+            AQI {aqi}
+          </Badge>
+        </div>
 
-          {dominantPollutant && (
-            <div className="mt-3 text-sm text-muted-foreground flex items-center gap-2">
+        <p className="text-base text-muted-foreground leading-relaxed">
+          {explanation.detailedDescription}
+        </p>
+
+        {explanation.affectedGroups && explanation.affectedGroups.length > 0 && (
+          <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+            <p className="text-sm font-semibold mb-2 flex items-center gap-2">
               <Activity className="h-4 w-4" />
-              <span>
-                <strong>Contaminante principal:</strong> {dominantPollutant}
-              </span>
+              Grupos que deben tener precaución:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {explanation.affectedGroups.map((group, idx) => (
+                <Badge
+                  key={idx}
+                  variant="secondary"
+                  className="text-xs"
+                >
+                  {group}
+                </Badge>
+              ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        )}
+
+        {dominantPollutant && (
+          <div className="mt-3 text-sm text-muted-foreground flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            <span>
+              <strong>Contaminante principal:</strong> {dominantPollutant}
+            </span>
+          </div>
+        )}
+      </div>
+      <div className="-mx-6 border-b"></div>
 
       {/* Recomendaciones */}
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle className="text-lg">¿Qué debo hacer?</CardTitle>
-          <CardDescription>
+      <div className="py-6">
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold">¿Qué debo hacer?</h3>
+          <p className="text-sm text-muted-foreground">
             Recomendaciones personalizadas para mantenerte saludable
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+          </p>
+        </div>
+
+        <div className="space-y-3">
           {categorized.all.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
               No hay recomendaciones especiales para este nivel de AQI
@@ -166,26 +165,25 @@ export function RecommendationsPanel({
               </Alert>
             ))
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+      <div className="-mx-6 border-b"></div>
 
       {/* Nota educativa */}
-      <Card className="mt-4 bg-blue-50 dark:bg-blue-950 border-blue-200">
-        <CardContent className="pt-4">
-          <div className="flex gap-3">
-            <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-900 dark:text-blue-100">
-              <p className="font-semibold mb-1">💡 ¿Cómo se calcula el AQI?</p>
-              <p className="text-xs leading-relaxed">
-                El Índice de Calidad del Aire (AQI) combina múltiples contaminantes (O3, NO2, PM2.5, etc.)
-                en un solo número fácil de entender. Un AQI más alto significa mayor contaminación y mayor
-                riesgo para la salud. Los datos provienen de estaciones terrestres EPA combinados con mediciones
-                satelitales NASA TEMPO.
-              </p>
-            </div>
+      <div className="py-6 bg-blue-50 dark:bg-blue-950 -mx-6 px-6 -mb-6">
+        <div className="flex gap-3">
+          <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-blue-900 dark:text-blue-100">
+            <p className="font-semibold mb-1">💡 ¿Cómo se calcula el AQI?</p>
+            <p className="text-xs leading-relaxed">
+              El Índice de Calidad del Aire (AQI) combina múltiples contaminantes (O3, NO2, PM2.5, etc.)
+              en un solo número fácil de entender. Un AQI más alto significa mayor contaminación y mayor
+              riesgo para la salud. Los datos provienen de estaciones terrestres EPA combinados con mediciones
+              satelitales NASA TEMPO.
+            </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }
