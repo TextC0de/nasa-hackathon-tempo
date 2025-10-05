@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { trpc } from "@/lib/trpc"
+import { useMonitoringStations, type GroupedStation } from "@/hooks/use-monitoring-stations"
 import { Header } from "./_components/header"
 import { MapView } from "./_components/map-view"
 import { DebugDialog } from "./_components/debug-dialog"
 import { MetricsDialog, TEMPODialog, WeatherDialog, PollutantsDialog } from "./_components/dialogs"
+import { StationDetailDialog } from "./_components/station-detail-dialog"
 import { getAQIColor, getAQIBadge, getAQILevel } from "./_components/utils"
 
 import "leaflet/dist/leaflet.css"
@@ -31,6 +33,18 @@ export default function UsuarioPage() {
   const [debugLat, setDebugLat] = useState<string>(CALIFORNIA_LOCATIONS[0].lat.toString())
   const [debugLng, setDebugLng] = useState<string>(CALIFORNIA_LOCATIONS[0].lng.toString())
   const [openDialog, setOpenDialog] = useState<string | null>(null)
+
+  // Estado para estación seleccionada
+  const [selectedStation, setSelectedStation] = useState<GroupedStation | null>(null)
+  const [stationDialogOpen, setStationDialogOpen] = useState(false)
+
+  // Hook para obtener todas las estaciones de monitoreo
+  const { groupedStations, isLoading: stationsLoading } = useMonitoringStations({
+    centerLat: 36.7783,
+    centerLng: -119.4179,
+    radiusKm: 200,
+    enabled: true
+  })
 
   // Query para obtener predicción de AQI
   const { data: prediction, isLoading, error, refetch } = trpc.predecirAqi.useQuery(
@@ -114,6 +128,13 @@ export default function UsuarioPage() {
     setOpenDialog(null)
   }
 
+  // Handler para click en estación
+  const handleStationClick = (station: GroupedStation) => {
+    console.log('📍 Estación seleccionada:', station.SiteName)
+    setSelectedStation(station)
+    setStationDialogOpen(true)
+  }
+
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background text-foreground">
@@ -146,10 +167,19 @@ export default function UsuarioPage() {
                 onDialogOpen={setOpenDialog}
                 getAQIColor={getAQIColor}
                 getAQIBadge={getAQIBadge}
+                groupedStations={groupedStations}
+                onStationClick={handleStationClick}
               />
             </main>
           </div>
         </div>
+
+        {/* Dialog de estación con datos TEMPO */}
+        <StationDetailDialog
+          station={selectedStation}
+          open={stationDialogOpen}
+          onOpenChange={setStationDialogOpen}
+        />
 
         {/* Diálogos */}
         <DebugDialog

@@ -16,7 +16,13 @@ import {
   Clock,
   Activity,
   TrendingUp,
-  Eye
+  Eye,
+  Sun,
+  CloudRain,
+  Snowflake,
+  CloudDrizzle,
+  CloudSnow,
+  Zap
 } from "lucide-react"
 
 interface StationWeatherDialogProps {
@@ -130,9 +136,46 @@ export function StationWeatherDialog({
     return directions[index]
   }
 
+  // Obtener icono del clima según código
+  const getWeatherIcon = (code: number | null) => {
+    if (code === null) return <Cloud className="h-5 w-5 text-gray-400" />
+
+    if (code === 0 || code === 1) return <Sun className="h-5 w-5 text-yellow-500" />
+    if (code === 2 || code === 3) return <Cloud className="h-5 w-5 text-gray-500" />
+    if (code >= 51 && code <= 55) return <CloudDrizzle className="h-5 w-5 text-blue-400" />
+    if (code >= 61 && code <= 65) return <CloudRain className="h-5 w-5 text-blue-600" />
+    if (code >= 71 && code <= 75) return <CloudSnow className="h-5 w-5 text-blue-300" />
+    if (code >= 80 && code <= 82) return <CloudRain className="h-5 w-5 text-blue-700" />
+    if (code >= 95) return <Zap className="h-5 w-5 text-yellow-600" />
+
+    return <Cloud className="h-5 w-5 text-gray-400" />
+  }
+
+  // Agrupar pronóstico por día
+  const groupForecastByDay = (hourlyData: any) => {
+    const days: { [key: string]: any[] } = {}
+
+    hourlyData.time?.forEach((time: string, idx: number) => {
+      const date = new Date(time)
+      const dayKey = date.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })
+
+      if (!days[dayKey]) {
+        days[dayKey] = []
+      }
+
+      days[dayKey].push({
+        time,
+        idx,
+        hour: date.getHours()
+      })
+    })
+
+    return days
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto z-[10001]">
+      <DialogContent className="sm:max-w-4xl w-full max-h-[90vh] overflow-y-auto z-[10001]">
         {/* Header */}
         <DialogHeader>
           <div className="space-y-3">
@@ -427,153 +470,166 @@ export function StationWeatherDialog({
               </div>
             ) : forecastData?.weather_data?.hourly ? (
               <div className="space-y-4">
-                {/* Forecast Timeline */}
-                <div className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  Pronóstico por Hora (próximas {forecastData.forecast_hours}h)
+                {/* Summary Cards Row */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="p-3 rounded-lg bg-gradient-to-br from-orange-50 to-red-50 border border-orange-200">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Thermometer className="h-4 w-4 text-orange-600" />
+                      <span className="text-xs font-semibold text-gray-700">Temp. Máx</span>
+                    </div>
+                    <div className="text-xl font-bold text-gray-900">
+                      {forecastData.weather_data.hourly.temperature_2m
+                        ? (() => {
+                            const temps = forecastData.weather_data.hourly.temperature_2m
+                              .map(t => typeof t === 'number' ? t : (typeof t === 'string' ? parseFloat(t) : null))
+                              .filter((t): t is number => t !== null && !isNaN(t))
+                            return temps.length > 0 ? `${Math.max(...temps).toFixed(1)}°C` : 'N/A'
+                          })()
+                        : 'N/A'}
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Thermometer className="h-4 w-4 text-blue-600" />
+                      <span className="text-xs font-semibold text-gray-700">Temp. Mín</span>
+                    </div>
+                    <div className="text-xl font-bold text-gray-900">
+                      {forecastData.weather_data.hourly.temperature_2m
+                        ? (() => {
+                            const temps = forecastData.weather_data.hourly.temperature_2m
+                              .map(t => typeof t === 'number' ? t : (typeof t === 'string' ? parseFloat(t) : null))
+                              .filter((t): t is number => t !== null && !isNaN(t))
+                            return temps.length > 0 ? `${Math.min(...temps).toFixed(1)}°C` : 'N/A'
+                          })()
+                        : 'N/A'}
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-gradient-to-br from-blue-100 to-blue-50 border border-blue-300">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Droplets className="h-4 w-4 text-blue-700" />
+                      <span className="text-xs font-semibold text-gray-700">Precipitación</span>
+                    </div>
+                    <div className="text-xl font-bold text-gray-900">
+                      {forecastData.weather_data.hourly.precipitation
+                        ? (() => {
+                            const precips = forecastData.weather_data.hourly.precipitation
+                              .map(p => typeof p === 'number' ? p : (typeof p === 'string' ? parseFloat(p) : null))
+                              .filter((p): p is number => p !== null && !isNaN(p))
+                            return precips.length > 0 ? `${precips.reduce((sum, p) => sum + p, 0).toFixed(1)} mm` : '0 mm'
+                          })()
+                        : '0 mm'}
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Wind className="h-4 w-4 text-purple-600" />
+                      <span className="text-xs font-semibold text-gray-700">Viento Máx</span>
+                    </div>
+                    <div className="text-xl font-bold text-gray-900">
+                      {forecastData.weather_data.hourly.windspeed_10m
+                        ? (() => {
+                            const winds = forecastData.weather_data.hourly.windspeed_10m
+                              .map(w => typeof w === 'number' ? w : (typeof w === 'string' ? parseFloat(w) : null))
+                              .filter((w): w is number => w !== null && !isNaN(w))
+                            return winds.length > 0 ? `${Math.max(...winds).toFixed(1)} m/s` : 'N/A'
+                          })()
+                        : 'N/A'}
+                    </div>
+                  </div>
                 </div>
 
-                {/* Scrollable hourly forecast */}
-                <div className="max-h-96 overflow-y-auto space-y-2">
-                  {forecastData.weather_data.hourly.time?.map((time, idx) => {
-                    const hourlyData = forecastData.weather_data.hourly
-                    if (!hourlyData) return null
+                {/* Forecast by Day */}
+                <div className="space-y-3">
+                  <div className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Pronóstico por Hora (próximas {forecastData.forecast_hours}h)
+                  </div>
 
-                    const temp = hourlyData.temperature_2m?.[idx]
-                    const precipitation = hourlyData.precipitation?.[idx]
-                    const windSpeed = hourlyData.windspeed_10m?.[idx]
-                    const weatherCode = hourlyData.weather_code?.[idx]
-                    const humidity = hourlyData.relative_humidity_2m?.[idx]
-                    const cloudCover = hourlyData.cloud_cover?.[idx]
+                  <div className="max-h-[400px] overflow-y-auto space-y-4 pr-2">
+                    {Object.entries(groupForecastByDay(forecastData.weather_data.hourly)).map(([day, hours]: [string, any]) => (
+                      <div key={day} className="border border-gray-200 rounded-lg overflow-hidden">
+                        {/* Day Header */}
+                        <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 font-semibold text-sm">
+                          {day}
+                        </div>
 
-                    // Convertir a número si es necesario
-                    const tempNum = typeof temp === 'number' ? temp : (typeof temp === 'string' ? parseFloat(temp) : null)
-                    const precipNum = typeof precipitation === 'number' ? precipitation : (typeof precipitation === 'string' ? parseFloat(precipitation) : null)
-                    const windNum = typeof windSpeed === 'number' ? windSpeed : (typeof windSpeed === 'string' ? parseFloat(windSpeed) : null)
-                    const weatherCodeNum = typeof weatherCode === 'number' ? weatherCode : (typeof weatherCode === 'string' ? parseInt(weatherCode) : null)
-                    const humidityNum = typeof humidity === 'number' ? humidity : (typeof humidity === 'string' ? parseFloat(humidity) : null)
-                    const cloudNum = typeof cloudCover === 'number' ? cloudCover : (typeof cloudCover === 'string' ? parseFloat(cloudCover) : null)
+                        {/* Hours in this day */}
+                        <div className="divide-y divide-gray-100">
+                          {hours.map(({ time, idx, hour }: any) => {
+                            const hourlyData = forecastData.weather_data.hourly
+                            if (!hourlyData) return null
 
-                    const forecastDate = new Date(time)
-                    const isNow = idx === 0
+                            const temp = hourlyData.temperature_2m?.[idx]
+                            const precipitation = hourlyData.precipitation?.[idx]
+                            const windSpeed = hourlyData.windspeed_10m?.[idx]
+                            const weatherCode = hourlyData.weather_code?.[idx]
+                            const humidity = hourlyData.relative_humidity_2m?.[idx]
 
-                    return (
-                      <div
-                        key={idx}
-                        className={`p-3 rounded-lg border ${isNow ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'}`}
-                      >
-                        <div className="flex items-center justify-between">
-                          {/* Time */}
-                          <div className="flex-1">
-                            <div className="font-semibold text-gray-900 flex items-center gap-2">
-                              {isNow && <Badge variant="default" className="text-xs">Ahora</Badge>}
-                              {forecastDate.toLocaleString('es-ES', {
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </div>
-                            <div className="text-xs text-gray-600 mt-1">
-                              {getWeatherDescription(weatherCodeNum)}
-                            </div>
-                          </div>
+                            // Convertir a número
+                            const tempNum = typeof temp === 'number' ? temp : (typeof temp === 'string' ? parseFloat(temp) : null)
+                            const precipNum = typeof precipitation === 'number' ? precipitation : (typeof precipitation === 'string' ? parseFloat(precipitation) : null)
+                            const windNum = typeof windSpeed === 'number' ? windSpeed : (typeof windSpeed === 'string' ? parseFloat(windSpeed) : null)
+                            const weatherCodeNum = typeof weatherCode === 'number' ? weatherCode : (typeof weatherCode === 'string' ? parseInt(weatherCode) : null)
+                            const humidityNum = typeof humidity === 'number' ? humidity : (typeof humidity === 'string' ? parseFloat(humidity) : null)
 
-                          {/* Temperature */}
-                          <div className="text-center mx-4">
-                            <div className="text-2xl font-bold text-gray-900">
-                              {tempNum !== null ? `${tempNum.toFixed(1)}°` : 'N/A'}
-                            </div>
-                            {humidityNum !== null && (
-                              <div className="text-xs text-gray-600">
-                                {humidityNum.toFixed(0)}% hum.
+                            const isNow = idx === 0
+
+                            return (
+                              <div
+                                key={idx}
+                                className={`px-4 py-3 hover:bg-gray-50 transition-colors ${isNow ? 'bg-blue-50' : 'bg-white'}`}
+                              >
+                                <div className="flex items-center justify-between gap-4">
+                                  {/* Hour + Weather Icon */}
+                                  <div className="flex items-center gap-3 flex-1 min-w-[140px]">
+                                    {isNow && <Badge variant="default" className="text-xs">Ahora</Badge>}
+                                    <span className="font-semibold text-gray-900 w-12">
+                                      {hour.toString().padStart(2, '0')}:00
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                      {getWeatherIcon(weatherCodeNum)}
+                                      <span className="text-xs text-gray-600 hidden sm:inline">
+                                        {getWeatherDescription(weatherCodeNum)}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Temperature */}
+                                  <div className="text-center min-w-[60px]">
+                                    <div className="text-lg font-bold text-gray-900">
+                                      {tempNum !== null ? `${tempNum.toFixed(1)}°` : 'N/A'}
+                                    </div>
+                                  </div>
+
+                                  {/* Weather Details */}
+                                  <div className="flex items-center gap-4 text-xs text-gray-600">
+                                    <div className="flex items-center gap-1 min-w-[70px]">
+                                      <Droplets className="h-3 w-3 text-blue-500" />
+                                      <span>{humidityNum !== null ? `${humidityNum.toFixed(0)}%` : 'N/A'}</span>
+                                    </div>
+
+                                    {precipNum !== null && precipNum > 0 && (
+                                      <div className="flex items-center gap-1 min-w-[60px] text-blue-600 font-semibold">
+                                        <CloudRain className="h-3 w-3" />
+                                        <span>{precipNum.toFixed(1)} mm</span>
+                                      </div>
+                                    )}
+
+                                    <div className="flex items-center gap-1 min-w-[60px]">
+                                      <Wind className="h-3 w-3 text-gray-500" />
+                                      <span>{windNum !== null ? `${windNum.toFixed(1)} m/s` : 'N/A'}</span>
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
-                            )}
-                          </div>
-
-                          {/* Weather details */}
-                          <div className="flex flex-col items-end gap-1">
-                            {precipNum !== null && precipNum > 0 && (
-                              <div className="flex items-center gap-1 text-xs text-blue-600">
-                                <Droplets className="h-3 w-3" />
-                                {precipNum.toFixed(1)} mm
-                              </div>
-                            )}
-                            {windNum !== null && (
-                              <div className="flex items-center gap-1 text-xs text-gray-600">
-                                <Wind className="h-3 w-3" />
-                                {windNum.toFixed(1)} m/s
-                              </div>
-                            )}
-                            {cloudNum !== null && (
-                              <div className="flex items-center gap-1 text-xs text-gray-600">
-                                <Cloud className="h-3 w-3" />
-                                {cloudNum.toFixed(0)}%
-                              </div>
-                            )}
-                          </div>
+                            )
+                          })}
                         </div>
                       </div>
-                    )
-                  })}
-                </div>
-
-                {/* Summary stats */}
-                <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
-                  <div className="text-sm font-semibold text-gray-700 mb-3">Resumen del Pronóstico</div>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-600">Temp. Máxima:</span>
-                      <span className="font-semibold ml-2">
-                        {forecastData.weather_data.hourly.temperature_2m
-                          ? (() => {
-                              const temps = forecastData.weather_data.hourly.temperature_2m
-                                .map(t => typeof t === 'number' ? t : (typeof t === 'string' ? parseFloat(t) : null))
-                                .filter((t): t is number => t !== null && !isNaN(t))
-                              return temps.length > 0 ? `${Math.max(...temps).toFixed(1)}°C` : 'N/A'
-                            })()
-                          : 'N/A'}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Temp. Mínima:</span>
-                      <span className="font-semibold ml-2">
-                        {forecastData.weather_data.hourly.temperature_2m
-                          ? (() => {
-                              const temps = forecastData.weather_data.hourly.temperature_2m
-                                .map(t => typeof t === 'number' ? t : (typeof t === 'string' ? parseFloat(t) : null))
-                                .filter((t): t is number => t !== null && !isNaN(t))
-                              return temps.length > 0 ? `${Math.min(...temps).toFixed(1)}°C` : 'N/A'
-                            })()
-                          : 'N/A'}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Precipitación Total:</span>
-                      <span className="font-semibold ml-2">
-                        {forecastData.weather_data.hourly.precipitation
-                          ? (() => {
-                              const precips = forecastData.weather_data.hourly.precipitation
-                                .map(p => typeof p === 'number' ? p : (typeof p === 'string' ? parseFloat(p) : null))
-                                .filter((p): p is number => p !== null && !isNaN(p))
-                              return precips.length > 0 ? `${precips.reduce((sum, p) => sum + p, 0).toFixed(1)} mm` : 'N/A'
-                            })()
-                          : 'N/A'}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Viento Máx.:</span>
-                      <span className="font-semibold ml-2">
-                        {forecastData.weather_data.hourly.windspeed_10m
-                          ? (() => {
-                              const winds = forecastData.weather_data.hourly.windspeed_10m
-                                .map(w => typeof w === 'number' ? w : (typeof w === 'string' ? parseFloat(w) : null))
-                                .filter((w): w is number => w !== null && !isNaN(w))
-                              return winds.length > 0 ? `${Math.max(...winds).toFixed(1)} m/s` : 'N/A'
-                            })()
-                          : 'N/A'}
-                      </span>
-                    </div>
+                    ))}
                   </div>
                 </div>
               </div>

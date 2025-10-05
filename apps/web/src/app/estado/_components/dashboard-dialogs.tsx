@@ -219,7 +219,7 @@ export function DashboardDialogs({
 
       {/* Alertas */}
       <Dialog open={openDialog === "alerts"} onOpenChange={(open) => !open && setOpenDialog(null)}>
-        <DialogContent className="max-w-md sm:max-w-lg z-[10001] mx-4">
+        <DialogContent className="max-w-md sm:max-w-4xl z-[10001] mx-4">
           <DialogHeader>
             <DialogTitle className="text-sm sm:text-base flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-orange-500" />

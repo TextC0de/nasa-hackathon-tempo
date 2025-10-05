@@ -166,7 +166,7 @@ export function FireDialog({ fire, open, onOpenChange }: FireDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto z-[10001]">
+      <DialogContent className="max-w-4xl w-full max-h-[90vh] overflow-y-auto z-[10001]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Flame className="w-5 h-5 text-orange-500" />
