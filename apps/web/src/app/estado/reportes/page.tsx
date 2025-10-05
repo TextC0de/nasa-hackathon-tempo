@@ -26,6 +26,7 @@ import {
 import { toast } from "sonner"
 import { UserReport } from "@/lib/report-types"
 import { formatDate, formatCoordinates, getSeverityConfig, getTypeConfig } from "@/lib/report-utils"
+import { ReportsMap } from "@/components/reports-map"
 
 // Alias para compatibilidad con el código existente
 type AdminReport = UserReport
@@ -45,6 +46,7 @@ export default function AdminReportsPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [activeTab, setActiveTab] = useState("overview")
+  const [selectedReportId, setSelectedReportId] = useState<string | undefined>()
 
   // Query para obtener todos los reportes (esto necesitaría implementarse en el backend)
   // Por ahora usaremos los reportes del usuario como ejemplo
@@ -92,20 +94,27 @@ export default function AdminReportsPage() {
     // Aquí se implementaría la mutación para actualizar el estado
   }
 
+  // Función para manejar clicks en reportes del mapa
+  const handleReportClick = (report: UserReport) => {
+    setSelectedReportId(report.id)
+    setActiveTab("reports") // Cambiar a la pestaña de reportes
+    toast.info(`Reporte ${report.id.slice(-8)} seleccionado`)
+  }
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-6">
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex-shrink-0">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-foreground">Gestión de Reportes</h1>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Administra y revisa todos los reportes de contaminación
               </p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" className="gap-2">
+              <Button variant="outline" size="sm" className="gap-2">
                 <Download className="h-4 w-4" />
                 Exportar
               </Button>
@@ -115,8 +124,24 @@ export default function AdminReportsPage() {
       </div>
 
       {/* Contenido principal */}
-      <div className="container mx-auto px-4 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
+          
+          {/* Columna izquierda - Mapa */}
+          <div className="h-full">
+            <div className="h-full bg-muted/20 rounded-lg border overflow-hidden">
+              <ReportsMap 
+                reports={allReports || []}
+                selectedReportId={selectedReportId}
+                onReportClick={handleReportClick}
+                className="h-full"
+              />
+            </div>
+          </div>
+
+          {/* Columna derecha - Panel de gestión */}
+          <div className="h-full overflow-y-auto">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
           {/* Pestañas */}
           <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:grid-cols-4">
             <TabsTrigger value="overview">Resumen</TabsTrigger>
@@ -432,7 +457,9 @@ export default function AdminReportsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
+            </Tabs>
+          </div>
+        </div>
       </div>
     </div>
   )
