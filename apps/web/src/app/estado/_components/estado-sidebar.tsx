@@ -55,7 +55,7 @@ export function EstadoSidebar({ className }: EstadoSidebarProps) {
           />
           <div className="flex flex-col opacity-0 group-hover:opacity-100 transition-opacity duration-150 overflow-hidden whitespace-nowrap">
             <span className="text-sm font-semibold text-foreground">AtmOS</span>
-          </div>
+          </div> 
         </div>
       </div>
 
