@@ -55,6 +55,12 @@ export const obtenerPoblacionAfectadaProcedure = publicProcedure
   .query(async ({ input, ctx }) => {
     const airnowApiKey = ctx.env.AIRNOW_API_KEY
 
+    // ============ DEBUG LOGS ============
+    console.log('🔍 [DEBUG] AIRNOW_API_KEY configurada:', airnowApiKey ? 'SÍ' : 'NO')
+    console.log('🔍 [DEBUG] AIRNOW_API_KEY completa:', airnowApiKey)
+    console.log('🔍 [DEBUG] ctx.env completo:', JSON.stringify(ctx.env, null, 2))
+    // ====================================
+
     // Generar cache key única basada en la hora (datos de AirNow se actualizan cada hora)
     const now = new Date()
     const hourTimestamp = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}T${String(now.getUTCHours()).padStart(2, '0')}`
@@ -103,6 +109,7 @@ export const obtenerPoblacionAfectadaProcedure = publicProcedure
         const url = `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${ciudad.lat}&longitude=${ciudad.lng}&distance=50&API_KEY=${airnowApiKey}`
 
         console.log(`🔄 [POBLACIÓN] Consultando AQI para ${ciudad.nombre}...`)
+        console.log(`🔍 [DEBUG] URL completa: ${url}`)
 
         const response = await fetch(url)
 
@@ -111,6 +118,7 @@ export const obtenerPoblacionAfectadaProcedure = publicProcedure
         if (!response.ok) {
           const errorText = await response.text()
           console.warn(`⚠️  [POBLACIÓN] No se pudo obtener AQI para ${ciudad.nombre} (${response.status})`)
+          console.warn(`🔍 [DEBUG] Error text:`, errorText)
           if (response.status === 429) {
             console.warn(`   ⏱️  Rate limit excedido, esperando...`)
           }
@@ -134,6 +142,7 @@ export const obtenerPoblacionAfectadaProcedure = publicProcedure
         }>
 
         console.log(`✅ [POBLACIÓN] Datos recibidos para ${ciudad.nombre}: ${data.length} parámetros`)
+        console.log(`🔍 [DEBUG] Datos completos:`, JSON.stringify(data, null, 2))
         if (data.length > 0) {
           console.log(`   AQI values: ${data.map(d => `${d.ParameterName}=${d.AQI}`).join(', ')}`)
         }
@@ -143,6 +152,7 @@ export const obtenerPoblacionAfectadaProcedure = publicProcedure
 
         if (aqiMax === null) {
           console.warn(`⚠️  [POBLACIÓN] No hay datos de AQI para ${ciudad.nombre}`)
+          console.warn(`🔍 [DEBUG] Array de datos vacío o inválido`)
           ciudadesConAQI.push({
             status: 'fulfilled',
             value: {
