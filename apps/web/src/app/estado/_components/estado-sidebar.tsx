@@ -1,29 +1,42 @@
 "use client"
 
+import { useState } from "react"
 import { cn } from "@/lib/utils"
 import {
   LayoutDashboard,
   Clock,
   Bell,
-  Settings
+  Settings,
+  AlertTriangle
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { ReportPollutionDialog } from "@/components/report-pollution-dialog"
 
 interface EstadoSidebarProps {
   className?: string
 }
 
-const navigation = [
+// Tipos para navegación
+interface NavigationItem {
+  href?: string
+  name: string
+  icon: React.ComponentType<{ className?: string }>
+  isDialog?: boolean
+}
+
+const navigation: NavigationItem[] = [
   { href: "/estado", name: "Overview", icon: LayoutDashboard },
   { href: "/estado/history", name: "History", icon: Clock },
   { href: "/estado/alerts", name: "Alerts", icon: Bell },
+  { name: "Reportar Contaminación", icon: AlertTriangle, isDialog: true },
 ]
 
 export function EstadoSidebar({ className }: EstadoSidebarProps) {
   const pathname = usePathname()
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false)
 
   return (
     <div
@@ -56,13 +69,32 @@ export function EstadoSidebar({ className }: EstadoSidebarProps) {
       <nav className="flex-1 px-2 py-4">
         <div className="flex flex-col gap-y-1">
           {navigation.map((item) => {
-            const isActive = pathname === item.href
+            const isActive = item.href ? pathname === item.href : false
             const Icon = item.icon
+
+            if (item.isDialog) {
+              return (
+                <button
+                  key={item.name}
+                  onClick={() => setIsReportDialogOpen(true)}
+                  className={cn(
+                    "flex items-center gap-x-3 px-3 py-3 rounded-md w-full",
+                    "transition-colors duration-150",
+                    "hover:bg-accent hover:text-accent-foreground"
+                  )}
+                >
+                  <Icon className="h-5 w-5 shrink-0" />
+                  <span className="text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-150 overflow-hidden whitespace-nowrap">
+                    {item.name}
+                  </span>
+                </button>
+              )
+            }
 
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={item.href!}
                 className={cn(
                   "flex items-center gap-x-3 px-3 py-3 rounded-md",
                   "transition-colors duration-150",
@@ -97,6 +129,12 @@ export function EstadoSidebar({ className }: EstadoSidebarProps) {
           </span>
         </button>
       </div>
+
+      {/* Report Pollution Dialog */}
+      <ReportPollutionDialog 
+        open={isReportDialogOpen} 
+        onOpenChange={setIsReportDialogOpen} 
+      />
     </div>
   )
 }
