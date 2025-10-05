@@ -18,25 +18,33 @@ interface UserReport {
   latitud: string
   longitud: string
   descripcion: string | null
-  gravedad: 'low' | 'intermediate' | 'critical'
-  tipo: 'fire' | 'smoke' | 'dust'
+  gravedad: string // Más flexible para aceptar cualquier valor del API
+  tipo: string // Más flexible para aceptar cualquier valor del API
   fechaReporte: string
   createdAt: string
   updatedAt: string
 }
 
-// Configuración de gravedad para badges
+// Configuración de gravedad para badges - Mapeo completo de valores del API
 const SEVERITY_CONFIG = {
   low: { label: 'Bajo', color: 'bg-green-100 text-green-800 border-green-200' },
   intermediate: { label: 'Intermedio', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  critical: { label: 'Crítico', color: 'bg-red-100 text-red-800 border-red-200' }
+  critical: { label: 'Crítico', color: 'bg-red-100 text-red-800 border-red-200' },
+  // Valores alternativos que podrían venir del API
+  'bajo': { label: 'Bajo', color: 'bg-green-100 text-green-800 border-green-200' },
+  'intermedio': { label: 'Intermedio', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+  'critico': { label: 'Crítico', color: 'bg-red-100 text-red-800 border-red-200' }
 } as const
 
-// Configuración de tipos para badges
+// Configuración de tipos para badges - Mapeo completo de valores del API
 const TYPE_CONFIG = {
   fire: { label: 'Fuego', icon: '🔥', color: 'bg-orange-100 text-orange-800 border-orange-200' },
   smoke: { label: 'Humo', icon: '💨', color: 'bg-gray-100 text-gray-800 border-gray-200' },
-  dust: { label: 'Polvo', icon: '🌪️', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' }
+  dust: { label: 'Polvo', icon: '🌪️', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+  // Valores alternativos que podrían venir del API
+  'fuego': { label: 'Fuego', icon: '🔥', color: 'bg-orange-100 text-orange-800 border-orange-200' },
+  'humo': { label: 'Humo', icon: '💨', color: 'bg-gray-100 text-gray-800 border-gray-200' },
+  'polvo': { label: 'Polvo', icon: '🌪️', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' }
 } as const
 
 export default function UserReportsPage() {
@@ -47,6 +55,14 @@ export default function UserReportsPage() {
   
   // Extraer el array de reportes de la respuesta
   const reports = reportsData?.reportes || []
+
+  // Debug: Mostrar los valores que llegan del API
+  if (reports.length > 0) {
+    console.log('Valores del API:', {
+      gravedades: reports.map(r => r.gravedad),
+      tipos: reports.map(r => r.tipo)
+    })
+  }
 
   // Función para formatear fecha
   const formatDate = (dateString: string) => {
@@ -62,6 +78,26 @@ export default function UserReportsPage() {
   // Función para obtener coordenadas formateadas
   const formatCoordinates = (lat: string, lng: string) => {
     return `${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)}`
+  }
+
+  // Función helper para obtener configuración de gravedad
+  const getSeverityConfig = (gravedad: string) => {
+    const config = SEVERITY_CONFIG[gravedad as keyof typeof SEVERITY_CONFIG]
+    if (!config) {
+      console.warn(`Gravedad no reconocida: ${gravedad}`)
+      return { label: gravedad, color: 'bg-gray-100 text-gray-800 border-gray-200' }
+    }
+    return config
+  }
+
+  // Función helper para obtener configuración de tipo
+  const getTypeConfig = (tipo: string) => {
+    const config = TYPE_CONFIG[tipo as keyof typeof TYPE_CONFIG]
+    if (!config) {
+      console.warn(`Tipo no reconocido: ${tipo}`)
+      return { label: tipo, icon: '❓', color: 'bg-gray-100 text-gray-800 border-gray-200' }
+    }
+    return config
   }
 
   return (
@@ -118,7 +154,9 @@ export default function UserReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">
-                {isLoading ? "..." : reports.filter((r: UserReport) => r.gravedad === 'critical').length || 0}
+                {isLoading ? "..." : reports.filter((r: UserReport) => 
+                  r.gravedad === 'critical' || r.gravedad === 'critico'
+                ).length || 0}
               </div>
             </CardContent>
           </Card>
@@ -170,12 +208,12 @@ export default function UserReportsPage() {
                         <div className="flex-1 space-y-3">
                           {/* Header del reporte */}
                           <div className="flex items-center gap-3">
-                            <Badge className={SEVERITY_CONFIG[report.gravedad].color}>
-                              {SEVERITY_CONFIG[report.gravedad].label}
+                            <Badge className={getSeverityConfig(report.gravedad).color}>
+                              {getSeverityConfig(report.gravedad).label}
                             </Badge>
-                            <Badge className={TYPE_CONFIG[report.tipo].color}>
-                              <span className="mr-1">{TYPE_CONFIG[report.tipo].icon}</span>
-                              {TYPE_CONFIG[report.tipo].label}
+                            <Badge className={getTypeConfig(report.tipo).color}>
+                              <span className="mr-1">{getTypeConfig(report.tipo).icon}</span>
+                              {getTypeConfig(report.tipo).label}
                             </Badge>
                             <span className="text-sm text-muted-foreground">
                               ID: #{report.id.slice(-8)}
