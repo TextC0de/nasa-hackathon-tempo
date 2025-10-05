@@ -9,8 +9,8 @@ interface TimelinePoint {
   value: number | null
   valueFormatted: string | null
   changePercent: string
-  event: 'fire_detected' | 'peak' | 'current' | null
-  reason?: 'no_data' | 'outside_coverage' | 'error'
+  event: string | null
+  reason?: 'no_data' | 'outside_coverage' | 'error' | string
 }
 
 interface FireImpactTimelineProps {
