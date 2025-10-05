@@ -64,13 +64,99 @@ const MapClickHandler = ({ onClick }: { onClick: (e: L.LeafletMouseEvent) => voi
   return null
 }
 
-// Fix para iconos de Leaflet
+// Fix para iconos de Leaflet + Crear ícono personalizado arrastrable
 if (typeof window !== 'undefined') {
   delete (L.Icon.Default.prototype as any)._getIconUrl
   L.Icon.Default.mergeOptions({
     iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
     iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
     shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  })
+}
+
+// Ícono personalizado con animación pulsante
+const createDraggableIcon = () => {
+  if (typeof window === 'undefined') return L.icon({})
+
+  return L.divIcon({
+    className: 'custom-draggable-marker',
+    html: `
+      <div style="position: relative; width: 40px; height: 40px;">
+        <!-- Pulso animado -->
+        <div style="
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 40px;
+          height: 40px;
+          background: hsl(var(--primary));
+          border-radius: 50%;
+          opacity: 0.3;
+          animation: pulse 2s ease-out infinite;
+        "></div>
+
+        <!-- Marker principal -->
+        <div style="
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 30px;
+          height: 30px;
+          background: hsl(var(--primary));
+          border: 3px solid white;
+          border-radius: 50%;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          cursor: move;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 16px;
+        ">
+          📍
+        </div>
+
+        <!-- Tooltip hint -->
+        <div style="
+          position: absolute;
+          top: -25px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(0,0,0,0.8);
+          color: white;
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-size: 10px;
+          white-space: nowrap;
+          pointer-events: none;
+        ">
+          Arrastra para mover
+        </div>
+      </div>
+
+      <style>
+        @keyframes pulse {
+          0% {
+            transform: translate(-50%, -50%) scale(0.8);
+            opacity: 0.5;
+          }
+          50% {
+            opacity: 0.2;
+          }
+          100% {
+            transform: translate(-50%, -50%) scale(1.5);
+            opacity: 0;
+          }
+        }
+        .custom-draggable-marker {
+          cursor: move !important;
+        }
+      </style>
+    `,
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -40]
   })
 }
 
@@ -230,8 +316,19 @@ export function HistoryLocationMap({
               }}
             />
 
-            {/* Marcador en el centro */}
-            <Marker position={position}>
+            {/* Marcador arrastrable */}
+            <Marker
+              position={position}
+              draggable={true}
+              icon={createDraggableIcon()}
+              eventHandlers={{
+                dragend: (e) => {
+                  const marker = e.target
+                  const pos = marker.getLatLng()
+                  onLocationChange(pos.lat, pos.lng)
+                }
+              }}
+            >
               <Popup>
                 <div className="text-xs">
                   <p className="font-semibold mb-1">{locationName}</p>
@@ -240,7 +337,7 @@ export function HistoryLocationMap({
                     Lng: {longitude.toFixed(4)}
                   </p>
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    Haz click en el mapa para cambiar ubicación
+                    Arrastra el marcador para mover la ubicación
                   </p>
                 </div>
               </Popup>
