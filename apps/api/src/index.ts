@@ -30,8 +30,8 @@ app.use('*', async (c, next) => {
 })
 
 app.use('/*', cors({
-  origin: ['http://localhost:3000'],
-  credentials: true,
+  origin: '*',
+  credentials: false,
 }))
 
 app.use(
