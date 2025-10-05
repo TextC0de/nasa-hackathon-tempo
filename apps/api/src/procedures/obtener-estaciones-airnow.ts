@@ -61,7 +61,7 @@ export const obtenerEstacionesAirNowProcedure = publicProcedure
       console.warn('⚠️  [AIRNOW] Error al leer cache, continuando con API:', error)
     }
 
-    const airnowClient = new AirNowClient({ apiKey: 'DA9ADC07-8368-4CA1-8B46-6C3A13D6BA1D' })
+    const airnowClient = new AirNowClient({ apiKey: 'A09EAF06-910B-4426-A2A8-8DC2D82641C6' })
 
     try {
       // ESTRATEGIA: Intentar primero con bbox completo (AirNow no documenta límite de km²)

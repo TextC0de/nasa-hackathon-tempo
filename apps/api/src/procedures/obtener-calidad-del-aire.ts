@@ -13,7 +13,7 @@ export const obtenerCalidadDelAireProcedure = publicProcedure
   .query(async ({ input }) => {
     const { latitud, longitud, radiusKm } = input
 
-    const airnowClient = new AirNowClient({ apiKey: 'DA9ADC07-8368-4CA1-8B46-6C3A13D6BA1D' })
+    const airnowClient = new AirNowClient({ apiKey: 'A09EAF06-910B-4426-A2A8-8DC2D82641C6' })
     const observations = await airnowClient.getCurrentObservationsByLocation(
       { latitude: latitud, longitude: longitud },
       { distance: radiusKm }
