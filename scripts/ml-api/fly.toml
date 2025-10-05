@@ -1,0 +1,23 @@
+# Fly.io configuration
+# Deploy with: fly deploy
+
+app = "nasa-tempo-ml-api"
+primary_region = "lax"  # Los Angeles (cerca de donde están tus datos)
+
+[build]
+  builder = "paketobuildpacks/builder:base"
+
+[env]
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0  # Auto-sleep cuando no hay tráfico
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512

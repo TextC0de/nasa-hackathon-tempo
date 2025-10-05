@@ -366,8 +366,8 @@ function validateAQI(aqi: number, concentration: number): string {
  * @returns HTML string para el popup
  */
 function createGroupedPopupContent(station: GroupedStation): string {
-  const worstAqiColor = getAQIColor(station.worstAQI)
-  const worstAqiCategory = getAQICategory(station.worstAQI)
+  const dominantAqiColor = getAQIColor(station.dominantAQI)
+  const dominantAqiCategory = getAQICategory(station.dominantAQI)
   const formattedDate = formatDate(station.lastUpdate)
   const formattedStatus = formatStatus(station.Status)
 
@@ -401,13 +401,13 @@ function createGroupedPopupContent(station: GroupedStation): string {
         <!-- Header -->
         <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-t-lg">
           <div class="flex items-center gap-3">
-            <div class="w-6 h-6 rounded-full flex-shrink-0 ring-2 ring-white" style="background-color: ${worstAqiColor}"></div>
+            <div class="w-6 h-6 rounded-full flex-shrink-0 ring-2 ring-white" style="background-color: ${dominantAqiColor}"></div>
             <div class="flex-1 min-w-0 text-white">
               <h3 class="font-bold text-base truncate">${station.SiteName}</h3>
               <p class="text-xs opacity-90 truncate">${station.AgencyName}</p>
             </div>
             <div class="text-right">
-              <div class="text-2xl font-bold text-white">${station.worstAQI > 0 ? station.worstAQI : 'N/A'}</div>
+              <div class="text-2xl font-bold text-white">${station.dominantAQI > 0 ? station.dominantAQI : 'N/A'}</div>
               <div class="text-xs opacity-90">AQI</div>
             </div>
           </div>
@@ -416,20 +416,20 @@ function createGroupedPopupContent(station: GroupedStation): string {
         <!-- Content -->
         <div class="p-4">
           <!-- Overall Status -->
-          <div class="mb-3 p-3 rounded-lg" style="background-color: ${worstAqiColor}15; border-left: 4px solid ${worstAqiColor}">
+          <div class="mb-3 p-3 rounded-lg" style="background-color: ${dominantAqiColor}15; border-left: 4px solid ${dominantAqiColor}">
             <div class="flex items-center justify-between">
               <div>
                 <div class="text-xs text-gray-600 mb-1">Estado General</div>
-                <div class="font-semibold" style="color: ${worstAqiColor}">
-                  ${worstAqiCategory.emoji} ${worstAqiCategory.category}
+                <div class="font-semibold" style="color: ${dominantAqiColor}">
+                  ${dominantAqiCategory.emoji} ${dominantAqiCategory.category}
                 </div>
               </div>
               <div class="text-right">
-                <div class="text-xs text-gray-600 mb-1">Peor Parámetro</div>
-                <div class="font-semibold text-gray-900">${station.worstParameter || 'N/A'}</div>
+                <div class="text-xs text-gray-600 mb-1">Parámetro Predominante</div>
+                <div class="font-semibold text-gray-900">${station.dominantParameter || 'N/A'}</div>
               </div>
             </div>
-            <div class="mt-2 text-xs text-gray-600 italic">${worstAqiCategory.description}</div>
+            <div class="mt-2 text-xs text-gray-600 italic">${dominantAqiCategory.description}</div>
           </div>
 
           <!-- Parameters Table -->
@@ -547,9 +547,9 @@ export const MonitoringStationsLayer = React.memo(function MonitoringStationsLay
 
       // Distribución de AQI
       const aqiRanges = {
-        good: valid.filter(s => s.worstAQI <= 50).length,
-        moderate: valid.filter(s => s.worstAQI > 50 && s.worstAQI <= 100).length,
-        unhealthy: valid.filter(s => s.worstAQI > 100).length
+        good: valid.filter(s => s.dominantAQI <= 50).length,
+        moderate: valid.filter(s => s.dominantAQI > 50 && s.dominantAQI <= 100).length,
+        unhealthy: valid.filter(s => s.dominantAQI > 100).length
       }
       console.log('🎨 [LAYER] Distribución de calidad del aire:', aqiRanges)
     }
@@ -608,15 +608,15 @@ export const MonitoringStationsLayer = React.memo(function MonitoringStationsLay
           console.log(`  ✏️  Marcador ${idx + 1}:`, {
             name: station.SiteName,
             coords,
-            worstAQI: station.worstAQI,
-            worstParameter: station.worstParameter,
+            dominantAQI: station.dominantAQI,
+            dominantParameter: station.dominantParameter,
             measurements: station.measurements.length
           })
         }
 
-        // Usar el peor AQI para el color del marcador
+        // Usar el AQI predominante para el color del marcador
         const marker = L.marker(coords, {
-          icon: createStationIcon(station.worstAQI > 0 ? station.worstAQI : 0, station.Status === 'Active')
+          icon: createStationIcon(station.dominantAQI > 0 ? station.dominantAQI : 0, station.Status === 'Active')
         })
 
         // OPCIÓN 1: Si hay callback, usar onClick para abrir Dialog

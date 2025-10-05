@@ -18,7 +18,6 @@ import {
 import { ChevronDown } from "lucide-react"
 import { PoblacionAfectada } from "./poblacion-afectada"
 import { CityDetailPanel } from "./city-detail-panel"
-import { ExportDataButtons } from "./export-data-buttons"
 
 interface TempoSidebarProps {
   metadata?: {
@@ -295,9 +294,6 @@ export function TempoSidebar({
             </AccordionItem>
           )}
         </Accordion>
-
-        {/* Exportar Datos */}
-        <ExportDataButtons />
 
         {/* Botón de Refresh */}
         <Button onClick={onRefresh} disabled={isLoading} className="w-full" variant="outline">

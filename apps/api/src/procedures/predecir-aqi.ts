@@ -7,6 +7,227 @@ import { OpenMeteoClient, HourlyVariable } from '@atmos/openmeteo-client'
 import { TEMPOService } from '@atmos/earthdata-imageserver-client'
 
 /**
+ * Build ML features for NO2 prediction
+ *
+ * TODO: This is a simplified version. For full accuracy, we need:
+ * - Complete TEMPO grid (for spatial neighborhoods, upwind/downwind)
+ * - PBL height from better meteo source
+ * - Historical NO2 data from database
+ * - Urban proximity calculation
+ */
+function buildNO2Features(params: {
+  no2Column: number
+  latitude: number
+  longitude: number
+  windSpeed: number
+  windDirection: number
+  temperature: number
+  precipitation: number
+  timestamp: Date
+}): Record<string, number> {
+  const { no2Column, latitude, longitude, windSpeed, windDirection, temperature, precipitation, timestamp } = params
+
+  // Temporal features
+  const hour = timestamp.getUTCHours()
+  const localHour = (hour - 8) % 24 // UTC-8 for LA
+  const dayOfWeek = timestamp.getUTCDay()
+  const month = timestamp.getUTCMonth() + 1
+  const dayOfYear = Math.floor((timestamp.getTime() - new Date(timestamp.getUTCFullYear(), 0, 0).getTime()) / 86400000)
+
+  // Cyclic encoding
+  const hourSin = Math.sin(2 * Math.PI * localHour / 24)
+  const hourCos = Math.cos(2 * Math.PI * localHour / 24)
+  const daySin = Math.sin(2 * Math.PI * dayOfWeek / 7)
+  const dayCos = Math.cos(2 * Math.PI * dayOfWeek / 7)
+  const monthSin = Math.sin(2 * Math.PI * month / 12)
+  const monthCos = Math.cos(2 * Math.PI * month / 12)
+
+  // Wind components
+  const windU = windSpeed * Math.cos((windDirection * Math.PI) / 180)
+  const windV = windSpeed * Math.sin((windDirection * Math.PI) / 180)
+
+  // Physics-based baseline prediction (calibrated from training)
+  const NO2_FACTOR = 1.8749
+  const BASE_FACTOR = 2e-16
+  const PBL_REF = 800
+  const pblHeight = 800 // Default PBL (we don't have real data yet)
+
+  let physicsPred = no2Column * BASE_FACTOR * NO2_FACTOR
+  const pblFactor = Math.sqrt(PBL_REF / Math.max(pblHeight, 300))
+  physicsPred *= pblFactor
+
+  // Diurnal adjustment
+  let diurnalFactor = 1.0
+  if (localHour >= 6 && localHour < 10) diurnalFactor = 1.15
+  else if (localHour >= 10 && localHour < 16) diurnalFactor = 0.85
+  else if (localHour >= 16 && localHour < 20) diurnalFactor = 1.1
+  physicsPred *= diurnalFactor
+
+  // Estimate urban proximity (simplified - based on California major cities)
+  const urbanProximity = estimateUrbanProximity(latitude, longitude)
+  const distanceToCity = estimateDistanceToNearestCity(latitude, longitude)
+
+  // Build features with conservative defaults for missing spatial data
+  // TODO: Replace with real grid-based calculations
+  return {
+    // Center
+    no2_column_center: no2Column,
+
+    // Geographic
+    urban_proximity_index: urbanProximity,
+    distance_to_nearest_city_km: distanceToCity,
+
+    // Spatial (using center value as proxy - NOT IDEAL)
+    no2_avg_5km: no2Column,
+    no2_max_5km: no2Column * 1.1,
+    no2_min_5km: no2Column * 0.9,
+    no2_std_5km: no2Column * 0.05,
+
+    no2_avg_10km: no2Column,
+    no2_max_10km: no2Column * 1.1,
+    no2_min_10km: no2Column * 0.9,
+    no2_std_10km: no2Column * 0.05,
+
+    no2_avg_20km: no2Column,
+    no2_max_20km: no2Column * 1.1,
+    no2_min_20km: no2Column * 0.9,
+    no2_std_20km: no2Column * 0.05,
+
+    // Upwind (using center value - needs real grid data)
+    no2_upwind_10km_avg: no2Column,
+    no2_upwind_10km_max: no2Column * 1.1,
+    no2_upwind_10km_std: no2Column * 0.05,
+
+    no2_upwind_20km_avg: no2Column,
+    no2_upwind_20km_max: no2Column * 1.1,
+    no2_upwind_20km_std: no2Column * 0.05,
+
+    no2_upwind_30km_avg: no2Column,
+    no2_upwind_30km_max: no2Column * 1.1,
+    no2_upwind_30km_std: no2Column * 0.05,
+
+    // Downwind
+    no2_downwind_10km_avg: no2Column,
+    no2_downwind_10km_max: no2Column * 1.1,
+    no2_downwind_10km_std: no2Column * 0.05,
+
+    // Cardinals
+    no2_north_10km: no2Column,
+    no2_north_std_10km: no2Column * 0.05,
+    no2_east_10km: no2Column,
+    no2_east_std_10km: no2Column * 0.05,
+    no2_south_10km: no2Column,
+    no2_south_std_10km: no2Column * 0.05,
+    no2_west_10km: no2Column,
+    no2_west_std_10km: no2Column * 0.05,
+
+    // Gradients (zero since we don't have spatial variation)
+    gradient_NS: 0,
+    gradient_EW: 0,
+    gradient_upwind_downwind: 0,
+    gradient_center_avg: 0,
+
+    // Meteorology
+    wind_speed: windSpeed,
+    wind_direction: windDirection,
+    wind_u: windU,
+    wind_v: windV,
+    pbl_height: pblHeight,
+    temperature: temperature,
+    precipitation: precipitation,
+    pbl_normalized: pblHeight / 800,
+
+    // Temporal
+    hour: localHour,
+    day_of_week: dayOfWeek,
+    month: month,
+    hour_sin: hourSin,
+    hour_cos: hourCos,
+    day_sin: daySin,
+    day_cos: dayCos,
+
+    // Physics
+    physics_prediction: physicsPred,
+
+    // Historical (not available - use 0)
+    no2_avg_24h: 0,
+    no2_avg_7d: 0,
+    no2_trend_24h: 0,
+
+    // Interactions
+    wind_speed_x_upwind_no2: windSpeed * no2Column,
+    hour_x_urban: localHour * urbanProximity,
+    pbl_x_center_no2: pblHeight * no2Column,
+
+    // Advanced temporal
+    day_of_year: dayOfYear,
+    month_sin: monthSin,
+    month_cos: monthCos,
+  }
+}
+
+/** Estimate urban proximity index (simplified) */
+function estimateUrbanProximity(lat: number, lon: number): number {
+  const majorCities = [
+    { name: 'Los Angeles', lat: 34.0522, lon: -118.2437, pop: 3900000 },
+    { name: 'San Diego', lat: 32.7157, lon: -117.1611, pop: 1400000 },
+    { name: 'San Jose', lat: 37.3382, lon: -121.8863, pop: 1000000 },
+    { name: 'San Francisco', lat: 37.7749, lon: -122.4194, pop: 875000 },
+  ]
+
+  let totalWeight = 0
+  for (const city of majorCities) {
+    const dist = Math.sqrt((lat - city.lat) ** 2 + (lon - city.lon) ** 2) * 111 // Rough km
+    const weight = city.pop / Math.max(dist, 1)
+    totalWeight += weight
+  }
+
+  return totalWeight / 1000000 // Normalize
+}
+
+/** Estimate distance to nearest major city (simplified) */
+function estimateDistanceToNearestCity(lat: number, lon: number): number {
+  const majorCities = [
+    { lat: 34.0522, lon: -118.2437 },
+    { lat: 32.7157, lon: -117.1611 },
+    { lat: 37.3382, lon: -121.8863 },
+    { lat: 37.7749, lon: -122.4194 },
+  ]
+
+  let minDist = Infinity
+  for (const city of majorCities) {
+    const dist = Math.sqrt((lat - city.lat) ** 2 + (lon - city.lon) ** 2) * 111 // Rough km
+    minDist = Math.min(minDist, dist)
+  }
+
+  return minDist
+}
+
+/**
+ * Call ML Service to predict NO2 surface concentration
+ */
+async function predictNO2WithML(mlServiceUrl: string, features: Record<string, number>): Promise<number | null> {
+  try {
+    const response = await fetch(`${mlServiceUrl}/predict`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(features),
+    })
+
+    if (!response.ok) {
+      console.error(`❌ ML Service error: ${response.status} ${response.statusText}`)
+      return null
+    }
+
+    const data = await response.json() as any;
+    return data.predicted_no2_ppb
+  } catch (error) {
+    console.error(`❌ ML Service call failed:`, error)
+    return null
+  }
+}
+
+/**
  * Procedure: predecir-aqi
  *
  * Predice la calidad del aire en una ubicación específica usando:
@@ -307,7 +528,7 @@ export const predecirAqiProcedure = publicProcedure
     }
 
     // =====================================================
-    // 5. CALCULAR AQI GENERAL (EL PEOR DE TODOS)
+    // 5. CALCULAR AQI GENERAL (EL PARÁMETRO PREDOMINANTE)
     // =====================================================
     const allAqis = [
       parameterResults.O3?.data.AQI,
@@ -316,12 +537,12 @@ export const predecirAqiProcedure = publicProcedure
     ].filter((aqi) => aqi != null) as number[]
 
     const generalAqi = allAqis.length > 0 ? Math.max(...allAqis) : null
-    let worstParameter = null
+    let dominantParameter = null
 
     if (generalAqi) {
-      if (parameterResults.O3?.data.AQI === generalAqi) worstParameter = parameterResults.O3.data
-      else if (parameterResults.NO2?.data.AQI === generalAqi) worstParameter = parameterResults.NO2.data
-      else if (parameterResults.PM25?.data.AQI === generalAqi) worstParameter = parameterResults.PM25.data
+      if (parameterResults.O3?.data.AQI === generalAqi) dominantParameter = parameterResults.O3.data
+      else if (parameterResults.NO2?.data.AQI === generalAqi) dominantParameter = parameterResults.NO2.data
+      else if (parameterResults.PM25?.data.AQI === generalAqi) dominantParameter = parameterResults.PM25.data
     }
 
     // Helper para mapear categorías
@@ -385,8 +606,8 @@ export const predecirAqiProcedure = publicProcedure
       general: generalAqi
         ? {
             aqi: generalAqi,
-            category: getCategoryName(worstParameter?.Category ?? 0),
-            dominantParameter: worstParameter?.Parameter,
+            category: getCategoryName(dominantParameter?.Category ?? 0),
+            dominantParameter: dominantParameter?.Parameter,
           }
         : null,
       O3: parameterResults.O3
@@ -421,35 +642,81 @@ export const predecirAqiProcedure = publicProcedure
           }
         : null,
       NO2: parameterResults.NO2
-        ? {
-            currentData: {
-              aqi: parameterResults.NO2.data.AQI,
-              category: getCategoryName(parameterResults.NO2.data.Category),
-              value: parameterResults.NO2.data.Value,
-              unit: parameterResults.NO2.data.Unit,
-              rawConcentration: parameterResults.NO2.data.RawConcentration,
-              utc: parameterResults.NO2.data.UTC,
-              parameterName: parameterResults.NO2.data.Parameter,
-              siteName: parameterResults.NO2.data.SiteName,
-            },
-            tempo: {
-              stationValue: parameterResults.NO2.tempo.station,
-              userValue: parameterResults.NO2.tempo.user,
-              ratio: parameterResults.NO2.tempo.ratio,
-              timestamp: parameterResults.NO2.tempo.timestamp ?? undefined,
-              // Estimación basada en TEMPO si hay proporción
-              estimatedUserValue: parameterResults.NO2.tempo.ratio && parameterResults.NO2.tempo.user
-                ? parameterResults.NO2.tempo.ratio * parameterResults.NO2.tempo.user
-                : null,
-            },
-            forecast: {
-              horizons: [
-                { hoursAhead: 1, predictedAQI: createForecast(parameterResults.NO2.data.AQI).t1h },
-                { hoursAhead: 2, predictedAQI: createForecast(parameterResults.NO2.data.AQI).t2h },
-                { hoursAhead: 3, predictedAQI: createForecast(parameterResults.NO2.data.AQI).t3h },
-              ],
-            },
-          }
+        ? await (async () => {
+            // Capture NO2 result to satisfy TypeScript null checks
+            const no2Result = parameterResults.NO2!
+
+            // Try ML-based forecast if enabled and service is available
+            let mlPrediction: number | null = null
+
+            if (ctx.env.ML_ENABLED && ctx.env.ML_SERVICE_URL && weather && no2Result.tempo.station) {
+              try {
+                console.log(`🤖 ML enabled - attempting XGBoost prediction for NO2...`)
+
+                const features = buildNO2Features({
+                  no2Column: no2Result.tempo.station,
+                  latitude: no2Result.station.latitude,
+                  longitude: no2Result.station.longitude,
+                  windSpeed: weather.windSpeed ?? 5,
+                  windDirection: weather.windDirection ?? 270,
+                  temperature: weather.temperature ?? 20,
+                  precipitation: weather.precipitation ?? 0,
+                  timestamp: new Date(),
+                })
+
+                mlPrediction = await predictNO2WithML(ctx.env.ML_SERVICE_URL, features)
+
+                if (mlPrediction) {
+                  console.log(`✅ ML prediction successful: ${mlPrediction.toFixed(2)} ppb`)
+                } else {
+                  console.log(`⚠️  ML prediction returned null, using fallback`)
+                }
+              } catch (err) {
+                console.error(`⚠️ ML prediction failed, using fallback:`, err)
+              }
+            } else if (!ctx.env.ML_ENABLED) {
+              console.log(`ℹ️  ML predictions disabled (ML_ENABLED=false)`)
+            } else if (!ctx.env.ML_SERVICE_URL) {
+              console.log(`ℹ️  ML service URL not configured`)
+            }
+
+            // Fallback to current AQI if ML fails
+            const forecastAQI = mlPrediction
+              ? Math.round(mlPrediction) // Convert ppb to AQI (simplified)
+              : no2Result.data.AQI
+
+            return {
+              currentData: {
+                aqi: no2Result.data.AQI,
+                category: getCategoryName(no2Result.data.Category),
+                value: no2Result.data.Value,
+                unit: no2Result.data.Unit,
+                rawConcentration: no2Result.data.RawConcentration,
+                utc: no2Result.data.UTC,
+                parameterName: no2Result.data.Parameter,
+                siteName: no2Result.data.SiteName,
+              },
+              tempo: {
+                stationValue: no2Result.tempo.station,
+                userValue: no2Result.tempo.user,
+                ratio: no2Result.tempo.ratio,
+                timestamp: no2Result.tempo.timestamp ?? undefined,
+                // Estimación basada en TEMPO si hay proporción
+                estimatedUserValue: no2Result.tempo.ratio && no2Result.tempo.user
+                  ? no2Result.tempo.ratio * no2Result.tempo.user
+                  : null,
+              },
+              forecast: {
+                horizons: [
+                  { hoursAhead: 1, predictedAQI: forecastAQI, mlPredicted: mlPrediction !== null },
+                  { hoursAhead: 2, predictedAQI: forecastAQI, mlPredicted: mlPrediction !== null },
+                  { hoursAhead: 3, predictedAQI: forecastAQI, mlPredicted: mlPrediction !== null },
+                ],
+                mlUsed: mlPrediction !== null,
+                mlPredictionPpb: mlPrediction,
+              },
+            }
+          })()
         : null,
       PM25: parameterResults.PM25
         ? {

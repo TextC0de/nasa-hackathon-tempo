@@ -9,6 +9,12 @@ type Bindings = Env
 
 const app = new Hono<{ Bindings: Bindings }>()
 
+// IMPORTANTE: CORS debe ir PRIMERO para que los errores también tengan headers CORS
+app.use('/*', cors({
+  origin: '*',
+  credentials: false,
+}))
+
 // Middleware: Validate environment variables on every request
 app.use('*', async (c, next) => {
   try {
@@ -28,11 +34,6 @@ app.use('*', async (c, next) => {
     )
   }
 })
-
-app.use('/*', cors({
-  origin: '*',
-  credentials: false,
-}))
 
 app.use(
   '/trpc/*',
