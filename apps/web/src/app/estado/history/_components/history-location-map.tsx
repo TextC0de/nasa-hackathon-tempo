@@ -81,6 +81,18 @@ const MapResizeHandler = ({ isExpanded }: { isExpanded: boolean }) => {
   return null
 }
 
+// Componente para mantener el mapa centrado cuando cambia la posición
+const MapCenterHandler = ({ position }: { position: [number, number] }) => {
+  const { useMap } = require('react-leaflet')
+  const map = useMap()
+
+  useEffect(() => {
+    map.setView(position, map.getZoom(), { animate: true })
+  }, [position, map])
+
+  return null
+}
+
 // Fix para iconos de Leaflet + Crear ícono personalizado arrastrable
 if (typeof window !== 'undefined') {
   delete (L.Icon.Default.prototype as any)._getIconUrl
@@ -312,8 +324,14 @@ export function HistoryLocationMap({
             zoom={isExpanded ? 10 : 9}
             style={{ height: '100%', width: '100%' }}
             zoomControl={isExpanded}
+            dragging={true}
+            scrollWheelZoom={true}
+            doubleClickZoom={true}
+            touchZoom={true}
           >
             <MapClickHandler onClick={handleMapClick} />
+            <MapResizeHandler isExpanded={isExpanded} />
+            <MapCenterHandler position={position} />
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
