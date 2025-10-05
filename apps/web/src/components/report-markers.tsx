@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useEffect } from "react"
 import { Marker } from "react-leaflet"
 import L from "leaflet"
 import { UserReport } from "@/lib/report-types"
@@ -61,6 +61,16 @@ interface ReportMarkersProps {
 }
 
 export function ReportMarkers({ reports, selectedReportId, onReportClick }: ReportMarkersProps) {
+  // Inyectar estilos solo en el cliente
+  useEffect(() => {
+    const style = document.createElement('style')
+    style.textContent = reportMarkerStyles
+    document.head.appendChild(style)
+    
+    return () => {
+      document.head.removeChild(style)
+    }
+  }, [])
 
   return (
     <>
@@ -110,9 +120,3 @@ const reportMarkerStyles = `
   }
 `
 
-// Inyectar estilos
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style')
-  style.textContent = reportMarkerStyles
-  document.head.appendChild(style)
-}
