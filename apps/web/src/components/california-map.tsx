@@ -42,6 +42,11 @@ const ImageOverlay = dynamic(
   { ssr: false }
 )
 
+const Pane = dynamic(
+  () => import("react-leaflet").then((mod) => mod.Pane),
+  { ssr: false }
+)
+
 // Leaflet Control Configuration - Following Official Documentation
 const LEAFLET_CONFIG = {
   positions: {
@@ -527,6 +532,7 @@ interface CaliforniaMapProps {
   showCities?: boolean
   showCityBoundaries?: boolean
   showTempoOverlay?: boolean
+  tempoOpacity?: number
   tempoOverlayData?: {
     imageUrl: string
     bounds: {
@@ -557,6 +563,7 @@ export const CaliforniaMap = React.memo(function CaliforniaMap({
   showCities = true,
   showCityBoundaries = true,
   showTempoOverlay = false,
+  tempoOpacity = 0.7,
   tempoOverlayData = null,
   alerts = [],
   onCitiesLoadingChange,
@@ -632,17 +639,18 @@ export const CaliforniaMap = React.memo(function CaliforniaMap({
           minZoom={LEAFLET_CONFIG.zoom.MIN}
         />
         
-        {/* TEMPO Satellite Overlay - Rendered first so it's behind markers */}
+        {/* TEMPO Satellite Overlay - Pane con z-index 450 (entre overlayPane:400 y shadowPane:500, debajo de markerPane:600) */}
         {showTempoOverlay && tempoOverlayData && (
-          <ImageOverlay
-            url={tempoOverlayData.imageUrl}
-            bounds={[
-              [tempoOverlayData.bounds.south, tempoOverlayData.bounds.west],
-              [tempoOverlayData.bounds.north, tempoOverlayData.bounds.east]
-            ]}
-            opacity={0.5}
-            zIndex={1}
-          />
+          <Pane name="tempoPane" style={{ zIndex: 450 }}>
+            <ImageOverlay
+              url={tempoOverlayData.imageUrl}
+              bounds={[
+                [tempoOverlayData.bounds.south, tempoOverlayData.bounds.west],
+                [tempoOverlayData.bounds.north, tempoOverlayData.bounds.east]
+              ]}
+              opacity={tempoOpacity}
+            />
+          </Pane>
         )}
 
         {/* Monitoring Stations Layer - Optimizado con lazy loading */}

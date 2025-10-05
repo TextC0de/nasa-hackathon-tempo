@@ -616,7 +616,8 @@ export const MonitoringStationsLayer = React.memo(function MonitoringStationsLay
 
         // Usar el AQI predominante para el color del marcador
         const marker = L.marker(coords, {
-          icon: createStationIcon(station.dominantAQI > 0 ? station.dominantAQI : 0, station.Status === 'Active')
+          icon: createStationIcon(station.dominantAQI > 0 ? station.dominantAQI : 0, station.Status === 'Active'),
+          zIndexOffset: 1000 // Asegurar que las estaciones estén por encima del overlay TEMPO
         })
 
         // OPCIÓN 1: Si hay callback, usar onClick para abrir Dialog

@@ -71,30 +71,66 @@ export interface GroupedStation {
  * Props para el hook de estaciones de monitoreo
  */
 export interface UseMonitoringStationsProps {
-  centerLat?: number
-  centerLng?: number
-  radiusKm?: number
   enabled?: boolean
+}
+
+/**
+ * Principales ciudades de California - Base para calcular bbox
+ */
+const CIUDADES_CALIFORNIA = [
+  { nombre: 'Los Angeles', lat: 34.0522, lng: -118.2437, poblacion: 3898747 },
+  { nombre: 'San Diego', lat: 32.7157, lng: -117.1611, poblacion: 1386932 },
+  { nombre: 'San Jose', lat: 37.3382, lng: -121.8863, poblacion: 1013240 },
+  { nombre: 'San Francisco', lat: 37.7749, lng: -122.4194, poblacion: 873965 },
+  { nombre: 'Fresno', lat: 36.7378, lng: -119.7871, poblacion: 542107 },
+  { nombre: 'Sacramento', lat: 38.5816, lng: -121.4944, poblacion: 524943 },
+  { nombre: 'Long Beach', lat: 33.7701, lng: -118.1937, poblacion: 466742 },
+  { nombre: 'Oakland', lat: 37.8044, lng: -122.2712, poblacion: 440646 },
+  { nombre: 'Bakersfield', lat: 35.3733, lng: -119.0187, poblacion: 403455 },
+  { nombre: 'Anaheim', lat: 33.8366, lng: -117.9143, poblacion: 346824 },
+  { nombre: 'Santa Ana', lat: 33.7455, lng: -117.8677, poblacion: 310227 },
+  { nombre: 'Riverside', lat: 33.9806, lng: -117.3755, poblacion: 314998 },
+  { nombre: 'Stockton', lat: 37.9577, lng: -121.2908, poblacion: 320804 },
+  { nombre: 'Irvine', lat: 33.6846, lng: -117.8265, poblacion: 307670 },
+  { nombre: 'Chula Vista', lat: 32.6401, lng: -117.0842, poblacion: 275487 },
+] as const
+
+/**
+ * Calcular bounding box que cubra todas las ciudades principales de California
+ * con un margen de seguridad para capturar estaciones cercanas
+ */
+function calcularBboxCalifornia() {
+  const lats = CIUDADES_CALIFORNIA.map(c => c.lat)
+  const lngs = CIUDADES_CALIFORNIA.map(c => c.lng)
+
+  // Margen de ~50km (≈0.5 grados)
+  const margin = 0.5
+
+  return {
+    minLatitude: Math.min(...lats) - margin,
+    maxLatitude: Math.max(...lats) + margin,
+    minLongitude: Math.min(...lngs) - margin,
+    maxLongitude: Math.max(...lngs) + margin,
+  }
 }
 
 /**
  * Configuración por defecto para California
  */
 const DEFAULT_CONFIG = {
-  centerLat: 36.7783, // Centro geográfico de California
-  centerLng: -119.4179,
-  radiusKm: 200, // Radio amplio para cubrir todo el estado
   enabled: true
 } as const
 
 /**
  * Configuración de React Query para datos de calidad del aire
+ * Cache agresivo para evitar rate limiting de AirNow (500 req/hora)
  */
 const QUERY_CONFIG = {
-  refetchInterval: 5 * 60 * 1000, // Refetch cada 5 minutos
-  staleTime: 2 * 60 * 1000, // Considerar stale después de 2 minutos
-  retry: 3, // Reintentar 3 veces en caso de error
-  retryDelay: 1000, // Esperar 1 segundo entre reintentos
+  refetchInterval: 60 * 60 * 1000, // Refetch cada 1 hora (datos actualizan cada hora)
+  staleTime: 50 * 60 * 1000, // Considerar stale después de 50 minutos
+  cacheTime: 2 * 60 * 60 * 1000, // Mantener en cache 2 horas
+  retry: 2, // Reintentar solo 2 veces para no saturar API
+  retryDelay: 2000, // Esperar 2 segundos entre reintentos
 } as const
 
 /**
@@ -127,9 +163,6 @@ const ACTIVE_STATUS_VALUES = [
  */
 // Optimización: Hook con debouncing y memoización
 export function useMonitoringStations({
-  centerLat = DEFAULT_CONFIG.centerLat,
-  centerLng = DEFAULT_CONFIG.centerLng,
-  radiusKm = DEFAULT_CONFIG.radiusKm,
   enabled = DEFAULT_CONFIG.enabled
 }: UseMonitoringStationsProps = {}) {
   // Estados locales optimizados
@@ -137,38 +170,23 @@ export function useMonitoringStations({
   const [groupedStations, setGroupedStations] = useState<GroupedStation[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
+
   // Ref para debouncing
   const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
+  // Calcular bbox que cubre todas las ciudades de California
+  const bbox = useMemo(() => calcularBboxCalifornia(), [])
+
   // Query para obtener estaciones de AirNow
-  const { 
-    data: airnowStations, 
-    isLoading: airnowLoading, 
+  // UI controla explícitamente el bbox - backend maneja chunking
+  const {
+    data: airnowStations,
+    isLoading: airnowLoading,
     error: airnowError,
     refetch: refetchStations
   } = trpc.obtenerEstacionesAirNow.useQuery(
     {
-      latitud: centerLat,
-      longitud: centerLng,
-      radiusKm: radiusKm
-    },
-    {
-      enabled,
-      ...QUERY_CONFIG
-    }
-  )
-
-  // Query para obtener calidad del aire actual
-  const { 
-    data: airQuality, 
-    isLoading: airQualityLoading,
-    refetch: refetchAirQuality
-  } = trpc.obtenerCalidadDelAire.useQuery(
-    {
-      latitud: centerLat,
-      longitud: centerLng,
-      radiusKm: radiusKm
+      bbox
     },
     {
       enabled,
@@ -179,11 +197,11 @@ export function useMonitoringStations({
   // Callback para refetch manual
   const refetch = useCallback(async () => {
     try {
-      await Promise.all([refetchStations(), refetchAirQuality()])
+      await refetchStations()
     } catch (error) {
       console.error('Error al refetch de datos:', error)
     }
-  }, [refetchStations, refetchAirQuality])
+  }, [refetchStations])
 
 // Efecto para manejar datos de estaciones
   useEffect(() => {
@@ -365,8 +383,8 @@ export function useMonitoringStations({
 
   // Efecto para manejar estado de carga
   useEffect(() => {
-    setIsLoading(airnowLoading || airQualityLoading)
-  }, [airnowLoading, airQualityLoading])
+    setIsLoading(airnowLoading)
+  }, [airnowLoading])
 
   // Memoizar estadísticas de las estaciones
   const stationStats = useMemo(() => {
@@ -408,7 +426,6 @@ export function useMonitoringStations({
 return {
     stations, // Flat list (compatibilidad)
     groupedStations, // Estaciones agrupadas por ubicación
-    airQuality,
     isLoading,
     error,
     refetch,

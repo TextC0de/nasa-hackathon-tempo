@@ -611,7 +611,8 @@ export const ActiveFiresLayer = React.memo(function ActiveFiresLayer({
         }
 
         const marker = L.marker(coords, {
-          icon: createFireIcon(fire)
+          icon: createFireIcon(fire),
+          zIndexOffset: 1000 // Asegurar que los incendios estén por encima del overlay TEMPO
         })
 
         // Si hay callback, usar onClick para abrir Dialog

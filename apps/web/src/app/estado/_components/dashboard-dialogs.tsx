@@ -2,11 +2,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Slider } from "@/components/ui/slider"
 import {
   AlertTriangle,
-  MapPin,
-  BarChart3,
   Calendar,
   Settings,
   Activity,
@@ -29,19 +27,6 @@ const AIR_QUALITY_LEVELS = [
   { color: "bg-red-800", label: "Peligroso" }
 ] as const
 
-const EXTERIOR_LAYERS = [
-  { id: "air-stations", label: "Estaciones de calidad del aire" },
-  { id: "fires", label: "Incendios" },
-  { id: "wind", label: "Viento" }
-] as const
-
-const INTERIOR_FACILITY_TYPES = [
-  { value: "any", label: "Cualquiera" },
-  { value: "hospital", label: "Hospital" },
-  { value: "school", label: "Escuela" },
-  { value: "office", label: "Oficina" }
-] as const
-
 interface DashboardDialogsProps {
   openDialog: string | null
   setOpenDialog: (dialog: string | null) => void
@@ -49,6 +34,10 @@ interface DashboardDialogsProps {
   setShowMonitoringStations: (show: boolean) => void
   showActiveFires: boolean
   setShowActiveFires: (show: boolean) => void
+  showTempoOverlay: boolean
+  setShowTempoOverlay: (show: boolean) => void
+  tempoOpacity: number
+  setTempoOpacity: (opacity: number) => void
   isLoading: boolean
   error: any
   stats: {
@@ -80,6 +69,10 @@ export function DashboardDialogs({
   setShowMonitoringStations,
   showActiveFires,
   setShowActiveFires,
+  showTempoOverlay,
+  setShowTempoOverlay,
+  tempoOpacity,
+  setTempoOpacity,
   isLoading,
   error,
   stats,
@@ -161,34 +154,42 @@ export function DashboardDialogs({
                     </Badge>
                   )}
                 </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="tempo-overlay"
+                    checked={showTempoOverlay}
+                    onCheckedChange={(checked) => setShowTempoOverlay(!!checked)}
+                  />
+                  <label
+                    htmlFor="tempo-overlay"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    🛰️ Overlay TEMPO
+                  </label>
+                </div>
+                {showTempoOverlay && (
+                  <div className="space-y-2 pl-6">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs text-muted-foreground">
+                        Opacidad
+                      </label>
+                      <span className="text-xs font-medium">
+                        {Math.round(tempoOpacity * 100)}%
+                      </span>
+                    </div>
+                    <Slider
+                      value={[tempoOpacity]}
+                      onValueChange={([value]) => setTempoOpacity(value)}
+                      min={0}
+                      max={1}
+                      step={0.1}
+                      className="w-full"
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Interior</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="clean-air" defaultChecked />
-                  <label htmlFor="clean-air" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Instalaciones de aire limpio
-                  </label>
-                </div>
-                <Select defaultValue="any">
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Seleccionar tipo" />
-                  </SelectTrigger>
-                  <SelectContent className="z-[10002]">
-                    {INTERIOR_FACILITY_TYPES.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {type.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </CardContent>
-            </Card>
           </div>
         </DialogContent>
       </Dialog>

@@ -36,6 +36,7 @@ export default function EstadoOverviewPage() {
   const [showMonitoringStations, setShowMonitoringStations] = useState(true)
   const [showActiveFires, setShowActiveFires] = useState(true)
   const [showTempoOverlay, setShowTempoOverlay] = useState(true)
+  const [tempoOpacity, setTempoOpacity] = useState(0.7)
   const [showCityBoundaries, setShowCityBoundaries] = useState(true)
   const [currentPollutant, setCurrentPollutant] = useState<'NO2' | 'O3' | 'HCHO'>('NO2')
   const [isSubmittingAlert, setIsSubmittingAlert] = useState(false)
@@ -159,6 +160,10 @@ export default function EstadoOverviewPage() {
           setShowMonitoringStations={setShowMonitoringStations}
           showActiveFires={showActiveFires}
           setShowActiveFires={setShowActiveFires}
+          showTempoOverlay={showTempoOverlay}
+          setShowTempoOverlay={setShowTempoOverlay}
+          tempoOpacity={tempoOpacity}
+          setTempoOpacity={setTempoOpacity}
           isLoading={isLoading}
           error={error}
           stats={stats}
@@ -211,6 +216,7 @@ export default function EstadoOverviewPage() {
               showMonitoringStations={showMonitoringStations}
               showActiveFires={showActiveFires}
               showTempoOverlay={showTempoOverlay}
+              tempoOpacity={tempoOpacity}
               showCityBoundaries={showCityBoundaries}
               tempoOverlayData={tempoOverlay.overlay ?? null}
               alerts={getActiveAlerts()}
