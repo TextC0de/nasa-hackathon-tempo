@@ -34,8 +34,9 @@ export const obtenerEstacionesAirNowProcedure = publicProcedure
     // Generar cache key única basada en bbox + fecha/hora (solo año-mes-día-hora)
     // Datos de AirNow se actualizan cada hora, así que cacheamos por hora completa
     // NO incluir minutos/segundos para que el cache sea reutilizable durante toda la hora
+    // v2: Sin HCHO (parámetro no soportado por AirNow)
     const hourTimestamp = `${endDate.getUTCFullYear()}-${String(endDate.getUTCMonth() + 1).padStart(2, '0')}-${String(endDate.getUTCDate()).padStart(2, '0')}T${String(endDate.getUTCHours()).padStart(2, '0')}`
-    const cacheKey = `airnow-stations:${bbox.minLatitude.toFixed(2)},${bbox.minLongitude.toFixed(2)},${bbox.maxLatitude.toFixed(2)},${bbox.maxLongitude.toFixed(2)}:${hourTimestamp}`
+    const cacheKey = `airnow-stations-v2:${bbox.minLatitude.toFixed(2)},${bbox.minLongitude.toFixed(2)},${bbox.maxLatitude.toFixed(2)},${bbox.maxLongitude.toFixed(2)}:${hourTimestamp}`
     const cacheUrl = new URL(`https://cache.internal/${cacheKey}`)
 
     console.log('🔍 [AIRNOW] === SOLICITUD DE ESTACIONES ===')
