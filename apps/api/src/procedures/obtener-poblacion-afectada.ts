@@ -199,10 +199,18 @@ export const obtenerPoblacionAfectadaProcedure = publicProcedure
     }
 
     // Procesar resultados
-    const ciudadesValidas = ciudadesConAQI
+    console.log(`🔍 [DEBUG] Total resultados obtenidos: ${ciudadesConAQI.length}`)
+
+    const ciudadesConAQIData = ciudadesConAQI
       .filter((result) => result.status === 'fulfilled')
       .map((result) => (result as PromiseFulfilledResult<any>).value)
-      .filter((ciudad) => ciudad.aqi !== null)
+
+    console.log(`🔍 [DEBUG] Ciudades fulfilled: ${ciudadesConAQIData.length}`)
+    console.log(`🔍 [DEBUG] Datos de todas las ciudades:`, JSON.stringify(ciudadesConAQIData.map(c => ({ nombre: c.nombre, aqi: c.aqi })), null, 2))
+
+    const ciudadesValidas = ciudadesConAQIData.filter((ciudad) => ciudad.aqi !== null)
+
+    console.log(`🔍 [DEBUG] Ciudades con AQI válido: ${ciudadesValidas.length}`)
 
     // Ordenar por AQI descendente
     ciudadesValidas.sort((a, b) => (b.aqi || 0) - (a.aqi || 0))
