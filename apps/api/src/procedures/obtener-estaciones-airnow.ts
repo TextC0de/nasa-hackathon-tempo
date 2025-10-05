@@ -52,7 +52,7 @@ export const obtenerEstacionesAirNowProcedure = publicProcedure
       if (cachedResponse) {
         const cachedData = await cachedResponse.json()
         console.log('✅ [AIRNOW] Datos obtenidos del cache de Cloudflare')
-        console.log(`📊 [AIRNOW] Estaciones en cache: ${cachedData.length}`)
+        console.log(`📊 [AIRNOW] Estaciones en cache: ${(cachedData as any).length}`)
         return cachedData
       }
       console.log('⚠️  [AIRNOW] No hay cache, consultando AirNow API...')
@@ -73,7 +73,7 @@ export const obtenerEstacionesAirNowProcedure = publicProcedure
         {
           startDate: formatDate(startDate),
           endDate: formatDate(endDate),
-          parameters: 'NO2,PM25,O3,PM10,SO2,CO,HCHO',
+          parameters: 'NO2,PM25,O3,PM10,SO2,CO', // HCHO no soportado por AirNow
         }
       )
 
@@ -158,7 +158,7 @@ export const obtenerEstacionesAirNowProcedure = publicProcedure
                 return await airnowClient.getMonitoringSites(chunk, {
                   startDate: formatDate(startDate),
                   endDate: formatDate(endDate),
-                  parameters: 'NO2,PM25,O3,PM10,SO2,CO,HCHO',
+                  parameters: 'NO2,PM25,O3,PM10,SO2,CO',
                 })
               } catch (err) {
                 console.error(`❌ Chunk falló:`, err)
