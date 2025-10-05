@@ -200,11 +200,24 @@ export function CityBoundariesLayer({ onCityHover, onCityClick }: CityBoundaries
   const [geojsonData, setGeojsonData] = useState<any>(null)
   const { data: ciudadesData } = trpc.obtenerPoblacionAfectada.useQuery({})
 
-  // Cargar GeoJSON
+  // Cargar GeoJSON real de California
   useEffect(() => {
-    fetch('/data/cities-boundaries.geojson')
+    fetch('/data/query.json')
       .then((res) => res.json())
-      .then((data) => setGeojsonData(data))
+      .then((data) => {
+        // Transformar para que coincida con el formato esperado
+        const transformed = {
+          ...data,
+          features: data.features.map((feature: any) => ({
+            ...feature,
+            properties: {
+              nombre: feature.properties.CENSUS_PLACE_NAME,
+              ...feature.properties
+            }
+          }))
+        }
+        setGeojsonData(transformed)
+      })
       .catch((err) => console.error('Error loading GeoJSON:', err))
   }, [])
 

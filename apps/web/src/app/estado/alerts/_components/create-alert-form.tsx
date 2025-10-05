@@ -87,7 +87,8 @@ export function CreateAlertForm({ onSubmit, isSubmitting }: CreateAlertFormProps
       latitude: 36.7783,
       longitude: -119.4179,
       locationName: 'California',
-      alertType: undefined
+      alertType: undefined,
+      radiusKm: 50
     })
     setSelectedTemplate(null)
   }
@@ -235,6 +236,7 @@ export function CreateAlertForm({ onSubmit, isSubmitting }: CreateAlertFormProps
                         alerts={[
                           {
                             id: 'preview',
+                            category: formData.alertType || 'custom',
                             title: formData.title || 'Alert Preview',
                             description: formData.description,
                             urgency: formData.urgency,
@@ -244,8 +246,7 @@ export function CreateAlertForm({ onSubmit, isSubmitting }: CreateAlertFormProps
                               lng: formData.longitude
                             },
                             location: formData.locationName,
-                            createdAt: new Date().toISOString(),
-                            alertType: formData.alertType
+                            createdAt: new Date()
                           }
                         ]}
                         fires={[]}

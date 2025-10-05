@@ -105,7 +105,7 @@ if (typeof window !== 'undefined') {
 
 // Ícono personalizado con animación pulsante
 const createDraggableIcon = () => {
-  if (typeof window === 'undefined') return L.icon({})
+  if (typeof window === 'undefined') return L.icon({ iconUrl: '', iconSize: [0, 0] })
 
   return L.divIcon({
     className: 'custom-draggable-marker',
