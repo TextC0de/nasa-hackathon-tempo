@@ -6,8 +6,36 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Loader2, TrendingDown, TrendingUp, Minus, Calendar, Clock } from "lucide-react"
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend, PieChart, Pie, Cell } from "recharts"
-import { format } from "date-fns"
+import { format, getWeek } from "date-fns"
 import { es } from "date-fns/locale"
+
+// Función para formatear fecha según granularidad
+function formatDateByGranularity(timestamp: string, granularity: 'hourly' | 'daily' | 'weekly' | 'monthly'): string {
+  const date = new Date(timestamp)
+  const year = date.getFullYear()
+
+  switch (granularity) {
+    case 'monthly':
+      // Mes: "ene 2024", "feb 2024"
+      return format(date, "MMM yyyy", { locale: es })
+
+    case 'weekly':
+      // Semana: "Sem 1 '24", "Sem 2 '24"
+      const weekNum = getWeek(date, { locale: es })
+      return `Sem ${weekNum} '${year.toString().slice(-2)}`
+
+    case 'daily':
+      // Día: "1 ene" o "1 ene '24" si cambia el año
+      return format(date, "d MMM", { locale: es })
+
+    case 'hourly':
+      // Hora: "1 ene 14:00"
+      return format(date, "d MMM HH:mm", { locale: es })
+
+    default:
+      return format(date, "d MMM", { locale: es })
+  }
+}
 
 // Función para obtener color basado en AQI
 function getAQIColor(aqi: number): string {
@@ -30,23 +58,35 @@ function getAQICategory(aqi: number): string {
 }
 
 // Tooltip personalizado para el chart
-function CustomTooltip({ active, payload }: any) {
+function CustomTooltip({ active, payload, granularity }: any) {
   if (!active || !payload || !payload[0]) return null
 
   const data = payload[0].payload
   const aqi = data.aqi_avg
   const color = getAQIColor(aqi)
 
+  // Formatear fecha para tooltip con más detalle
+  const formattedDate = (() => {
+    const date = new Date(data.timestamp)
+    switch (granularity) {
+      case 'monthly':
+        return format(date, "MMMM 'de' yyyy", { locale: es })
+      case 'weekly':
+        const weekNum = getWeek(date, { locale: es })
+        return `Semana ${weekNum} de ${date.getFullYear()}`
+      case 'daily':
+        return format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })
+      case 'hourly':
+        return format(date, "EEEE, d 'de' MMMM 'de' yyyy - HH:mm", { locale: es })
+      default:
+        return format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })
+    }
+  })()
+
   return (
     <div className="bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-3">
       <p className="text-xs text-muted-foreground mb-2">
-        {new Date(data.timestamp).toLocaleDateString('es-ES', {
-          weekday: 'short',
-          month: 'short',
-          day: 'numeric',
-          hour: data.hour !== undefined ? '2-digit' : undefined,
-          minute: data.hour !== undefined ? '2-digit' : undefined
-        })}
+        {formattedDate}
       </p>
       <div className="flex items-center gap-2">
         <span className="text-2xl font-bold" style={{ color }}>
@@ -231,7 +271,7 @@ export function HistoryChart({
               Histórico de Calidad del Aire
             </CardTitle>
             <CardDescription>
-              {granularityLabels[data.granularity]} • {format(startDate, 'PP', { locale: es })} - {format(endDate, 'PP', { locale: es })}
+              {granularityLabels[data.granularity]} • {format(startDate, 'd MMM yyyy', { locale: es })} - {format(endDate, 'd MMM yyyy', { locale: es })}
             </CardDescription>
           </div>
         </div>
@@ -299,13 +339,7 @@ export function HistoryChart({
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis
                   dataKey="timestamp"
-                  tickFormatter={(value) => {
-                    const date = new Date(value)
-                    if (data.granularity === 'hourly') {
-                      return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
-                    }
-                    return date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })
-                  }}
+                  tickFormatter={(value) => formatDateByGranularity(value, data.granularity)}
                   className="text-xs"
                   stroke="hsl(var(--muted-foreground))"
                 />
@@ -314,7 +348,7 @@ export function HistoryChart({
                   stroke="hsl(var(--muted-foreground))"
                   label={{ value: 'AQI', angle: -90, position: 'insideLeft', className: 'text-xs fill-muted-foreground' }}
                 />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<CustomTooltip granularity={data.granularity} />} />
 
                 {/* Líneas de referencia para categorías AQI */}
                 <ReferenceLine y={50} stroke="#10b981" strokeDasharray="3 3" opacity={0.3} />
@@ -373,13 +407,7 @@ export function HistoryChart({
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
               <XAxis
                 dataKey="timestamp"
-                tickFormatter={(value) => {
-                  const date = new Date(value)
-                  if (data.granularity === 'hourly') {
-                    return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
-                  }
-                  return date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })
-                }}
+                tickFormatter={(value) => formatDateByGranularity(value, data.granularity)}
                 className="text-xs"
                 stroke="hsl(var(--muted-foreground))"
               />
@@ -388,7 +416,7 @@ export function HistoryChart({
                 stroke="hsl(var(--muted-foreground))"
                 label={{ value: 'Concentración', angle: -90, position: 'insideLeft', className: 'text-xs fill-muted-foreground' }}
               />
-              <Tooltip />
+              <Tooltip content={<CustomTooltip granularity={data.granularity} />} />
               <Legend />
               <Line
                 type="monotone"

@@ -52,14 +52,11 @@ FORMATO DE RESPUESTA:
 - Usa emojis ocasionalmente: 📊 datos, 🌡️ temperatura, 💨 viento, 🏥 salud, ⚠️ advertencia`
 
   const result = streamText({
-    model: openai('gpt-4o', {
-      // Usando prompt caching para reducir costos
-      structuredOutputs: true,
-    }),
+    model: openai('gpt-4o'),
     system: systemPrompt,
     messages: convertToModelMessages(messages),
     temperature: 0.7,
-    maxTokens: 1000,
+    maxOutputTokens: 1000,
   })
 
   return result.toUIMessageStreamResponse()

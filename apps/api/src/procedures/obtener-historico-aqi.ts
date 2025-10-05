@@ -216,6 +216,20 @@ export const obtenerHistoricoAqiProcedure = publicProcedure
     console.log(`   AQI promedio: ${stats.avg.toFixed(1)}`)
     console.log(`   Tendencia: ${trendDirection} (${trendPct > 0 ? '+' : ''}${trendPct.toFixed(1)}%)`)
 
+    // Formatear mensaje de tendencia con más detalle
+    const trendMessage = (() => {
+      const firstHalfAvg = firstAvg.toFixed(1)
+      const secondHalfAvg = secondAvg.toFixed(1)
+
+      if (trendDirection === 'improving') {
+        return `Mejorando: La segunda mitad del período (AQI ${secondHalfAvg}) muestra un ${Math.abs(trendPct).toFixed(1)}% menos de contaminación que la primera mitad (AQI ${firstHalfAvg})`
+      } else if (trendDirection === 'worsening') {
+        return `Empeorando: La segunda mitad del período (AQI ${secondHalfAvg}) muestra un ${trendPct.toFixed(1)}% más de contaminación que la primera mitad (AQI ${firstHalfAvg})`
+      } else {
+        return `Estable: La calidad del aire se mantiene consistente durante todo el período (AQI promedio ${stats.avg.toFixed(1)})`
+      }
+    })()
+
     return {
       granularity: granularity as 'hourly' | 'daily' | 'weekly' | 'monthly',
       data,
@@ -223,11 +237,7 @@ export const obtenerHistoricoAqiProcedure = publicProcedure
       trend: {
         direction: trendDirection,
         percentageChange: trendPct,
-        message: trendDirection === 'improving'
-          ? `La calidad del aire ha mejorado un ${Math.abs(trendPct).toFixed(1)}% en el período`
-          : trendDirection === 'worsening'
-            ? `La calidad del aire ha empeorado un ${trendPct.toFixed(1)}% en el período`
-            : 'La calidad del aire se mantiene estable'
+        message: trendMessage
       },
     }
     } catch (e) {
