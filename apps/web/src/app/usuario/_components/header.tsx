@@ -183,7 +183,7 @@ export function Header({
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
-                    onClick={() => onDialogOpen("data-panel")}
+                    onClick={() => onDialogOpen("pollutants")}
                     className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors"
                   >
                     <Database className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -191,7 +191,7 @@ export function Header({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">
-                  <p>Ver datos de estaciones y modelos</p>
+                  <p>Análisis completo de contaminantes</p>
                 </TooltipContent>
               </Tooltip>
             )}

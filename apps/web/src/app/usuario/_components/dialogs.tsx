@@ -3,7 +3,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { useState } from "react"
 import {
@@ -17,8 +16,7 @@ import {
   ChevronDown,
   ChevronUp,
   Satellite,
-  BrainCircuit,
-  MapPin
+  BrainCircuit
 } from "lucide-react"
 import { getAQIBadge } from "./utils"
 
@@ -878,189 +876,6 @@ export function PollutantsDialog({ open, onOpenChange, prediction }: PollutantsD
               </CardContent>
             </Card>
           )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-interface DataPanelDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  currentLocation: { name: string; lat: number; lng: number }
-  searchLat: number
-  searchLng: number
-  prediction: any
-  onOpenPollutantsDialog: () => void
-}
-
-export function DataPanelDialog({
-  open,
-  onOpenChange,
-  currentLocation,
-  searchLat,
-  searchLng,
-  prediction,
-  onOpenPollutantsDialog
-}: DataPanelDialogProps) {
-  if (!prediction) return null
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl z-[10001] mx-4 max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-primary" />
-            Datos en Tiempo Real
-          </DialogTitle>
-          <CardDescription className="text-xs pt-1">
-            Estaciones de monitoreo, datos satelitales y predicciones ML
-          </CardDescription>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          {/* Ubicación */}
-          <Card>
-            <CardContent className="pt-4">
-              <div className="p-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
-                <div className="flex items-center gap-2 mb-1">
-                  <MapPin className="h-4 w-4 text-blue-600" />
-                  <p className="text-sm font-semibold">Ubicación</p>
-                </div>
-                <p className="text-base font-medium pl-6">{currentLocation.name}</p>
-                <p className="text-xs text-muted-foreground pl-6 font-mono">
-                  {searchLat.toFixed(4)}°, {searchLng.toFixed(4)}°
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Estaciones por parámetro */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Estaciones de Monitoreo</CardTitle>
-              <CardDescription className="text-xs">
-                Cada contaminante usa la estación más cercana con datos disponibles
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {/* O3 */}
-              {prediction.stations?.O3 && (
-                <div className="p-3 bg-gradient-to-r from-blue-50/80 to-transparent dark:from-blue-950/20 rounded-lg border-l-4 border-blue-400">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold text-sm">O₃ Ozono</span>
-                    <Badge variant="outline" className="text-xs">
-                      {prediction.stations.O3.distanceKm.toFixed(1)} km
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <p className="text-muted-foreground">Coordenadas</p>
-                      <p className="font-mono text-[10px]">
-                        {prediction.stations.O3.latitude.toFixed(4)}°, {prediction.stations.O3.longitude.toFixed(4)}°
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Proveedor</p>
-                      <p className="font-medium">{prediction.stations.O3.provider}</p>
-                    </div>
-                  </div>
-                  {prediction.O3?.tempo && (
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2 pt-2 border-t">
-                      <Satellite className="h-3 w-3" />
-                      <span>TEMPO: {prediction.O3.tempo.stationValue?.toFixed(1)} DU</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* NO2 */}
-              {prediction.stations?.NO2 && (
-                <div className="p-3 bg-gradient-to-r from-orange-50/80 to-transparent dark:from-orange-950/20 rounded-lg border-l-4 border-orange-400">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold text-sm">NO₂ Dióxido de Nitrógeno</span>
-                    <Badge variant="outline" className="text-xs">
-                      {prediction.stations.NO2.distanceKm.toFixed(1)} km
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <p className="text-muted-foreground">Coordenadas</p>
-                      <p className="font-mono text-[10px]">
-                        {prediction.stations.NO2.latitude.toFixed(4)}°, {prediction.stations.NO2.longitude.toFixed(4)}°
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Proveedor</p>
-                      <p className="font-medium">{prediction.stations.NO2.provider}</p>
-                    </div>
-                  </div>
-                  <div className="space-y-1 mt-2 pt-2 border-t">
-                    {prediction.NO2?.tempo && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Satellite className="h-3 w-3" />
-                        <span>TEMPO: {prediction.NO2.tempo.stationValue?.toExponential(2)} molec/cm²</span>
-                      </div>
-                    )}
-                    {prediction.NO2?.forecast?.mlUsed && prediction.NO2?.forecast?.modelInfo && (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 font-medium">
-                          <BrainCircuit className="h-3 w-3" />
-                          <span>ML Prediction: {prediction.NO2.forecast.mlPredictionPpb?.toFixed(1)} ppb</span>
-                        </div>
-                        <div className="pl-4 text-[10px] text-muted-foreground">
-                          <p>{prediction.NO2.forecast.modelInfo.modelType} • R²={prediction.NO2.forecast.modelInfo.performance?.r2?.toFixed(2)} • Confianza: {prediction.NO2.forecast.modelInfo.confidenceLevel}</p>
-                        </div>
-                      </div>
-                    )}
-                    {!prediction.NO2?.forecast?.mlUsed && prediction.NO2?.forecast?.modelInfo && (
-                      <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-                        <Activity className="h-3 w-3" />
-                        <span>{prediction.NO2.forecast.modelInfo.detectionMethod}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* PM25 */}
-              {prediction.stations?.PM25 && (
-                <div className="p-3 bg-gradient-to-r from-purple-50/80 to-transparent dark:from-purple-950/20 rounded-lg border-l-4 border-purple-400">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold text-sm">PM2.5 Material Particulado</span>
-                    <Badge variant="outline" className="text-xs">
-                      {prediction.stations.PM25.distanceKm.toFixed(1)} km
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <p className="text-muted-foreground">Coordenadas</p>
-                      <p className="font-mono text-[10px]">
-                        {prediction.stations.PM25.latitude.toFixed(4)}°, {prediction.stations.PM25.longitude.toFixed(4)}°
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Proveedor</p>
-                      <p className="font-medium">{prediction.stations.PM25.provider}</p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2 pt-2 border-t">Datos EPA ground truth</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Botón para ver detalles completos */}
-          <Button
-            variant="default"
-            className="w-full"
-            onClick={() => {
-              onOpenChange(false)
-              setTimeout(() => onOpenPollutantsDialog(), 100)
-            }}
-          >
-            Ver Detalles Completos de Contaminantes
-          </Button>
         </div>
       </DialogContent>
     </Dialog>

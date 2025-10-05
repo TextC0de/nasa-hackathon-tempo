@@ -7,7 +7,7 @@ import { useAlertPolling } from "@/hooks/use-alert-polling"
 import { Header } from "./_components/header"
 import { MapView } from "./_components/map-view"
 import { DebugDialog } from "./_components/debug-dialog"
-import { MetricsDialog, TEMPODialog, WeatherDialog, PollutantsDialog, DataPanelDialog } from "./_components/dialogs"
+import { MetricsDialog, TEMPODialog, WeatherDialog, PollutantsDialog } from "./_components/dialogs"
 import { RecommendationsPanel, RecommendationsPanelCompact } from "./_components/recommendations-panel"
 import { getAQIColor, getAQIBadge, getAQILevel } from "./_components/utils"
 
@@ -231,16 +231,6 @@ export default function UsuarioPage() {
           open={openDialog === "pollutants"}
           onOpenChange={(open) => !open && setOpenDialog(null)}
           prediction={prediction}
-        />
-
-        <DataPanelDialog
-          open={openDialog === "data-panel"}
-          onOpenChange={(open) => !open && setOpenDialog(null)}
-          currentLocation={currentLocation}
-          searchLat={searchLat}
-          searchLng={searchLng}
-          prediction={prediction}
-          onOpenPollutantsDialog={() => setOpenDialog("pollutants")}
         />
       </div>
     </TooltipProvider>
