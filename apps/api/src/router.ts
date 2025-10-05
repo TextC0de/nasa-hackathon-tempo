@@ -19,6 +19,8 @@ import { actualizarAlertaProcedure } from './procedures/actualizar-alerta'
 import { obtenerAlertasActivasProcedure } from './procedures/obtener-alertas-activas'
 import { crearReporteUsuarioProcedure } from './procedures/crear-reporte-usuario'
 import { obtenerReportesUsuarioProcedure } from './procedures/obtener-reporte-usuario'
+import { obtenerPoblacionCiudadProcedure } from './procedures/obtener-poblacion-ciudad'
+import { obtenerPoblacionCondadoProcedure } from './procedures/obtener-poblacion-condado'
 
 export const appRouter = router({
   hello: helloProcedure,
@@ -41,6 +43,8 @@ export const appRouter = router({
   obtenerAlertasActivas: obtenerAlertasActivasProcedure,
   crearReporteUsuario: crearReporteUsuarioProcedure,
   obtenerReportesUsuario: obtenerReportesUsuarioProcedure,
+  obtenerPoblacionCiudad: obtenerPoblacionCiudadProcedure,
+  obtenerPoblacionCondado: obtenerPoblacionCondadoProcedure,
 })
 
 export type AppRouter = typeof appRouter

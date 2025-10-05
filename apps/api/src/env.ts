@@ -33,6 +33,13 @@ const envSchema = z.object({
    * Format: postgresql://user:password@host:port/database
    */
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+
+  /**
+   * U.S. Census Bureau API Key
+   * Required for accessing population data by city and county
+   * Get it from: https://api.census.gov/data/key_signup.html
+   */
+  CENSUS_API_KEY: z.string().min(1, 'CENSUS_API_KEY is required'),
 })
 
 export type Env = z.infer<typeof envSchema>
