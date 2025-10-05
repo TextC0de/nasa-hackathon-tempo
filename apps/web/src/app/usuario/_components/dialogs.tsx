@@ -36,16 +36,16 @@ export function MetricsDialog({ open, onOpenChange, currentLocation, prediction 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
-            Métricas Detalladas - {currentLocation.name}
+            Detailed Metrics - {currentLocation.name}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* AQI General */}
+          {/* General AQI */}
           {prediction.general && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Calidad del Aire General</CardTitle>
+                <CardTitle className="text-base">General Air Quality</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
@@ -58,7 +58,7 @@ export function MetricsDialog({ open, onOpenChange, currentLocation, prediction 
                         {getAQIBadge(prediction.general.aqi).label}
                       </Badge>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Parámetro dominante: {prediction.general.dominantParameter}
+                        Dominant parameter: {prediction.general.dominantParameter}
                       </p>
                     </div>
                   </div>
@@ -67,12 +67,12 @@ export function MetricsDialog({ open, onOpenChange, currentLocation, prediction 
             </Card>
           )}
 
-          {/* Estaciones por Parámetro */}
+          {/* Monitoring Stations by Parameter */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Estaciones de Monitoreo por Parámetro</CardTitle>
+              <CardTitle className="text-base">Monitoring Stations by Parameter</CardTitle>
               <CardDescription className="text-xs">
-                💡 Cada contaminante puede tener una estación diferente - se usa la más cercana con datos
+                💡 Each pollutant can have a different station - uses the closest one with data
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -82,7 +82,7 @@ export function MetricsDialog({ open, onOpenChange, currentLocation, prediction 
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-semibold text-sm flex items-center gap-2">
                       <Badge variant="outline" className="text-xs">O3</Badge>
-                      Ozono
+                      Ozone
                     </h4>
                     <span className="text-xs text-muted-foreground">
                       📍 {prediction.stations.O3.distanceKm.toFixed(2)} km
@@ -90,11 +90,11 @@ export function MetricsDialog({ open, onOpenChange, currentLocation, prediction 
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
-                      <p className="text-muted-foreground">Coordenadas</p>
+                      <p className="text-muted-foreground">Coordinates</p>
                       <p className="font-mono">{prediction.stations.O3.latitude.toFixed(4)}°, {prediction.stations.O3.longitude.toFixed(4)}°</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Proveedor</p>
+                      <p className="text-muted-foreground">Provider</p>
                       <p className="font-medium">{prediction.stations.O3.provider}</p>
                     </div>
                   </div>
@@ -107,7 +107,7 @@ export function MetricsDialog({ open, onOpenChange, currentLocation, prediction 
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-semibold text-sm flex items-center gap-2">
                       <Badge variant="outline" className="text-xs">NO2</Badge>
-                      Dióxido de Nitrógeno
+                      Nitrogen Dioxide
                       {prediction.NO2?.forecast?.mlUsed && (
                         <Badge className="text-[10px] bg-purple-500">🤖 ML</Badge>
                       )}
@@ -118,11 +118,11 @@ export function MetricsDialog({ open, onOpenChange, currentLocation, prediction 
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
-                      <p className="text-muted-foreground">Coordenadas</p>
+                      <p className="text-muted-foreground">Coordinates</p>
                       <p className="font-mono">{prediction.stations.NO2.latitude.toFixed(4)}°, {prediction.stations.NO2.longitude.toFixed(4)}°</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Proveedor</p>
+                      <p className="text-muted-foreground">Provider</p>
                       <p className="font-medium">{prediction.stations.NO2.provider}</p>
                     </div>
                   </div>
@@ -135,7 +135,7 @@ export function MetricsDialog({ open, onOpenChange, currentLocation, prediction 
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-semibold text-sm flex items-center gap-2">
                       <Badge variant="outline" className="text-xs">PM2.5</Badge>
-                      Material Particulado
+                      Particulate Matter
                     </h4>
                     <span className="text-xs text-muted-foreground">
                       📍 {prediction.stations.PM25.distanceKm.toFixed(2)} km
@@ -143,31 +143,31 @@ export function MetricsDialog({ open, onOpenChange, currentLocation, prediction 
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
-                      <p className="text-muted-foreground">Coordenadas</p>
+                      <p className="text-muted-foreground">Coordinates</p>
                       <p className="font-mono">{prediction.stations.PM25.latitude.toFixed(4)}°, {prediction.stations.PM25.longitude.toFixed(4)}°</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Proveedor</p>
+                      <p className="text-muted-foreground">Provider</p>
                       <p className="font-medium">{prediction.stations.PM25.provider}</p>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Fallback: Si no hay stations separadas, mostrar station general */}
+              {/* Fallback: If no separate stations, show general station */}
               {!prediction.stations && prediction.station && (
                 <div className="p-3 border rounded-lg">
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <p className="text-muted-foreground">Proveedor</p>
+                      <p className="text-muted-foreground">Provider</p>
                       <p className="font-medium">{prediction.station.provider}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Distancia</p>
+                      <p className="text-muted-foreground">Distance</p>
                       <p className="font-medium">{prediction.station.distanceKm?.toFixed(2)} km</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Coordenadas</p>
+                      <p className="text-muted-foreground">Coordinates</p>
                       <p className="font-mono text-xs">
                         {prediction.station.latitude.toFixed(4)}°, {prediction.station.longitude.toFixed(4)}°
                       </p>
@@ -178,34 +178,34 @@ export function MetricsDialog({ open, onOpenChange, currentLocation, prediction 
             </CardContent>
           </Card>
 
-          {/* Contaminantes */}
+          {/* Pollutants */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Parámetros por Contaminante</CardTitle>
+              <CardTitle className="text-base">Parameters by Pollutant</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* O3 */}
               {prediction.O3 && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-semibold">Ozono (O3)</h4>
+                    <h4 className="font-semibold">Ozone (O3)</h4>
                     <Badge className={getAQIBadge(prediction.O3.currentData.aqi).color}>
                       AQI: {prediction.O3.currentData.aqi}
                     </Badge>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div>
-                      <p className="text-muted-foreground">Valor</p>
+                      <p className="text-muted-foreground">Value</p>
                       <p className="font-medium">{prediction.O3.currentData.value} {prediction.O3.currentData.unit}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Categoría</p>
+                      <p className="text-muted-foreground">Category</p>
                       <p className="font-medium">{prediction.O3.currentData.category}</p>
                     </div>
                     {prediction.O3.tempo?.stationValue && (
                       <>
                         <div>
-                          <p className="text-muted-foreground">TEMPO Estación</p>
+                          <p className="text-muted-foreground">TEMPO Station</p>
                           <p className="font-medium">{prediction.O3.tempo.stationValue.toExponential(2)}</p>
                         </div>
                         {prediction.O3.tempo.ratio && (
@@ -224,24 +224,24 @@ export function MetricsDialog({ open, onOpenChange, currentLocation, prediction 
               {prediction.NO2 && (
                 <div className="space-y-2 pt-4 border-t">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-semibold">Dióxido de Nitrógeno (NO2)</h4>
+                    <h4 className="font-semibold">Nitrogen Dioxide (NO2)</h4>
                     <Badge className={getAQIBadge(prediction.NO2.currentData.aqi).color}>
                       AQI: {prediction.NO2.currentData.aqi}
                     </Badge>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div>
-                      <p className="text-muted-foreground">Valor</p>
+                      <p className="text-muted-foreground">Value</p>
                       <p className="font-medium">{prediction.NO2.currentData.value} {prediction.NO2.currentData.unit}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Categoría</p>
+                      <p className="text-muted-foreground">Category</p>
                       <p className="font-medium">{prediction.NO2.currentData.category}</p>
                     </div>
                     {prediction.NO2.tempo?.stationValue && (
                       <>
                         <div>
-                          <p className="text-muted-foreground">TEMPO Estación</p>
+                          <p className="text-muted-foreground">TEMPO Station</p>
                           <p className="font-medium">{prediction.NO2.tempo.stationValue.toExponential(2)}</p>
                         </div>
                         {prediction.NO2.tempo.ratio && (
@@ -260,18 +260,18 @@ export function MetricsDialog({ open, onOpenChange, currentLocation, prediction 
               {prediction.PM25 && (
                 <div className="space-y-2 pt-4 border-t">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-semibold">Material Particulado (PM2.5)</h4>
+                    <h4 className="font-semibold">Particulate Matter (PM2.5)</h4>
                     <Badge className={getAQIBadge(prediction.PM25.currentData.aqi).color}>
                       AQI: {prediction.PM25.currentData.aqi}
                     </Badge>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div>
-                      <p className="text-muted-foreground">Valor</p>
+                      <p className="text-muted-foreground">Value</p>
                       <p className="font-medium">{prediction.PM25.currentData.value} {prediction.PM25.currentData.unit}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Categoría</p>
+                      <p className="text-muted-foreground">Category</p>
                       <p className="font-medium">{prediction.PM25.currentData.category}</p>
                     </div>
                   </div>
@@ -299,7 +299,7 @@ export function TEMPODialog({ open, onOpenChange, tempoData, tempoLoading }: TEM
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5" />
-            Datos TEMPO - Satélite NASA
+            TEMPO Data - NASA Satellite
           </DialogTitle>
         </DialogHeader>
         {tempoLoading && (
@@ -319,7 +319,7 @@ export function TEMPODialog({ open, onOpenChange, tempoData, tempoLoading }: TEM
                 <p className="text-xs text-muted-foreground">{tempoData.notes}</p>
                 <div className="mt-2 text-xs">
                   <p className="text-muted-foreground">
-                    Timestamp: {new Date(tempoData.timestamp).toLocaleString('es-ES')}
+                    Timestamp: {new Date(tempoData.timestamp).toLocaleString('en-US')}
                   </p>
                   <p className="text-muted-foreground italic">{tempoData.timestamp_info}</p>
                 </div>
@@ -331,7 +331,7 @@ export function TEMPODialog({ open, onOpenChange, tempoData, tempoLoading }: TEM
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center justify-between">
-                    <span>Dióxido de Nitrógeno (NO2)</span>
+                    <span>Nitrogen Dioxide (NO2)</span>
                     <Badge variant="outline" className="text-xs">
                       {tempoData.data.NO2.nivel}
                     </Badge>
@@ -341,12 +341,12 @@ export function TEMPODialog({ open, onOpenChange, tempoData, tempoLoading }: TEM
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">Valor (columnar)</p>
+                      <p className="text-sm text-muted-foreground">Value (column)</p>
                       <p className="font-medium text-sm">{tempoData.data.NO2.value_formatted}</p>
                       <p className="text-xs text-muted-foreground">{tempoData.data.NO2.unit}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Clasificación</p>
+                      <p className="text-sm text-muted-foreground">Classification</p>
                       <p className="font-medium">{tempoData.data.NO2.nivel}</p>
                     </div>
                   </div>
@@ -359,7 +359,7 @@ export function TEMPODialog({ open, onOpenChange, tempoData, tempoLoading }: TEM
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center justify-between">
-                    <span>Ozono (O3)</span>
+                    <span>Ozone (O3)</span>
                     <Badge variant="outline" className="text-xs">
                       {tempoData.data.O3.nivel}
                     </Badge>
@@ -369,12 +369,12 @@ export function TEMPODialog({ open, onOpenChange, tempoData, tempoLoading }: TEM
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">Valor (columnar)</p>
+                      <p className="text-sm text-muted-foreground">Value (column)</p>
                       <p className="font-medium">{tempoData.data.O3.value?.toFixed(2)}</p>
                       <p className="text-xs text-muted-foreground">{tempoData.data.O3.unit}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Clasificación</p>
+                      <p className="text-sm text-muted-foreground">Classification</p>
                       <p className="font-medium">{tempoData.data.O3.nivel}</p>
                     </div>
                   </div>
@@ -387,7 +387,7 @@ export function TEMPODialog({ open, onOpenChange, tempoData, tempoLoading }: TEM
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center justify-between">
-                    <span>Formaldehído (HCHO)</span>
+                    <span>Formaldehyde (HCHO)</span>
                     <Badge variant="outline" className="text-xs">
                       {tempoData.data.HCHO.nivel}
                     </Badge>
@@ -397,16 +397,16 @@ export function TEMPODialog({ open, onOpenChange, tempoData, tempoLoading }: TEM
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">Valor (columnar)</p>
+                      <p className="text-sm text-muted-foreground">Value (column)</p>
                       <p className="font-medium text-sm">{tempoData.data.HCHO.value_formatted}</p>
                       <p className="text-xs text-muted-foreground">{tempoData.data.HCHO.unit}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">En DU</p>
+                      <p className="text-sm text-muted-foreground">In DU</p>
                       <p className="font-medium">{tempoData.data.HCHO.value_DU} DU</p>
                     </div>
                     <div className="col-span-2">
-                      <p className="text-sm text-muted-foreground">Clasificación</p>
+                      <p className="text-sm text-muted-foreground">Classification</p>
                       <p className="font-medium">{tempoData.data.HCHO.nivel}</p>
                     </div>
                   </div>
@@ -414,16 +414,16 @@ export function TEMPODialog({ open, onOpenChange, tempoData, tempoLoading }: TEM
               </Card>
             )}
 
-            {/* Ubicación */}
+            {/* Location */}
             <Card className="bg-muted/50">
               <CardContent className="pt-4">
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <p className="text-muted-foreground">Latitud</p>
+                    <p className="text-muted-foreground">Latitude</p>
                     <p className="font-medium">{tempoData.location.latitude.toFixed(4)}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Longitud</p>
+                    <p className="text-muted-foreground">Longitude</p>
                     <p className="font-medium">{tempoData.location.longitude.toFixed(4)}</p>
                   </div>
                 </div>
@@ -451,7 +451,7 @@ export function WeatherDialog({ open, onOpenChange, weatherData, weatherLoading,
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Cloud className="h-5 w-5" />
-            Condiciones Meteorológicas Completas
+            Complete Weather Conditions
           </DialogTitle>
         </DialogHeader>
         {weatherLoading && (
@@ -461,40 +461,40 @@ export function WeatherDialog({ open, onOpenChange, weatherData, weatherLoading,
         )}
         {weatherData && (
           <div className="space-y-4">
-            {/* Condiciones actuales */}
+            {/* Current conditions */}
             {prediction?.weather && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Condiciones Actuales</CardTitle>
-                  <CardDescription>Datos en tiempo real de la estación más cercana</CardDescription>
+                  <CardTitle className="text-base">Current Conditions</CardTitle>
+                  <CardDescription>Real-time data from the nearest station</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex items-center gap-2">
                       <Thermometer className="h-4 w-4 text-orange-500" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Temperatura</p>
+                        <p className="text-sm text-muted-foreground">Temperature</p>
                         <p className="font-medium">{prediction.weather.temperature}°C</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Wind className="h-4 w-4 text-blue-500" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Viento</p>
+                        <p className="text-sm text-muted-foreground">Wind</p>
                         <p className="font-medium">{prediction.weather.windSpeed} m/s</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Droplets className="h-4 w-4 text-blue-600" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Humedad</p>
+                        <p className="text-sm text-muted-foreground">Humidity</p>
                         <p className="font-medium">{prediction.weather.relativeHumidity}%</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Cloud className="h-4 w-4 text-gray-500" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Precipitación</p>
+                        <p className="text-sm text-muted-foreground">Precipitation</p>
                         <p className="font-medium">{prediction.weather.precipitation} mm</p>
                       </div>
                     </div>
@@ -503,83 +503,83 @@ export function WeatherDialog({ open, onOpenChange, weatherData, weatherLoading,
               </Card>
             )}
 
-            {/* Info del pronóstico */}
+            {/* Forecast info */}
             <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
               <CardContent className="pt-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Cloud className="h-4 w-4 text-blue-600" />
-                  <p className="font-semibold text-sm">Pronóstico Extendido - OpenMeteo</p>
+                  <p className="font-semibold text-sm">Extended Forecast - OpenMeteo</p>
                 </div>
                 <div className="text-xs">
                   <p className="text-muted-foreground">
-                    Ubicación: {weatherData.location.latitude.toFixed(4)}, {weatherData.location.longitude.toFixed(4)}
+                    Location: {weatherData.location.latitude.toFixed(4)}, {weatherData.location.longitude.toFixed(4)}
                   </p>
                   <p className="text-muted-foreground">
-                    Días de pronóstico: {weatherData.forecast_days}
+                    Forecast days: {weatherData.forecast_days}
                   </p>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Datos meteorológicos detallados */}
+            {/* Detailed weather data */}
             {weatherData.weather_data && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Parámetros Meteorológicos Avanzados</CardTitle>
-                  <CardDescription>Variables críticas para modelado de calidad del aire</CardDescription>
+                  <CardTitle className="text-base">Advanced Weather Parameters</CardTitle>
+                  <CardDescription>Critical variables for air quality modeling</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <p className="text-muted-foreground">Velocidad del viento (10m)</p>
+                      <p className="text-muted-foreground">Wind speed (10m)</p>
                       <p className="font-medium">
                         {weatherData.weather_data.hourly?.wind_speed_10m?.[0] ?? 'N/A'} km/h
                       </p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Dirección del viento (10m)</p>
+                      <p className="text-muted-foreground">Wind direction (10m)</p>
                       <p className="font-medium">
                         {weatherData.weather_data.hourly?.wind_direction_10m?.[0] ?? 'N/A'}°
                       </p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Altura capa límite</p>
+                      <p className="text-muted-foreground">Boundary layer height</p>
                       <p className="font-medium">
                         {weatherData.weather_data.hourly?.boundary_layer_height?.[0] ?? 'N/A'} m
                       </p>
                       <p className="text-xs text-muted-foreground italic">
-                        Crítico para conversión columna-superficie
+                        Critical for column-to-surface conversion
                       </p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Temperatura (2m)</p>
+                      <p className="text-muted-foreground">Temperature (2m)</p>
                       <p className="font-medium">
                         {weatherData.weather_data.hourly?.temperature_2m?.[0] ?? 'N/A'}°C
                       </p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Precipitación</p>
+                      <p className="text-muted-foreground">Precipitation</p>
                       <p className="font-medium">
                         {weatherData.weather_data.hourly?.precipitation?.[0] ?? 'N/A'} mm
                       </p>
                       <p className="text-xs text-muted-foreground italic">
-                        Washout de contaminantes
+                        Pollutant washout
                       </p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Humedad relativa (2m)</p>
+                      <p className="text-muted-foreground">Relative humidity (2m)</p>
                       <p className="font-medium">
                         {weatherData.weather_data.hourly?.relative_humidity_2m?.[0] ?? 'N/A'}%
                       </p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Presión superficial</p>
+                      <p className="text-muted-foreground">Surface pressure</p>
                       <p className="font-medium">
                         {weatherData.weather_data.hourly?.surface_pressure?.[0] ?? 'N/A'} hPa
                       </p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Cobertura de nubes</p>
+                      <p className="text-muted-foreground">Cloud cover</p>
                       <p className="font-medium">
                         {weatherData.weather_data.hourly?.cloud_cover?.[0] ?? 'N/A'}%
                       </p>
@@ -614,10 +614,10 @@ export function PollutantsDialog({ open, onOpenChange, prediction }: PollutantsD
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5" />
-            Análisis Completo de Contaminantes
+            Complete Pollutants Analysis
           </DialogTitle>
           <CardDescription className="text-xs pt-1">
-            Datos EPA (ground truth) + TEMPO (satélite) + Predicciones ML
+            EPA data (ground truth) + TEMPO (satellite) + ML Predictions
           </CardDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -637,11 +637,11 @@ export function PollutantsDialog({ open, onOpenChange, prediction }: PollutantsD
                 {/* EPA Data */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-sm text-muted-foreground">Concentración EPA</p>
+                    <p className="text-sm text-muted-foreground">EPA Concentration</p>
                     <p className="font-medium">{prediction.O3.currentData.value} {prediction.O3.currentData.unit}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Estación</p>
+                    <p className="text-sm text-muted-foreground">Station</p>
                     <p className="font-medium text-sm">{prediction.O3.currentData.siteName}</p>
                   </div>
                 </div>
@@ -653,7 +653,7 @@ export function PollutantsDialog({ open, onOpenChange, prediction }: PollutantsD
                       <div className="flex items-center justify-between w-full pt-3 border-t hover:bg-muted/50 px-2 py-2 rounded">
                         <div className="flex items-center gap-2">
                           <Satellite className="h-4 w-4 text-blue-500" />
-                          <p className="text-sm font-semibold">Datos TEMPO (Satélite NASA)</p>
+                          <p className="text-sm font-semibold">TEMPO Data (NASA Satellite)</p>
                         </div>
                         {expandedO3 ?
                           <ChevronUp className="h-4 w-4" /> :
@@ -664,31 +664,31 @@ export function PollutantsDialog({ open, onOpenChange, prediction }: PollutantsD
                     <CollapsibleContent className="pt-2">
                       <div className="grid grid-cols-2 gap-3 text-sm bg-blue-50/50 dark:bg-blue-950/20 p-3 rounded-lg">
                         <div>
-                          <p className="text-muted-foreground">Columna en estación</p>
+                          <p className="text-muted-foreground">Column at station</p>
                           <p className="font-medium">{prediction.O3.tempo.station?.toFixed(2)} DU</p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground">Columna en tu ubicación</p>
+                          <p className="text-muted-foreground">Column at your location</p>
                           <p className="font-medium">{prediction.O3.tempo.user?.toFixed(2)} DU</p>
                         </div>
                         {prediction.O3.tempo.ratio && (
                           <div>
-                            <p className="text-muted-foreground">Ratio Ground/TEMPO</p>
+                            <p className="text-muted-foreground">Ground/TEMPO Ratio</p>
                             <p className="font-medium">{prediction.O3.tempo.ratio.toFixed(6)}</p>
                           </div>
                         )}
                         {prediction.O3.tempo.timestamp && (
                           <div>
-                            <p className="text-muted-foreground">Timestamp TEMPO</p>
-                            <p className="font-medium text-xs">{new Date(prediction.O3.tempo.timestamp).toLocaleTimeString('es-ES')}</p>
+                            <p className="text-muted-foreground">TEMPO Timestamp</p>
+                            <p className="font-medium text-xs">{new Date(prediction.O3.tempo.timestamp).toLocaleTimeString('en-US')}</p>
                           </div>
                         )}
                         {prediction.O3.tempo.estimatedUserValue && (
                           <div className="col-span-2 pt-2 border-t">
-                            <p className="text-muted-foreground">Estimación física para tu ubicación</p>
+                            <p className="text-muted-foreground">Physical estimation for your location</p>
                             <p className="font-medium text-base">{prediction.O3.tempo.estimatedUserValue.toFixed(2)} {prediction.O3.currentData.unit}</p>
                             <p className="text-xs text-muted-foreground italic mt-1">
-                              Basado en ratio calibrado TEMPO-EPA
+                              Based on calibrated TEMPO-EPA ratio
                             </p>
                           </div>
                         )}
@@ -706,7 +706,7 @@ export function PollutantsDialog({ open, onOpenChange, prediction }: PollutantsD
               <CardHeader>
                 <CardTitle className="text-base flex items-center justify-between">
                   <span className="flex items-center gap-2">
-                    Dióxido de Nitrógeno (NO2)
+                    Nitrogen Dioxide (NO2)
                     {prediction.NO2.forecast?.mlUsed && (
                       <Badge className="text-[10px] bg-gradient-to-r from-purple-500 to-pink-500 text-white">
                         <BrainCircuit className="h-3 w-3 mr-1" />
@@ -724,11 +724,11 @@ export function PollutantsDialog({ open, onOpenChange, prediction }: PollutantsD
                 {/* EPA Data */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-sm text-muted-foreground">Concentración EPA</p>
+                    <p className="text-sm text-muted-foreground">EPA Concentration</p>
                     <p className="font-medium">{prediction.NO2.currentData.value} {prediction.NO2.currentData.unit}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Estación</p>
+                    <p className="text-sm text-muted-foreground">Station</p>
                     <p className="font-medium text-sm">{prediction.NO2.currentData.siteName}</p>
                   </div>
                 </div>
@@ -739,7 +739,7 @@ export function PollutantsDialog({ open, onOpenChange, prediction }: PollutantsD
                     <div className="flex items-center gap-2 mb-2">
                       <BrainCircuit className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                       <div className="flex-1">
-                        <p className="text-sm font-semibold">Predicción Machine Learning</p>
+                        <p className="text-sm font-semibold">Machine Learning Prediction</p>
                         <p className="text-xs text-muted-foreground">{prediction.NO2.forecast.modelInfo.detectionMethod}</p>
                       </div>
                       <Badge variant="outline" className="text-[10px]">
@@ -748,13 +748,13 @@ export function PollutantsDialog({ open, onOpenChange, prediction }: PollutantsD
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-sm mb-2">
                       <div>
-                        <p className="text-muted-foreground text-xs">Valor predicho</p>
+                        <p className="text-muted-foreground text-xs">Predicted value</p>
                         <p className="font-bold text-purple-700 dark:text-purple-300">
                           {prediction.NO2.forecast.mlPredictionPpb.toFixed(2)} ppb
                         </p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground text-xs">Modelo</p>
+                        <p className="text-muted-foreground text-xs">Model</p>
                         <p className="font-medium text-xs">{prediction.NO2.forecast.modelInfo.modelType} {prediction.NO2.forecast.modelInfo.modelVersion}</p>
                       </div>
                       <div>
@@ -768,10 +768,10 @@ export function PollutantsDialog({ open, onOpenChange, prediction }: PollutantsD
                     </div>
                     <div className="pt-2 border-t border-purple-200/50 dark:border-purple-800/50">
                       <p className="text-xs text-muted-foreground">
-                        <span className="font-semibold">Features:</span> {prediction.NO2.forecast.modelInfo.features} variables (TEMPO satélite + meteorología + temporal)
+                        <span className="font-semibold">Features:</span> {prediction.NO2.forecast.modelInfo.features} variables (TEMPO satellite + meteorology + temporal)
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        <span className="font-semibold">Entrenado con:</span> {prediction.NO2.forecast.modelInfo.trainedOn}
+                        <span className="font-semibold">Trained on:</span> {prediction.NO2.forecast.modelInfo.trainedOn}
                       </p>
                     </div>
                   </div>
@@ -803,7 +803,7 @@ export function PollutantsDialog({ open, onOpenChange, prediction }: PollutantsD
                       <div className="flex items-center justify-between w-full pt-3 border-t hover:bg-muted/50 px-2 py-2 rounded">
                         <div className="flex items-center gap-2">
                           <Satellite className="h-4 w-4 text-blue-500" />
-                          <p className="text-sm font-semibold">Datos TEMPO (Satélite NASA)</p>
+                          <p className="text-sm font-semibold">TEMPO Data (NASA Satellite)</p>
                         </div>
                         {expandedNO2 ?
                           <ChevronUp className="h-4 w-4" /> :
@@ -814,31 +814,31 @@ export function PollutantsDialog({ open, onOpenChange, prediction }: PollutantsD
                     <CollapsibleContent className="pt-2">
                       <div className="grid grid-cols-2 gap-3 text-sm bg-blue-50/50 dark:bg-blue-950/20 p-3 rounded-lg">
                         <div>
-                          <p className="text-muted-foreground">Columna en estación</p>
+                          <p className="text-muted-foreground">Column at station</p>
                           <p className="font-medium font-mono text-xs">{prediction.NO2.tempo.stationValue?.toExponential(2)} molec/cm²</p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground">Columna en tu ubicación</p>
+                          <p className="text-muted-foreground">Column at your location</p>
                           <p className="font-medium font-mono text-xs">{prediction.NO2.tempo.userValue?.toExponential(2)} molec/cm²</p>
                         </div>
                         {prediction.NO2.tempo.ratio && (
                           <div>
-                            <p className="text-muted-foreground">Ratio Ground/TEMPO</p>
+                            <p className="text-muted-foreground">Ground/TEMPO Ratio</p>
                             <p className="font-medium">{prediction.NO2.tempo.ratio.toFixed(6)}</p>
                           </div>
                         )}
                         {prediction.NO2.tempo.timestamp && (
                           <div>
-                            <p className="text-muted-foreground">Timestamp TEMPO</p>
-                            <p className="font-medium text-xs">{new Date(prediction.NO2.tempo.timestamp).toLocaleTimeString('es-ES')}</p>
+                            <p className="text-muted-foreground">TEMPO Timestamp</p>
+                            <p className="font-medium text-xs">{new Date(prediction.NO2.tempo.timestamp).toLocaleTimeString('en-US')}</p>
                           </div>
                         )}
                         {prediction.NO2.tempo.estimatedUserValue && (
                           <div className="col-span-2 pt-2 border-t">
-                            <p className="text-muted-foreground">Estimación física para tu ubicación</p>
+                            <p className="text-muted-foreground">Physical estimation for your location</p>
                             <p className="font-medium text-base">{prediction.NO2.tempo.estimatedUserValue.toFixed(2)} {prediction.NO2.currentData.unit}</p>
                             <p className="text-xs text-muted-foreground italic mt-1">
-                              Basado en ratio calibrado TEMPO-EPA
+                              Based on calibrated TEMPO-EPA ratio
                             </p>
                           </div>
                         )}
@@ -855,7 +855,7 @@ export function PollutantsDialog({ open, onOpenChange, prediction }: PollutantsD
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center justify-between">
-                  <span>Material Particulado (PM2.5)</span>
+                  <span>Particulate Matter (PM2.5)</span>
                   <Badge className={getAQIBadge(prediction.PM25.currentData.aqi).color}>
                     AQI: {prediction.PM25.currentData.aqi}
                   </Badge>
@@ -865,11 +865,11 @@ export function PollutantsDialog({ open, onOpenChange, prediction }: PollutantsD
               <CardContent>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-sm text-muted-foreground">Concentración</p>
+                    <p className="text-sm text-muted-foreground">Concentration</p>
                     <p className="font-medium">{prediction.PM25.currentData.value} {prediction.PM25.currentData.unit}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Estación</p>
+                    <p className="text-sm text-muted-foreground">Station</p>
                     <p className="font-medium text-sm">{prediction.PM25.currentData.siteName}</p>
                   </div>
                 </div>

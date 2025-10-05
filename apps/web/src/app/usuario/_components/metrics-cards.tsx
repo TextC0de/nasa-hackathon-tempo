@@ -34,36 +34,36 @@ export function MetricsCards({ prediction, isLoading, onDialogOpen, getAQIColor 
   }
 
   const getAQIStatus = (aqi: number) => {
-    if (aqi <= 50) return { 
-      status: "Excelente", 
+    if (aqi <= 50) return {
+      status: "Excellent",
       icon: <CheckCircle className="h-4 w-4 text-green-500" />,
       bgColor: "bg-green-50",
       borderColor: "border-green-200",
       textColor: "text-green-700"
     }
-    if (aqi <= 100) return { 
-      status: "Buena", 
+    if (aqi <= 100) return {
+      status: "Good",
       icon: <CheckCircle className="h-4 w-4 text-green-500" />,
       bgColor: "bg-green-50",
       borderColor: "border-green-200",
       textColor: "text-green-700"
     }
-    if (aqi <= 150) return { 
-      status: "Moderada", 
+    if (aqi <= 150) return {
+      status: "Moderate",
       icon: <AlertTriangle className="h-4 w-4 text-yellow-500" />,
       bgColor: "bg-yellow-50",
       borderColor: "border-yellow-200",
       textColor: "text-yellow-700"
     }
-    if (aqi <= 200) return { 
-      status: "No saludable", 
+    if (aqi <= 200) return {
+      status: "Unhealthy",
       icon: <AlertTriangle className="h-4 w-4 text-orange-500" />,
       bgColor: "bg-orange-50",
       borderColor: "border-orange-200",
       textColor: "text-orange-700"
     }
-    return { 
-      status: "Peligroso", 
+    return {
+      status: "Dangerous",
       icon: <AlertTriangle className="h-4 w-4 text-red-500" />,
       bgColor: "bg-red-50",
       borderColor: "border-red-200",
@@ -75,7 +75,7 @@ export function MetricsCards({ prediction, isLoading, onDialogOpen, getAQIColor 
 
   const metrics = [
     {
-      title: "AQI General",
+      title: "General AQI",
       value: prediction?.general?.aqi || "---",
       unit: "",
       icon: <Activity className="h-5 w-5" />,
@@ -85,7 +85,7 @@ export function MetricsCards({ prediction, isLoading, onDialogOpen, getAQIColor 
       status: aqiStatus?.status,
       statusIcon: aqiStatus?.icon,
       trend: prediction?.general?.trend,
-      description: "Índice de Calidad del Aire"
+      description: "Air Quality Index"
     }
   ]
 
@@ -142,7 +142,7 @@ export function MetricsCards({ prediction, isLoading, onDialogOpen, getAQIColor 
                       )}
                     </div>
                     
-                    {/* Valor principal */}
+                    {/* Main value */}
                     <div className="text-center space-y-3">
                       <div className="flex items-center justify-center gap-3">
                         <span className={`text-5xl font-bold ${metric.color} drop-shadow-sm`}>
@@ -156,7 +156,7 @@ export function MetricsCards({ prediction, isLoading, onDialogOpen, getAQIColor 
                           <span className="text-lg text-gray-600 font-medium">{metric.unit}</span>
                         )}
                       </div>
-                      
+
                       {/* Trend indicator */}
                       {metric.trend && (
                         <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-white/60 backdrop-blur-sm border border-white/50 shadow-sm">
@@ -166,12 +166,12 @@ export function MetricsCards({ prediction, isLoading, onDialogOpen, getAQIColor 
                           </span>
                         </div>
                       )}
-                      
+
                       {/* Loading indicator */}
                       {isLoading && (
                         <div className="flex items-center justify-center gap-2 text-blue-600">
                           <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent" />
-                          <span className="text-sm font-medium">Actualizando datos...</span>
+                          <span className="text-sm font-medium">Updating data...</span>
                         </div>
                       )}
                     </div>
@@ -179,7 +179,7 @@ export function MetricsCards({ prediction, isLoading, onDialogOpen, getAQIColor 
                 </Card>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Click para ver detalles completos</p>
+                <p>Click to view full details</p>
               </TooltipContent>
             </Tooltip>
           </motion.div>

@@ -16,29 +16,29 @@ import { getAQIColor, getAQIBadge, getAQILevel } from "./_components/utils"
 
 import "leaflet/dist/leaflet.css"
 
-// Ubicaciones de ejemplo en California
+// Example locations in California
 const CALIFORNIA_LOCATIONS = [
-  { name: "Los Ángeles", lat: 34.0522, lng: -118.2437 },
+  { name: "Los Angeles", lat: 34.0522, lng: -118.2437 },
   { name: "San Francisco", lat: 37.7749, lng: -122.4194 },
   { name: "San Diego", lat: 32.7157, lng: -117.1611 },
   { name: "Sacramento", lat: 38.5816, lng: -121.4944 },
   { name: "Fresno", lat: 36.7378, lng: -119.7871 },
-  { name: "San José", lat: 37.3382, lng: -121.8863 }
+  { name: "San Jose", lat: 37.3382, lng: -121.8863 }
 ] as const
 
 export default function UsuarioPage() {
-  // Estado por defecto: Los Ángeles, California
+  // Default state: Los Angeles, California
   const [currentLocation, setCurrentLocation] = useState<{ name: string; lat: number; lng: number }>(CALIFORNIA_LOCATIONS[0])
   const [searchLat, setSearchLat] = useState<number>(CALIFORNIA_LOCATIONS[0].lat)
   const [searchLng, setSearchLng] = useState<number>(CALIFORNIA_LOCATIONS[0].lng)
 
-  // Estados para debug
+  // Debug states
   const [debugLat, setDebugLat] = useState<string>(CALIFORNIA_LOCATIONS[0].lat.toString())
   const [debugLng, setDebugLng] = useState<string>(CALIFORNIA_LOCATIONS[0].lng.toString())
   const [openDialog, setOpenDialog] = useState<string | null>(null)
 
 
-  // Query para obtener predicción de AQI
+  // Query to get AQI prediction
   const { data: prediction, isLoading, error, refetch } = trpc.predecirAqi.useQuery(
     {
       latitude: searchLat,
@@ -47,12 +47,12 @@ export default function UsuarioPage() {
     {
       enabled: true,
       retry: 2,
-      staleTime: 5 * 60 * 1000, // 5 minutos
-      refetchInterval: 5 * 60 * 1000 // Auto-refetch cada 5 minutos
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchInterval: 5 * 60 * 1000 // Auto-refetch every 5 minutes
     }
   )
 
-  // Hook para polling de alertas
+  // Hook for alert polling
   const {
     alerts,
     unreadAlerts,
@@ -65,25 +65,25 @@ export default function UsuarioPage() {
     longitude: searchLng,
     radiusKm: 100,
     enabled: true,
-    pollingInterval: 30000 // 30 segundos
+    pollingInterval: 30000 // 30 seconds
   })
 
-  // NOTA: Los datos TEMPO ahora vienen incluidos en prediction.O3.tempo y prediction.NO2.tempo
+  // NOTE: TEMPO data is now included in prediction.O3.tempo and prediction.NO2.tempo
   const tempoData = null
   const tempoLoading = false
 
-  // Query para obtener datos meteorológicos completos
-  // NOTA: Esta query fue comentada porque la procedure fue eliminada
-  // Los datos meteorológicos ahora vienen incluidos en prediction.weather
+  // Query to get complete weather data
+  // NOTE: This query was commented out because the procedure was removed
+  // Weather data is now included in prediction.weather
   const weatherData = null
   const weatherLoading = false
 
-  // Cargar predicción inicial
+  // Load initial prediction
   useEffect(() => {
     refetch()
   }, [searchLat, searchLng, refetch])
 
-  // Función para cambiar ubicación desde presets
+  // Function to change location from presets
   const handleLocationChange = (location: { name: string; lat: number; lng: number }) => {
     setCurrentLocation(location)
     setSearchLat(location.lat)
@@ -92,38 +92,38 @@ export default function UsuarioPage() {
     setDebugLng(location.lng.toString())
   }
 
-  // Función para actualizar ubicación desde el mapa (drag)
+  // Function to update location from the map (drag)
   const handleLocationUpdate = (lat: number, lng: number) => {
     setSearchLat(lat)
     setSearchLng(lng)
     setDebugLat(lat.toString())
     setDebugLng(lng.toString())
-    setCurrentLocation({ name: "Ubicación personalizada", lat, lng })
+    setCurrentLocation({ name: "Custom location", lat, lng })
   }
 
-  // Función para búsqueda manual (debug)
+  // Function for manual search (debug)
   const handleDebugSearch = () => {
     const lat = parseFloat(debugLat)
     const lng = parseFloat(debugLng)
 
     if (isNaN(lat) || isNaN(lng)) {
-      alert("Por favor ingresa valores numéricos válidos")
+      alert("Please enter valid numeric values")
       return
     }
 
     if (lat < -90 || lat > 90) {
-      alert("La latitud debe estar entre -90 y 90")
+      alert("Latitude must be between -90 and 90")
       return
     }
 
     if (lng < -180 || lng > 180) {
-      alert("La longitud debe estar entre -180 y 180")
+      alert("Longitude must be between -180 and 180")
       return
     }
 
     setSearchLat(lat)
     setSearchLng(lng)
-    setCurrentLocation({ name: "Ubicación personalizada", lat, lng })
+    setCurrentLocation({ name: "Custom location", lat, lng })
     setOpenDialog(null)
   }
 
@@ -219,7 +219,7 @@ export default function UsuarioPage() {
           </div>
         </div>
 
-        {/* Diálogos */}
+        {/* Dialogs */}
         <DebugDialog
           open={openDialog === "debug"}
           onOpenChange={(open) => !open && setOpenDialog(null)}

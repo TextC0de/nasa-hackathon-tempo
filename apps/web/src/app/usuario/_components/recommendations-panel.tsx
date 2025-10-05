@@ -30,10 +30,10 @@ interface RecommendationsPanelProps {
 }
 
 /**
- * Panel de Recomendaciones Inteligente
+ * Smart Recommendations Panel
  *
- * Muestra recomendaciones personalizadas según el nivel de AQI
- * de forma visual, clara y fácil de entender
+ * Shows personalized recommendations based on AQI level
+ * in a visual, clear, and easy-to-understand way
  */
 export function RecommendationsPanel({
   aqi,
@@ -104,7 +104,7 @@ export function RecommendationsPanel({
           <div className="mt-4 p-3 bg-muted/50 rounded-lg">
             <p className="text-sm font-semibold mb-2 flex items-center gap-2">
               <Activity className="h-4 w-4" />
-              Grupos que deben tener precaución:
+              Groups that should take precaution:
             </p>
             <div className="flex flex-wrap gap-2">
               {explanation.affectedGroups.map((group, idx) => (
@@ -124,26 +124,26 @@ export function RecommendationsPanel({
           <div className="mt-3 text-sm text-muted-foreground flex items-center gap-2">
             <Activity className="h-4 w-4" />
             <span>
-              <strong>Contaminante principal:</strong> {dominantPollutant}
+              <strong>Main pollutant:</strong> {dominantPollutant}
             </span>
           </div>
         )}
       </div>
       <div className="-mx-6 border-b"></div>
 
-      {/* Recomendaciones */}
+      {/* Recommendations */}
       <div className="py-6">
         <div className="mb-4">
-          <h3 className="text-lg font-semibold">¿Qué debo hacer?</h3>
+          <h3 className="text-lg font-semibold">What should I do?</h3>
           <p className="text-sm text-muted-foreground">
-            Recomendaciones personalizadas para mantenerte saludable
+            Personalized recommendations to keep you healthy
           </p>
         </div>
 
         <div className="space-y-3">
           {categorized.all.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
-              No hay recomendaciones especiales para este nivel de AQI
+              No special recommendations for this AQI level
             </p>
           ) : (
             categorized.all.map((rec) => (
@@ -169,17 +169,17 @@ export function RecommendationsPanel({
       </div>
       <div className="-mx-6 border-b"></div>
 
-      {/* Nota educativa */}
+      {/* Educational note */}
       <div className="py-6 bg-blue-50 dark:bg-blue-950 -mx-6 px-6 -mb-6">
         <div className="flex gap-3">
           <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-blue-900 dark:text-blue-100">
-            <p className="font-semibold mb-1">💡 ¿Cómo se calcula el AQI?</p>
+            <p className="font-semibold mb-1">💡 How is AQI calculated?</p>
             <p className="text-xs leading-relaxed">
-              El Índice de Calidad del Aire (AQI) combina múltiples contaminantes (O3, NO2, PM2.5, etc.)
-              en un solo número fácil de entender. Un AQI más alto significa mayor contaminación y mayor
-              riesgo para la salud. Los datos provienen de estaciones terrestres EPA combinados con mediciones
-              satelitales NASA TEMPO.
+              The Air Quality Index (AQI) combines multiple pollutants (O3, NO2, PM2.5, etc.)
+              into a single easy-to-understand number. A higher AQI means more pollution and greater
+              health risk. Data comes from EPA ground stations combined with NASA TEMPO
+              satellite measurements.
             </p>
           </div>
         </div>
@@ -189,7 +189,7 @@ export function RecommendationsPanel({
 }
 
 /**
- * Versión compacta del panel de recomendaciones (para vista móvil)
+ * Compact version of recommendations panel (for mobile view)
  */
 export function RecommendationsPanelCompact({
   aqi,

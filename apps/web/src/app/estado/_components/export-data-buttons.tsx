@@ -12,16 +12,16 @@ export function ExportDataButtons() {
     if (!ciudadesData) return
 
     try {
-      // Cargar el GeoJSON base
+      // Load base GeoJSON
       const response = await fetch('/data/cities-boundaries.geojson')
       const geoJSON = await response.json()
 
-      // Crear un mapa de ciudades por nombre
+      // Create a map of cities by name
       const ciudadesMap = new Map(
         ciudadesData.ciudades.map((ciudad: any) => [ciudad.nombre, ciudad])
       )
 
-      // Enriquecer el GeoJSON con datos de AQI actuales
+      // Enrich GeoJSON with current AQI data
       const enrichedGeoJSON = {
         ...geoJSON,
         features: geoJSON.features.map((feature: any) => {
@@ -48,7 +48,7 @@ export function ExportDataButtons() {
         },
       }
 
-      // Crear archivo y descargar
+      // Create file and download
       const blob = new Blob([JSON.stringify(enrichedGeoJSON, null, 2)], {
         type: 'application/json',
       })
@@ -62,7 +62,7 @@ export function ExportDataButtons() {
       URL.revokeObjectURL(url)
     } catch (error) {
       console.error('Error downloading GeoJSON:', error)
-      alert('Error al descargar GeoJSON. Por favor intenta nuevamente.')
+      alert('Error downloading GeoJSON. Please try again.')
     }
   }
 
@@ -70,37 +70,37 @@ export function ExportDataButtons() {
     if (!ciudadesData) return
 
     try {
-      // Crear encabezados CSV
+      // Create CSV headers
       const headers = [
-        'Ciudad',
-        'Población',
+        'City',
+        'Population',
         'AQI',
-        'Categoría',
+        'Category',
         'Color',
-        'Latitud',
-        'Longitud',
-        'Fecha',
+        'Latitude',
+        'Longitude',
+        'Date',
       ]
 
-      // Crear filas de datos
+      // Create data rows
       const rows = ciudadesData.ciudades.map((ciudad) => [
         ciudad.nombre,
         ciudad.poblacion,
         ciudad.aqi || 'N/A',
-        ciudad.categoria || 'Sin datos',
+        ciudad.categoria || 'No data',
         ciudad.color || 'N/A',
         ciudad.lat,
         ciudad.lng,
         new Date().toISOString(),
       ])
 
-      // Combinar encabezados y datos
+      // Combine headers and data
       const csvContent = [
         headers.join(','),
         ...rows.map((row) => row.join(',')),
       ].join('\n')
 
-      // Crear archivo y descargar
+      // Create file and download
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')

@@ -101,9 +101,9 @@ export function Header({
               </span>
             </div>
 
-            {/* Métricas en tiempo real - Desktop */}
+            {/* Real-time metrics - Desktop */}
             <div className="hidden lg:flex items-center space-x-4">
-              {/* Estado de conexión */}
+              {/* Connection status */}
               <div className="flex items-center space-x-2">
                 {isLoading ? (
                   <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />
@@ -113,11 +113,11 @@ export function Header({
                   <Wifi className="h-4 w-4 text-green-500" />
                 )}
                 <span className="text-xs text-muted-foreground">
-                  {isLoading ? "Cargando..." : error ? "Error" : "Conectado"}
+                  {isLoading ? "Loading..." : error ? "Error" : "Connected"}
                 </span>
               </div>
 
-              {/* Ubicación actual */}
+              {/* Current location */}
               <div className="flex items-center space-x-2">
                 <MapPin className="h-4 w-4 text-blue-500" />
                 <span className="text-xs text-muted-foreground">
@@ -125,7 +125,7 @@ export function Header({
                 </span>
               </div>
 
-              {/* AQI General */}
+              {/* General AQI */}
               {prediction?.general && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -140,16 +140,16 @@ export function Header({
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    <p>Índice de Calidad del Aire en {currentLocation.name}</p>
+                    <p>Air Quality Index in {currentLocation.name}</p>
                   </TooltipContent>
                 </Tooltip>
               )}
 
-              {/* Última actualización */}
+              {/* Last update */}
               <div className="flex items-center space-x-2">
                 <Clock className="h-4 w-4 text-gray-500" />
                 <span className="text-xs text-muted-foreground">
-                  {new Date().toLocaleTimeString('es-ES', {
+                  {new Date().toLocaleTimeString('en-US', {
                     hour: '2-digit',
                     minute: '2-digit'
                   })}
@@ -158,7 +158,7 @@ export function Header({
             </div>
           </div>
 
-          {/* Métricas móviles */}
+          {/* Mobile metrics */}
           <div className="lg:hidden flex items-center space-x-1 sm:space-x-2 min-w-0">
             <div className="flex items-center space-x-1">
               {isLoading ? (
@@ -177,9 +177,9 @@ export function Header({
             )}
           </div>
 
-          {/* Alertas Bell + Botón Datos + Menubar */}
+          {/* Alerts Bell + Data Button + Menubar */}
           <div className="ml-auto flex items-center gap-1 flex-shrink-0">
-            {/* Botón de Datos en Tiempo Real */}
+            {/* Real-time Data Button */}
             {prediction?.general && prediction?.stations && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -189,16 +189,16 @@ export function Header({
                     className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors"
                   >
                     <Database className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span className="hidden sm:inline text-xs sm:text-sm font-medium">Datos</span>
+                    <span className="hidden sm:inline text-xs sm:text-sm font-medium">Data</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">
-                  <p>Análisis completo de contaminantes</p>
+                  <p>Complete pollutant analysis</p>
                 </TooltipContent>
               </Tooltip>
             )}
 
-            {/* Botón de Reportes */}
+            {/* Reports Button */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Link href="/usuario/reportes">
@@ -207,16 +207,16 @@ export function Header({
                     className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 bg-orange-600/10 hover:bg-orange-600/20 rounded-lg transition-colors"
                   >
                     <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-orange-600" />
-                    <span className="hidden sm:inline text-xs sm:text-sm font-medium text-orange-600">Reportes</span>
+                    <span className="hidden sm:inline text-xs sm:text-sm font-medium text-orange-600">Reports</span>
                   </Button>
                 </Link>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p>Gestionar reportes de contaminación</p>
+                <p>Manage pollution reports</p>
               </TooltipContent>
             </Tooltip>
 
-            {/* Campanita de alertas */}
+            {/* Alerts bell */}
             <AlertsBell
               alerts={alerts}
               unreadCount={unreadAlertsCount}
@@ -226,17 +226,17 @@ export function Header({
             />
 
             <Menubar className="border-0 bg-transparent shadow-none">
-              {/* Menú Ubicación */}
+              {/* Location Menu */}
               <MenubarMenu>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <MenubarTrigger className="flex items-center gap-1 sm:gap-2 cursor-help px-1 sm:px-2">
                       <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
-                      <span className="hidden sm:inline text-xs sm:text-sm">Ubicación</span>
+                      <span className="hidden sm:inline text-xs sm:text-sm">Location</span>
                     </MenubarTrigger>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    <p>Cambiar ubicación</p>
+                    <p>Change location</p>
                   </TooltipContent>
                 </Tooltip>
                 <MenubarContent>

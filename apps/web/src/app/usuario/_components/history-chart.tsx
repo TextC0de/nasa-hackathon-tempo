@@ -8,57 +8,57 @@ import { Button } from "@/components/ui/button"
 import { Loader2, TrendingDown, TrendingUp, Minus, Calendar, Clock } from "lucide-react"
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend, PieChart, Pie, Cell } from "recharts"
 import { format, getWeek } from "date-fns"
-import { es } from "date-fns/locale"
+import { enUS } from "date-fns/locale"
 
-// Función para formatear fecha según granularidad
+// Function to format date based on granularity
 function formatDateByGranularity(timestamp: string, granularity: 'hourly' | 'daily' | 'weekly' | 'monthly'): string {
   const date = new Date(timestamp)
   const year = date.getFullYear()
 
   switch (granularity) {
     case 'monthly':
-      // Mes: "ene 2024", "feb 2024"
-      return format(date, "MMM yyyy", { locale: es })
+      // Month: "Jan 2024", "Feb 2024"
+      return format(date, "MMM yyyy", { locale: enUS })
 
     case 'weekly':
-      // Semana: "Sem 1 '24", "Sem 2 '24"
-      const weekNum = getWeek(date, { locale: es })
-      return `Sem ${weekNum} '${year.toString().slice(-2)}`
+      // Week: "Wk 1 '24", "Wk 2 '24"
+      const weekNum = getWeek(date, { locale: enUS })
+      return `Wk ${weekNum} '${year.toString().slice(-2)}`
 
     case 'daily':
-      // Día: "1 ene" o "1 ene '24" si cambia el año
-      return format(date, "d MMM", { locale: es })
+      // Day: "Jan 1" or "Jan 1 '24" if year changes
+      return format(date, "d MMM", { locale: enUS })
 
     case 'hourly':
-      // Hora: "1 ene 14:00"
-      return format(date, "d MMM HH:mm", { locale: es })
+      // Hour: "Jan 1 2:00 PM"
+      return format(date, "d MMM HH:mm", { locale: enUS })
 
     default:
-      return format(date, "d MMM", { locale: es })
+      return format(date, "d MMM", { locale: enUS })
   }
 }
 
-// Función para obtener color basado en AQI
+// Function to get color based on AQI
 function getAQIColor(aqi: number): string {
-  if (aqi <= 50) return '#10b981'        // Verde - Bueno
-  if (aqi <= 100) return '#f59e0b'       // Amarillo - Moderado
-  if (aqi <= 150) return '#f97316'       // Naranja - Insalubre para sensibles
-  if (aqi <= 200) return '#ef4444'       // Rojo - Insalubre
-  if (aqi <= 300) return '#8b5cf6'       // Púrpura - Muy insalubre
-  return '#7c2d12'                        // Marrón - Peligroso
+  if (aqi <= 50) return '#10b981'        // Green - Good
+  if (aqi <= 100) return '#f59e0b'       // Yellow - Moderate
+  if (aqi <= 150) return '#f97316'       // Orange - Unhealthy for Sensitive
+  if (aqi <= 200) return '#ef4444'       // Red - Unhealthy
+  if (aqi <= 300) return '#8b5cf6'       // Purple - Very Unhealthy
+  return '#7c2d12'                        // Brown - Hazardous
 }
 
-// Función para obtener categoría AQI
+// Function to get AQI category
 function getAQICategory(aqi: number): string {
-  if (aqi <= 50) return 'Bueno'
-  if (aqi <= 100) return 'Moderado'
-  if (aqi <= 150) return 'Insalubre para Sensibles'
-  if (aqi <= 200) return 'Insalubre'
-  if (aqi <= 300) return 'Muy Insalubre'
-  return 'Peligroso'
+  if (aqi <= 50) return 'Good'
+  if (aqi <= 100) return 'Moderate'
+  if (aqi <= 150) return 'Unhealthy for Sensitive'
+  if (aqi <= 200) return 'Unhealthy'
+  if (aqi <= 300) return 'Very Unhealthy'
+  return 'Hazardous'
 }
 
-// Tooltip personalizado para el chart
+// Custom tooltip for the chart
 function CustomTooltip({ active, payload, granularity }: any) {
   if (!active || !payload || !payload[0]) return null
 
@@ -66,21 +66,21 @@ function CustomTooltip({ active, payload, granularity }: any) {
   const aqi = data.aqi_avg
   const color = getAQIColor(aqi)
 
-  // Formatear fecha para tooltip con más detalle
+  // Format date for tooltip with more detail
   const formattedDate = (() => {
     const date = new Date(data.timestamp)
     switch (granularity) {
       case 'monthly':
-        return format(date, "MMMM 'de' yyyy", { locale: es })
+        return format(date, "MMMM yyyy", { locale: enUS })
       case 'weekly':
-        const weekNum = getWeek(date, { locale: es })
-        return `Semana ${weekNum} de ${date.getFullYear()}`
+        const weekNum = getWeek(date, { locale: enUS })
+        return `Week ${weekNum} of ${date.getFullYear()}`
       case 'daily':
-        return format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })
+        return format(date, "EEEE, MMMM d, yyyy", { locale: enUS })
       case 'hourly':
-        return format(date, "EEEE, d 'de' MMMM 'de' yyyy - HH:mm", { locale: es })
+        return format(date, "EEEE, MMMM d, yyyy - HH:mm", { locale: enUS })
       default:
-        return format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })
+        return format(date, "EEEE, MMMM d, yyyy", { locale: enUS })
     }
   })()
 
@@ -99,12 +99,12 @@ function CustomTooltip({ active, payload, granularity }: any) {
       </div>
       {data.aqi_min !== undefined && data.aqi_max !== undefined && (
         <p className="text-xs text-muted-foreground mt-1">
-          Rango: {data.aqi_min} - {data.aqi_max}
+          Range: {data.aqi_min} - {data.aqi_max}
         </p>
       )}
       {data.dominant_pollutant && (
         <p className="text-xs text-muted-foreground mt-1">
-          Contaminante: {data.dominant_pollutant}
+          Pollutant: {data.dominant_pollutant}
         </p>
       )}
     </div>
@@ -145,16 +145,16 @@ export function HistoryChart({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Histórico de Calidad del Aire
+            Air Quality History
           </CardTitle>
           <CardDescription>
-            {format(startDate, 'PP', { locale: es })} - {format(endDate, 'PP', { locale: es })}
+            {format(startDate, 'PP', { locale: enUS })} - {format(endDate, 'PP', { locale: enUS })}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-64">
           <div className="flex flex-col items-center space-y-2">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Cargando histórico...</p>
+            <p className="text-sm text-muted-foreground">Loading history...</p>
           </div>
         </CardContent>
       </Card>
@@ -167,12 +167,12 @@ export function HistoryChart({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Histórico de Calidad del Aire
+            Air Quality History
           </CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-64">
           <div className="text-center">
-            <p className="text-sm text-destructive">Error al cargar histórico</p>
+            <p className="text-sm text-destructive">Error loading history</p>
             <p className="text-xs text-muted-foreground mt-1">{error.message}</p>
           </div>
         </CardContent>
@@ -186,17 +186,17 @@ export function HistoryChart({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Histórico de Calidad del Aire
+            Air Quality History
           </CardTitle>
           <CardDescription>
-            {format(startDate, 'PP', { locale: es })} - {format(endDate, 'PP', { locale: es })}
+            {format(startDate, 'PP', { locale: enUS })} - {format(endDate, 'PP', { locale: enUS })}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-64">
           <div className="text-center">
-            <p className="text-sm text-muted-foreground">No hay datos históricos disponibles</p>
+            <p className="text-sm text-muted-foreground">No historical data available</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Intenta aumentar el radio de búsqueda o cambiar el rango de fechas
+              Try increasing the search radius or changing the date range
             </p>
           </div>
         </CardContent>
@@ -232,7 +232,7 @@ export function HistoryChart({
     pm25: (pollutantStats.pm25_total / totalPollution) * 100,
   } : { o3: 0, no2: 0, pm25: 0 }
 
-  // Determinar icono de tendencia
+  // Determine trend icon
   const TrendIcon = data.trend?.direction === 'improving'
     ? TrendingDown
     : data.trend?.direction === 'worsening'
@@ -252,10 +252,10 @@ export function HistoryChart({
       : 'bg-yellow-50 dark:bg-yellow-950'
 
   const granularityLabels = {
-    hourly: 'Datos por hora',
-    daily: 'Datos diarios',
-    weekly: 'Datos semanales',
-    monthly: 'Datos mensuales'
+    hourly: 'Hourly data',
+    daily: 'Daily data',
+    weekly: 'Weekly data',
+    monthly: 'Monthly data'
   }
 
   return (
@@ -269,32 +269,32 @@ export function HistoryChart({
               ) : (
                 <Calendar className="h-5 w-5" />
               )}
-              Histórico de Calidad del Aire
+              Air Quality History
             </CardTitle>
             <CardDescription>
-              {granularityLabels[data.granularity]} • {format(startDate, 'd MMM yyyy', { locale: es })} - {format(endDate, 'd MMM yyyy', { locale: es })}
+              {granularityLabels[data.granularity]} • {format(startDate, 'd MMM yyyy', { locale: enUS })} - {format(endDate, 'd MMM yyyy', { locale: enUS })}
             </CardDescription>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Estadísticas generales */}
+        {/* General statistics */}
         {data.stats && (
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">Promedio</p>
+              <p className="text-xs text-muted-foreground">Average</p>
               <p className="text-2xl font-bold" style={{ color: getAQIColor(data.stats.avg) }}>
                 {Math.round(data.stats.avg)}
               </p>
             </div>
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">Mínimo</p>
+              <p className="text-xs text-muted-foreground">Minimum</p>
               <p className="text-2xl font-bold" style={{ color: getAQIColor(data.stats.min) }}>
                 {Math.round(data.stats.min)}
               </p>
             </div>
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">Máximo</p>
+              <p className="text-xs text-muted-foreground">Maximum</p>
               <p className="text-2xl font-bold" style={{ color: getAQIColor(data.stats.max) }}>
                 {Math.round(data.stats.max)}
               </p>
@@ -302,16 +302,16 @@ export function HistoryChart({
           </div>
         )}
 
-        {/* Indicador de tendencia */}
+        {/* Trend indicator */}
         {data.trend && (
           <div className={`${trendBgColor} rounded-lg p-3 border`}>
             <div className="flex items-center gap-2">
               <TrendIcon className={`h-5 w-5 ${trendColor}`} />
               <div className="flex-1">
                 <p className={`font-semibold text-sm ${trendColor}`}>
-                  {data.trend.direction === 'improving' && '📉 Mejorando'}
-                  {data.trend.direction === 'worsening' && '📈 Empeorando'}
-                  {data.trend.direction === 'stable' && '➡️ Estable'}
+                  {data.trend.direction === 'improving' && '📉 Improving'}
+                  {data.trend.direction === 'worsening' && '📈 Worsening'}
+                  {data.trend.direction === 'stable' && '➡️ Stable'}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {data.trend.message}
@@ -370,9 +370,9 @@ export function HistoryChart({
             </ResponsiveContainer>
           </div>
 
-          {/* Pie Chart - Contribución por Contaminante */}
+          {/* Pie Chart - Pollutant Contribution */}
           <div className="h-64 sm:h-80 flex flex-col">
-            <h4 className="text-sm font-semibold mb-2">Contribución por Contaminante</h4>
+            <h4 className="text-sm font-semibold mb-2">Pollutant Contribution</h4>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -400,9 +400,9 @@ export function HistoryChart({
           </div>
         </div>
 
-        {/* Chart de Contaminantes Individuales */}
+        {/* Individual Pollutants Chart */}
         <div className="h-64 sm:h-80 mt-4">
-          <h4 className="text-sm font-semibold mb-2">Tendencias por Contaminante (ppb / μg/m³)</h4>
+          <h4 className="text-sm font-semibold mb-2">Trends by Pollutant (ppb / μg/m³)</h4>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -415,7 +415,7 @@ export function HistoryChart({
               <YAxis
                 className="text-xs"
                 stroke="hsl(var(--muted-foreground))"
-                label={{ value: 'Concentración', angle: -90, position: 'insideLeft', className: 'text-xs fill-muted-foreground' }}
+                label={{ value: 'Concentration', angle: -90, position: 'insideLeft', className: 'text-xs fill-muted-foreground' }}
               />
               <Tooltip content={<CustomTooltip granularity={data.granularity} />} />
               <Legend />
@@ -447,44 +447,44 @@ export function HistoryChart({
           </ResponsiveContainer>
         </div>
 
-        {/* Leyenda de categorías AQI */}
+        {/* AQI categories legend */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#10b981' }} />
-            <span className="text-xs text-muted-foreground">Bueno (0-50)</span>
+            <span className="text-xs text-muted-foreground">Good (0-50)</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#f59e0b' }} />
-            <span className="text-xs text-muted-foreground">Moderado (51-100)</span>
+            <span className="text-xs text-muted-foreground">Moderate (51-100)</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#f97316' }} />
-            <span className="text-xs text-muted-foreground">Sensibles (101-150)</span>
+            <span className="text-xs text-muted-foreground">Sensitive (101-150)</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#ef4444' }} />
-            <span className="text-xs text-muted-foreground">Insalubre (151-200)</span>
+            <span className="text-xs text-muted-foreground">Unhealthy (151-200)</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#8b5cf6' }} />
-            <span className="text-xs text-muted-foreground">Muy Insalubre (201-300)</span>
+            <span className="text-xs text-muted-foreground">Very Unhealthy (201-300)</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#7c2d12' }} />
-            <span className="text-xs text-muted-foreground">Peligroso (301+)</span>
+            <span className="text-xs text-muted-foreground">Hazardous (301+)</span>
           </div>
         </div>
 
-        {/* Nota informativa */}
+        {/* Informative note */}
         <div className="text-xs text-muted-foreground italic pt-2 border-t">
-          💡 Datos agregados de estaciones EPA en un radio de {radiusKm} km
+          💡 Aggregated data from EPA stations within a {radiusKm} km radius
         </div>
       </CardContent>
     </Card>
   )
 }
 
-// Versión compacta para mobile
+// Compact version for mobile
 export function HistoryChartCompact({ latitude, longitude, className }: HistoryChartProps) {
   const [days, setDays] = useState(7)
 
@@ -540,7 +540,7 @@ export function HistoryChartCompact({ latitude, longitude, className }: HistoryC
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">Últimos {days} días</span>
+          <span className="text-sm font-medium">Last {days} days</span>
         </div>
         <div className="flex gap-1">
           <Button
@@ -562,12 +562,12 @@ export function HistoryChartCompact({ latitude, longitude, className }: HistoryC
         </div>
       </div>
 
-      {/* Tendencia */}
+      {/* Trend */}
       <div className="flex items-center gap-2 mb-3">
         <TrendIcon className={`h-4 w-4 ${trendColor}`} />
         <span className={`text-xs font-medium ${trendColor}`}>
           {data.trend.percentageChange > 0 ? '+' : ''}
-          {data.trend.percentageChange.toFixed(1)}% en el período
+          {data.trend.percentageChange.toFixed(1)}% in the period
         </span>
       </div>
 
@@ -591,7 +591,7 @@ export function HistoryChartCompact({ latitude, longitude, className }: HistoryC
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-2 mt-3 text-center">
         <div>
-          <p className="text-xs text-muted-foreground">Prom</p>
+          <p className="text-xs text-muted-foreground">Avg</p>
           <p className="text-sm font-bold" style={{ color: getAQIColor(data.stats.avg) }}>
             {Math.round(data.stats.avg)}
           </p>

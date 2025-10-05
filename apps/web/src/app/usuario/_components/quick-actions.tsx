@@ -30,8 +30,8 @@ interface QuickActionsProps {
 export function QuickActions({ onDialogOpen, onRefetch, isLoading, unreadAlertsCount = 0 }: QuickActionsProps) {
   const actions = [
     {
-      title: "Reportar Contaminación",
-      description: "Reporta un incidente de contaminación",
+      title: "Report Pollution",
+      description: "Report a pollution incident",
       icon: <AlertTriangle className="h-5 w-5" />,
       href: "/usuario/reportes",
       color: "bg-red-500 hover:bg-red-600",
@@ -40,8 +40,8 @@ export function QuickActions({ onDialogOpen, onRefetch, isLoading, unreadAlertsC
       textColor: "text-red-700"
     },
     {
-      title: "Ver Reportes",
-      description: "Gestiona tus reportes",
+      title: "View Reports",
+      description: "Manage your reports",
       icon: <FileText className="h-5 w-5" />,
       href: "/usuario/reportes",
       color: "bg-blue-500 hover:bg-blue-600",
@@ -50,8 +50,8 @@ export function QuickActions({ onDialogOpen, onRefetch, isLoading, unreadAlertsC
       textColor: "text-blue-700"
     },
     {
-      title: "Análisis Detallado",
-      description: "Métricas y tendencias completas",
+      title: "Detailed Analysis",
+      description: "Complete metrics and trends",
       icon: <BarChart3 className="h-5 w-5" />,
       action: () => onDialogOpen("metrics"),
       color: "bg-green-500 hover:bg-green-600",
@@ -60,8 +60,8 @@ export function QuickActions({ onDialogOpen, onRefetch, isLoading, unreadAlertsC
       textColor: "text-green-700"
     },
     {
-      title: "Pronóstico",
-      description: "Predicciones meteorológicas",
+      title: "Forecast",
+      description: "Weather predictions",
       icon: <TrendingUp className="h-5 w-5" />,
       action: () => onDialogOpen("weather"),
       color: "bg-purple-500 hover:bg-purple-600",
@@ -79,13 +79,13 @@ export function QuickActions({ onDialogOpen, onRefetch, isLoading, unreadAlertsC
         transition={{ duration: 0.5, delay: 0.4 }}
         className="space-y-6"
       >
-        {/* Acciones principales */}
+        {/* Main actions */}
         <Card className="border-0 shadow-lg bg-gradient-to-br from-white via-gray-50 to-blue-50">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
                 <Settings className="h-5 w-5 text-blue-600" />
-                Acciones Rápidas
+                Quick Actions
               </CardTitle>
               <Button
                 onClick={onRefetch}
@@ -95,7 +95,7 @@ export function QuickActions({ onDialogOpen, onRefetch, isLoading, unreadAlertsC
                 className="bg-white/80 hover:bg-white border-blue-200 hover:border-blue-300"
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                Actualizar
+                Refresh
               </Button>
             </div>
           </CardHeader>
@@ -154,7 +154,7 @@ export function QuickActions({ onDialogOpen, onRefetch, isLoading, unreadAlertsC
                       )}
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Click para {action.href ? 'navegar' : 'abrir'}</p>
+                      <p>Click to {action.href ? 'navigate' : 'open'}</p>
                     </TooltipContent>
                   </Tooltip>
                 </motion.div>
@@ -163,7 +163,7 @@ export function QuickActions({ onDialogOpen, onRefetch, isLoading, unreadAlertsC
           </CardContent>
         </Card>
 
-        {/* Acciones secundarias */}
+        {/* Secondary actions */}
         <div className="flex flex-wrap gap-3">
           <Button
             variant="outline"
@@ -171,25 +171,25 @@ export function QuickActions({ onDialogOpen, onRefetch, isLoading, unreadAlertsC
             className="bg-white/80 hover:bg-white border-green-200 hover:border-green-300 text-green-700 hover:text-green-800"
           >
             <Heart className="h-4 w-4 mr-2" />
-            Favoritos
+            Favorites
           </Button>
-          
+
           <Button
             variant="outline"
             size="sm"
             className="bg-white/80 hover:bg-white border-blue-200 hover:border-blue-300 text-blue-700 hover:text-blue-800"
           >
             <Share2 className="h-4 w-4 mr-2" />
-            Compartir
+            Share
           </Button>
-          
+
           <Button
             variant="outline"
             size="sm"
             className="bg-white/80 hover:bg-white border-purple-200 hover:border-purple-300 text-purple-700 hover:text-purple-800"
           >
             <Download className="h-4 w-4 mr-2" />
-            Exportar
+            Export
           </Button>
 
           {unreadAlertsCount > 0 && (
@@ -199,7 +199,7 @@ export function QuickActions({ onDialogOpen, onRefetch, isLoading, unreadAlertsC
               className="bg-red-50 hover:bg-red-100 border-red-200 hover:border-red-300 text-red-700 hover:text-red-800 relative"
             >
               <Bell className="h-4 w-4 mr-2" />
-              Alertas
+              Alerts
               <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
                 {unreadAlertsCount}
               </Badge>

@@ -67,21 +67,21 @@ function getSeverityColor(severity: Alert['severity']) {
   }
 }
 
-// Formatear tiempo relativo
+// Format relative time
 function getTimeAgo(timestamp: string): string {
   const now = new Date()
   const past = new Date(timestamp)
   const diffMs = now.getTime() - past.getTime()
   const diffMins = Math.floor(diffMs / 60000)
 
-  if (diffMins < 1) return 'Ahora'
-  if (diffMins < 60) return `Hace ${diffMins} min`
+  if (diffMins < 1) return 'Now'
+  if (diffMins < 60) return `${diffMins} min ago`
 
   const diffHours = Math.floor(diffMins / 60)
-  if (diffHours < 24) return `Hace ${diffHours}h`
+  if (diffHours < 24) return `${diffHours}h ago`
 
   const diffDays = Math.floor(diffHours / 24)
-  return `Hace ${diffDays}d`
+  return `${diffDays}d ago`
 }
 
 export function AlertsBell({
@@ -108,7 +108,7 @@ export function AlertsBell({
           variant="ghost"
           size="icon"
           className="relative"
-          aria-label={`Notificaciones${unreadCount > 0 ? ` - ${unreadCount} nuevas` : ''}`}
+          aria-label={`Notifications${unreadCount > 0 ? ` - ${unreadCount} new` : ''}`}
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
@@ -131,7 +131,7 @@ export function AlertsBell({
         <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/50">
           <div className="flex items-center gap-2">
             <Bell className="h-4 w-4" />
-            <h3 className="font-semibold text-sm">Alertas</h3>
+            <h3 className="font-semibold text-sm">Alerts</h3>
             {unreadCount > 0 && (
               <Badge variant="destructive" className="h-5 px-1.5 text-xs">
                 {unreadCount}
@@ -145,7 +145,7 @@ export function AlertsBell({
               className="h-7 px-2 text-xs"
               onClick={handleMarkAllRead}
             >
-              Marcar todas leídas
+              Mark all read
             </Button>
           )}
         </div>
@@ -156,10 +156,10 @@ export function AlertsBell({
             <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
               <Bell className="h-12 w-12 text-muted-foreground/20 mb-3" />
               <p className="text-sm font-medium text-muted-foreground">
-                No hay alertas activas
+                No active alerts
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Te notificaremos cuando haya alertas en tu área
+                We'll notify you when there are alerts in your area
               </p>
             </div>
           ) : (
@@ -253,7 +253,7 @@ export function AlertsBell({
         {alerts.length > 0 && (
           <div className="px-4 py-2 border-t bg-muted/50">
             <p className="text-xs text-muted-foreground text-center">
-              Mostrando alertas activas en un radio de 100 km
+              Showing active alerts within a 100 km radius
             </p>
           </div>
         )}

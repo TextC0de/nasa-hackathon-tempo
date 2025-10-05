@@ -14,7 +14,7 @@ const MapContainer = dynamic(
       <div className="flex items-center justify-center h-full bg-muted/20">
         <div className="flex flex-col items-center space-y-2">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-muted-foreground">Cargando mapa...</p>
+          <p className="text-sm text-muted-foreground">Loading map...</p>
         </div>
       </div>
     )
@@ -389,17 +389,17 @@ export function MapView({
           >
             <Popup>
               <div className="text-sm space-y-2">
-                <p className="font-semibold text-blue-600">👤 Tu Ubicación</p>
+                <p className="font-semibold text-blue-600">👤 Your Location</p>
                 <p className="font-medium">{currentLocation.name}</p>
                 <p className="text-xs text-muted-foreground">
                   {searchLat.toFixed(4)}, {searchLng.toFixed(4)}
                 </p>
                 <p className="text-xs text-green-600 font-medium">
-                  💡 Arrastra el marcador para cambiar ubicación
+                  💡 Drag marker to change location
                 </p>
                 {prediction?.general && (
                   <div className="pt-2 border-t">
-                    <p className="text-xs text-muted-foreground mb-1">Calidad del Aire Estimada</p>
+                    <p className="text-xs text-muted-foreground mb-1">Estimated Air Quality</p>
                     <div className="flex items-center gap-2">
                       <span className={`text-2xl font-bold ${getAQIColor(prediction.general.aqi)}`}>
                         {prediction.general.aqi}
@@ -414,7 +414,7 @@ export function MapView({
             </Popup>
           </Marker>
 
-          {/* Marcador de ESTACIÓN DE MONITOREO con SVG personalizado */}
+          {/* Monitoring station marker with custom SVG */}
           {prediction?.station && (
             <Marker
               position={[prediction.station.latitude, prediction.station.longitude]}
@@ -426,18 +426,18 @@ export function MapView({
             >
               <Popup>
                 <div className="text-sm space-y-2">
-                  <p className="font-semibold text-orange-600">📡 Estación de Monitoreo</p>
+                  <p className="font-semibold text-orange-600">📡 Monitoring Station</p>
                   <p className="font-medium">{prediction.station.provider}</p>
                   <p className="text-xs text-muted-foreground">
                     {prediction.station.latitude.toFixed(4)}, {prediction.station.longitude.toFixed(4)}
                   </p>
                   <div className="pt-2 border-t">
-                    <p className="text-xs text-muted-foreground">Distancia desde tu ubicación</p>
+                    <p className="text-xs text-muted-foreground">Distance from your location</p>
                     <p className="font-semibold text-lg">{prediction.station.distanceKm?.toFixed(2)} km</p>
                   </div>
                   {prediction?.general && (
                     <div className="pt-2 border-t">
-                      <p className="text-xs text-muted-foreground mb-1">Datos Medidos Aquí</p>
+                      <p className="text-xs text-muted-foreground mb-1">Data Measured Here</p>
                       <div className="flex items-center gap-2">
                         <span className={`text-2xl font-bold ${getAQIColor(prediction.general.aqi)}`}>
                           {prediction.general.aqi}
@@ -453,7 +453,7 @@ export function MapView({
             </Marker>
           )}
 
-          {/* Mostrar las 3 estaciones separadas (O3, NO2, PM2.5) si existen */}
+          {/* Show the 3 separate stations (O3, NO2, PM2.5) if they exist */}
           {prediction?.stations?.O3 && (
             <Marker
               position={[prediction.stations.O3.latitude, prediction.stations.O3.longitude]}
@@ -465,13 +465,13 @@ export function MapView({
             >
               <Popup>
                 <div className="text-sm space-y-2">
-                  <p className="font-semibold text-orange-600">📡 Estación O₃</p>
+                  <p className="font-semibold text-orange-600">📡 O₃ Station</p>
                   <p className="font-medium">{prediction.stations.O3.provider}</p>
                   <p className="text-xs text-muted-foreground">
                     {prediction.stations.O3.latitude.toFixed(4)}, {prediction.stations.O3.longitude.toFixed(4)}
                   </p>
                   <div className="pt-2 border-t">
-                    <p className="text-xs text-muted-foreground">Distancia</p>
+                    <p className="text-xs text-muted-foreground">Distance</p>
                     <p className="font-semibold">{Number(prediction.stations.O3.distanceKm).toFixed(2)} km</p>
                   </div>
                 </div>
@@ -490,13 +490,13 @@ export function MapView({
             >
               <Popup>
                 <div className="text-sm space-y-2">
-                  <p className="font-semibold text-orange-600">📡 Estación NO₂</p>
+                  <p className="font-semibold text-orange-600">📡 NO₂ Station</p>
                   <p className="font-medium">{prediction.stations.NO2.provider}</p>
                   <p className="text-xs text-muted-foreground">
                     {prediction.stations.NO2.latitude.toFixed(4)}, {prediction.stations.NO2.longitude.toFixed(4)}
                   </p>
                   <div className="pt-2 border-t">
-                    <p className="text-xs text-muted-foreground">Distancia</p>
+                    <p className="text-xs text-muted-foreground">Distance</p>
                     <p className="font-semibold">{Number(prediction.stations.NO2.distanceKm).toFixed(2)} km</p>
                   </div>
                 </div>
@@ -515,13 +515,13 @@ export function MapView({
             >
               <Popup>
                 <div className="text-sm space-y-2">
-                  <p className="font-semibold text-orange-600">📡 Estación PM2.5</p>
+                  <p className="font-semibold text-orange-600">📡 PM2.5 Station</p>
                   <p className="font-medium">{prediction.stations.PM25.provider}</p>
                   <p className="text-xs text-muted-foreground">
                     {prediction.stations.PM25.latitude.toFixed(4)}, {prediction.stations.PM25.longitude.toFixed(4)}
                   </p>
                   <div className="pt-2 border-t">
-                    <p className="text-xs text-muted-foreground">Distancia</p>
+                    <p className="text-xs text-muted-foreground">Distance</p>
                     <p className="font-semibold">{Number(prediction.stations.PM25.distanceKm).toFixed(2)} km</p>
                   </div>
                 </div>
@@ -537,8 +537,8 @@ export function MapView({
           <Card className="p-6">
             <div className="flex flex-col items-center space-y-2">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Cargando datos de calidad del aire...</p>
-              <p className="text-xs text-muted-foreground">Obteniendo estaciones y datos satelitales...</p>
+              <p className="text-sm text-muted-foreground">Loading air quality data...</p>
+              <p className="text-xs text-muted-foreground">Fetching stations and satellite data...</p>
             </div>
           </Card>
         </div>
@@ -552,7 +552,7 @@ export function MapView({
               <div className="flex items-center gap-2 text-destructive">
                 <AlertCircle className="h-5 w-5" />
                 <div>
-                  <p className="font-semibold text-sm">Error al cargar datos</p>
+                  <p className="font-semibold text-sm">Error loading data</p>
                   <p className="text-xs">{error.message}</p>
                 </div>
               </div>

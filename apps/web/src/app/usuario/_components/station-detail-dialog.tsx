@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { HistoryChart } from "./history-chart"
 import { MapPin, Radio, Calendar } from "lucide-react"
 
-// Función para obtener color basado en AQI
+// Function to get color based on AQI
 function getAQIColor(aqi: number): string {
   if (aqi <= 50) return '#10b981'
   if (aqi <= 100) return '#f59e0b'
@@ -16,14 +16,14 @@ function getAQIColor(aqi: number): string {
   return '#7c2d12'
 }
 
-// Función para obtener categoría AQI
+// Function to get AQI category
 function getAQICategory(aqi: number): string {
-  if (aqi <= 50) return 'Bueno'
-  if (aqi <= 100) return 'Moderado'
-  if (aqi <= 150) return 'Insalubre para Sensibles'
-  if (aqi <= 200) return 'Insalubre'
-  if (aqi <= 300) return 'Muy Insalubre'
-  return 'Peligroso'
+  if (aqi <= 50) return 'Good'
+  if (aqi <= 100) return 'Moderate'
+  if (aqi <= 150) return 'Unhealthy for Sensitive'
+  if (aqi <= 200) return 'Unhealthy'
+  if (aqi <= 300) return 'Very Unhealthy'
+  return 'Hazardous'
 }
 
 interface StationDetailDialogProps {
@@ -52,10 +52,10 @@ export function StationDetailDialog({ open, onOpenChange, station }: StationDeta
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Radio className="h-5 w-5 text-orange-500" />
-            Estación de Monitoreo
+            Monitoring Station
           </DialogTitle>
           <DialogDescription>
-            Detalles e histórico de datos de calidad del aire
+            Details and historical air quality data
           </DialogDescription>
         </DialogHeader>
 
@@ -68,31 +68,31 @@ export function StationDetailDialog({ open, onOpenChange, station }: StationDeta
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Radio className="h-4 w-4" />
-                    <span>Proveedor</span>
+                    <span>Provider</span>
                   </div>
                   <p className="text-lg font-semibold">{station.provider}</p>
                 </div>
 
-                {/* Ubicación */}
+                {/* Location */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <MapPin className="h-4 w-4" />
-                    <span>Ubicación</span>
+                    <span>Location</span>
                   </div>
                   <p className="text-sm font-mono">
                     {station.latitude.toFixed(4)}°, {station.longitude.toFixed(4)}°
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {Number(station.distanceKm).toFixed(2)} km de tu ubicación
+                    {Number(station.distanceKm).toFixed(2)} km from your location
                   </p>
                 </div>
 
-                {/* AQI Actual */}
+                {/* Current AQI */}
                 {station.aqi !== undefined && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4" />
-                      <span>Última Lectura</span>
+                      <span>Latest Reading</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-3xl font-bold" style={{ color }}>
@@ -105,11 +105,11 @@ export function StationDetailDialog({ open, onOpenChange, station }: StationDeta
                   </div>
                 )}
 
-                {/* Contaminante dominante */}
+                {/* Dominant pollutant */}
                 {station.pollutant && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span>Contaminante Dominante</span>
+                      <span>Dominant Pollutant</span>
                     </div>
                     <p className="text-lg font-semibold">{station.pollutant}</p>
                   </div>
@@ -118,11 +118,11 @@ export function StationDetailDialog({ open, onOpenChange, station }: StationDeta
             </CardContent>
           </Card>
 
-          {/* Histórico de la estación */}
+          {/* Station historical data */}
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              Histórico de Datos
+              Data History
             </h3>
             <HistoryChart
               latitude={station.latitude}
@@ -133,10 +133,10 @@ export function StationDetailDialog({ open, onOpenChange, station }: StationDeta
             />
           </div>
 
-          {/* Nota informativa */}
+          {/* Informative note */}
           <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
             <p className="text-sm text-blue-900 dark:text-blue-100">
-              <span className="font-semibold">💡 Nota:</span> Los datos mostrados provienen de estaciones de monitoreo EPA (Environmental Protection Agency) en un radio cercano. Los valores históricos son agregados de mediciones horarias y diarias.
+              <span className="font-semibold">💡 Note:</span> The data shown comes from EPA (Environmental Protection Agency) monitoring stations in a nearby radius. Historical values are aggregates of hourly and daily measurements.
             </p>
           </div>
         </div>

@@ -48,12 +48,12 @@ export function WelcomeCard({
   }
 
   const getHealthRecommendation = (aqi: number) => {
-    if (aqi <= 50) return { text: "Excelente calidad del aire", color: "text-green-600", icon: "😊" }
-    if (aqi <= 100) return { text: "Buena calidad del aire", color: "text-green-500", icon: "😌" }
-    if (aqi <= 150) return { text: "Calidad moderada", color: "text-yellow-500", icon: "😐" }
-    if (aqi <= 200) return { text: "No saludable para grupos sensibles", color: "text-orange-500", icon: "😷" }
-    if (aqi <= 300) return { text: "No saludable", color: "text-red-500", icon: "😷" }
-    return { text: "Peligroso", color: "text-red-600", icon: "⚠️" }
+    if (aqi <= 50) return { text: "Excellent air quality", color: "text-green-600", icon: "😊" }
+    if (aqi <= 100) return { text: "Good air quality", color: "text-green-500", icon: "😌" }
+    if (aqi <= 150) return { text: "Moderate quality", color: "text-yellow-500", icon: "😐" }
+    if (aqi <= 200) return { text: "Unhealthy for sensitive groups", color: "text-orange-500", icon: "😷" }
+    if (aqi <= 300) return { text: "Unhealthy", color: "text-red-500", icon: "😷" }
+    return { text: "Hazardous", color: "text-red-600", icon: "⚠️" }
   }
 
   const recommendation = prediction?.general?.aqi ? getHealthRecommendation(prediction.general.aqi) : null
@@ -65,20 +65,20 @@ export function WelcomeCard({
       transition={{ duration: 0.5 }}
     >
       <Card className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-green-50 border-0 shadow-lg">
-        {/* Fondo decorativo */}
+        {/* Decorative background */}
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-green-500/5" />
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-500/10 to-transparent rounded-full -translate-y-16 translate-x-16" />
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-green-500/10 to-transparent rounded-full translate-y-12 -translate-x-12" />
-        
+
         <CardContent className="relative p-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            {/* Información principal */}
+            {/* Main information */}
             <div className="flex-1 space-y-4">
-              {/* Saludo y ubicación */}
+              {/* Greeting and location */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <h1 className="text-2xl font-bold text-gray-900">
-                    ¡Hola! 👋
+                    Hello! 👋
                   </h1>
                   <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                     <MapPin className="h-3 w-3 mr-1" />
@@ -86,14 +86,14 @@ export function WelcomeCard({
                   </Badge>
                 </div>
                 <p className="text-gray-600">
-                  Aquí tienes un resumen de la calidad del aire en tu ubicación
+                  Here's a summary of the air quality in your location
                 </p>
               </div>
 
-              {/* Estado actual */}
+              {/* Current status */}
               {prediction?.general && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {/* AQI Principal */}
+                  {/* Main AQI */}
                   <motion.div
                     initial={{ scale: 0.9 }}
                     animate={{ scale: 1 }}
@@ -103,7 +103,7 @@ export function WelcomeCard({
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <Activity className="h-5 w-5 text-blue-600" />
-                        <span className="text-sm font-medium text-gray-700">AQI Actual</span>
+                        <span className="text-sm font-medium text-gray-700">Current AQI</span>
                       </div>
                       {recommendation && (
                         <span className="text-lg">{recommendation.icon}</span>
@@ -117,7 +117,7 @@ export function WelcomeCard({
                     </div>
                   </motion.div>
 
-                  {/* Recomendación de salud */}
+                  {/* Health recommendation */}
                   {recommendation && (
                     <motion.div
                       initial={{ scale: 0.9 }}
@@ -127,7 +127,7 @@ export function WelcomeCard({
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <TrendingUp className="h-5 w-5 text-green-600" />
-                        <span className="text-sm font-medium text-gray-700">Recomendación</span>
+                        <span className="text-sm font-medium text-gray-700">Recommendation</span>
                       </div>
                       <p className={`text-sm font-medium ${recommendation.color}`}>
                         {recommendation.text}
@@ -135,7 +135,7 @@ export function WelcomeCard({
                     </motion.div>
                   )}
 
-                  {/* Última actualización */}
+                  {/* Last update */}
                   <motion.div
                     initial={{ scale: 0.9 }}
                     animate={{ scale: 1 }}
@@ -144,10 +144,10 @@ export function WelcomeCard({
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <Clock className="h-5 w-5 text-gray-600" />
-                      <span className="text-sm font-medium text-gray-700">Actualizado</span>
+                      <span className="text-sm font-medium text-gray-700">Updated</span>
                     </div>
                     <p className="text-sm text-gray-600">
-                      {new Date().toLocaleTimeString('es-ES', {
+                      {new Date().toLocaleTimeString('en-US', {
                         hour: '2-digit',
                         minute: '2-digit'
                       })}
@@ -156,41 +156,41 @@ export function WelcomeCard({
                 </div>
               )}
 
-              {/* Mensaje de estado */}
+              {/* Status message */}
               {isLoading && (
                 <div className="flex items-center gap-2 text-blue-600">
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent" />
-                  <span className="text-sm">Actualizando datos...</span>
+                  <span className="text-sm">Updating data...</span>
                 </div>
               )}
             </div>
 
-            {/* Acciones rápidas */}
+            {/* Quick actions */}
             <div className="flex flex-col gap-3 lg:min-w-[200px]">
               <Button
                 onClick={() => onDialogOpen("metrics")}
                 className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
               >
                 <Activity className="h-4 w-4 mr-2" />
-                Ver Métricas
+                View Metrics
               </Button>
-              
+
               <Button
                 onClick={() => onDialogOpen("weather")}
                 variant="outline"
                 className="w-full bg-white/80 hover:bg-white border-blue-200 hover:border-blue-300 text-blue-700 hover:text-blue-800 shadow-sm hover:shadow-md transition-all duration-200"
               >
                 <Cloud className="h-4 w-4 mr-2" />
-                Pronóstico
+                Forecast
               </Button>
-              
+
               <Button
                 onClick={() => onDialogOpen("pollutants")}
                 variant="outline"
                 className="w-full bg-white/80 hover:bg-white border-green-200 hover:border-green-300 text-green-700 hover:text-green-800 shadow-sm hover:shadow-md transition-all duration-200"
               >
                 <Droplets className="h-4 w-4 mr-2" />
-                Contaminantes
+                Pollutants
               </Button>
             </div>
           </div>

@@ -15,14 +15,14 @@ import { FireDialog } from "./_components/fire-dialog"
 import { TempoSidebar } from "./_components/tempo-sidebar"
 import { getAQIColor, getAQILevel, getAQIDetails } from "./_components/aqi-utils"
 
-// Importar el componente del mapa dinámicamente para evitar problemas de SSR
+// Import map component dynamically to avoid SSR issues
 const CaliforniaMap = dynamic(() => import("@/components/california-map").then(mod => ({ default: mod.CaliforniaMap })), {
   ssr: false,
   loading: () => (
     <div className="h-full w-full flex items-center justify-center bg-muted">
       <div className="text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-        <p className="text-sm text-muted-foreground">Cargando mapa...</p>
+        <p className="text-sm text-muted-foreground">Loading map...</p>
       </div>
     </div>
   )
@@ -42,28 +42,28 @@ export default function EstadoOverviewPage() {
   const [isSubmittingAlert, setIsSubmittingAlert] = useState(false)
   const [isLoadingCities, setIsLoadingCities] = useState(true)
 
-  // State para el Dialog de estación seleccionada
+  // State for selected station dialog
   const [selectedStation, setSelectedStation] = useState<GroupedStation | null>(null)
   const [stationDialogOpen, setStationDialogOpen] = useState(false)
 
-  // State para el Dialog de incendio seleccionado
+  // State for selected fire dialog
   const [selectedFire, setSelectedFire] = useState<FireDataPoint | null>(null)
   const [fireDialogOpen, setFireDialogOpen] = useState(false)
 
-  // Hook para obtener datos de estaciones de monitoreo
+  // Hook to get monitoring stations data
   const { isLoading, error, stats } = useMonitoringStations({
     enabled: true
   })
 
-  // Hook para obtener datos de incendios activos
+  // Hook to get active fires data
   const { fires, statistics: fireStats, isLoading: isLoadingFires } = useActiveFires({
-    centerLat: 36.7783, // Centro de California
+    centerLat: 36.7783, // California center
     centerLng: -119.4179,
     radiusKm: 200,
     enabled: true
   })
 
-  // Hook para manejar alertas
+  // Hook to manage alerts
   const {
     alerts,
     addAlert,
@@ -71,36 +71,36 @@ export default function EstadoOverviewPage() {
     getActiveAlerts
   } = useAlerts()
 
-  // Hook para overlay TEMPO
+  // Hook for TEMPO overlay
   const tempoOverlay = useCaliforniaTEMPOOverlay(currentPollutant)
 
-  // Funciones para manejar alertas
+  // Functions to handle alerts
   const handleSubmitAlert = async (alertData: any) => {
     setIsSubmittingAlert(true)
-    
+
     try {
-      // Simular envío de alerta
+      // Simulate alert submission
       await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      // Agregar coordenadas de ejemplo si no se proporcionaron
+
+      // Add example coordinates if not provided
       const alertWithCoords = {
         ...alertData,
         coordinates: alertData.coordinates || {
-          lat: 36.7783 + (Math.random() - 0.5) * 0.1, // Coordenadas aleatorias cerca de California
+          lat: 36.7783 + (Math.random() - 0.5) * 0.1, // Random coordinates near California
           lng: -119.4179 + (Math.random() - 0.5) * 0.1
         }
       }
-      
+
       addAlert(alertWithCoords)
 
-      // Cerrar diálogo
+      // Close dialog
       setOpenDialog(null)
 
-      // Mostrar mensaje de éxito
-      alert("¡Alerta enviada exitosamente! Se ha agregado al mapa.")
+      // Show success message
+      alert("Alert sent successfully! It has been added to the map.")
       
     } catch (error) {
-      alert("Error al enviar la alerta. Por favor intenta nuevamente.")
+      alert("Error sending alert. Please try again.")
     } finally {
       setIsSubmittingAlert(false)
     }
@@ -114,26 +114,26 @@ export default function EstadoOverviewPage() {
     updateAlertStatus(alertId, 'dismissed')
   }
 
-  // Handler para click en estación
+  // Handler for station click
   const handleStationClick = (station: GroupedStation) => {
-    console.log('📍 [DASHBOARD] Estación seleccionada:', station.SiteName)
+    console.log('📍 [DASHBOARD] Selected station:', station.SiteName)
     setSelectedStation(station)
     setStationDialogOpen(true)
   }
 
-  // Handler para click en incendio
+  // Handler for fire click
   const handleFireClick = (fire: FireDataPoint) => {
-    console.log('🔥 [DASHBOARD] Incendio seleccionado:', fire)
+    console.log('🔥 [DASHBOARD] Selected fire:', fire)
     setSelectedFire(fire)
     setFireDialogOpen(true)
   }
 
-  // Handler para estado de carga de ciudades
+  // Handler for cities loading state
   const handleCitiesLoadingChange = (loading: boolean) => {
     setIsLoadingCities(loading)
   }
 
-  // Estado de carga combinado: estaciones Y ciudades deben estar cargadas
+  // Combined loading state: stations AND cities must be loaded
   const isLoadingMapData = isLoading || isLoadingCities
 
   return (
@@ -177,9 +177,9 @@ export default function EstadoOverviewPage() {
         />
 
         <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
-          {/* Mapa Principal */}
+          {/* Main Map */}
           <div className="flex-1 lg:w-[65%] relative">
-            {/* Overlay de carga - Estaciones, Ciudades e Incendios */}
+            {/* Loading overlay - Stations, Cities and Fires */}
             {(isLoadingMapData || isLoadingFires) && (
               <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-[1000] flex items-center justify-center">
                 <div className="bg-card rounded-lg shadow-lg p-6 border border-border max-w-sm mx-4">
@@ -192,12 +192,12 @@ export default function EstadoOverviewPage() {
                     </div>
                     <div className="text-center space-y-2">
                       <h3 className="font-semibold text-lg">
-                        {isLoadingFires ? 'Cargando datos de incendios' : 'Cargando datos del mapa'}
+                        {isLoadingFires ? 'Loading fire data' : 'Loading map data'}
                       </h3>
                       <p className="text-sm text-muted-foreground">
                         {isLoadingFires
-                          ? 'Obteniendo información de NASA FIRMS...'
-                          : 'Obteniendo estaciones y ciudades...'}
+                          ? 'Fetching NASA FIRMS information...'
+                          : 'Fetching stations and cities...'}
                       </p>
                     </div>
                     <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
@@ -226,7 +226,7 @@ export default function EstadoOverviewPage() {
             />
           </div>
 
-          {/* Sidebar TEMPO */}
+          {/* TEMPO Sidebar */}
           <div className="h-[400px] lg:h-full lg:w-[35%] border-t lg:border-t-0 lg:border-l border-border">
             <TempoSidebar
               metadata={tempoOverlay.metadata}
@@ -240,7 +240,7 @@ export default function EstadoOverviewPage() {
           </div>
         </div>
 
-      {/* Dialog de Estación con Clima */}
+      {/* Station Weather Dialog */}
       <StationWeatherDialog
         station={selectedStation}
         open={stationDialogOpen}
@@ -249,7 +249,7 @@ export default function EstadoOverviewPage() {
         getAQICategory={getAQIDetails}
       />
 
-        {/* Dialog de Incendio */}
+        {/* Fire Dialog */}
         <FireDialog
           fire={selectedFire}
           open={fireDialogOpen}
