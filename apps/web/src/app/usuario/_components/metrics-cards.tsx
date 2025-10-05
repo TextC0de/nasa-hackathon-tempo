@@ -1,14 +1,8 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { 
   Activity, 
-  Thermometer, 
-  Droplets, 
-  Wind, 
-  Eye, 
   TrendingUp,
   TrendingDown,
   Minus,
@@ -92,39 +86,6 @@ export function MetricsCards({ prediction, isLoading, onDialogOpen, getAQIColor 
       statusIcon: aqiStatus?.icon,
       trend: prediction?.general?.trend,
       description: "Índice de Calidad del Aire"
-    },
-    {
-      title: "PM2.5",
-      value: prediction?.pm25?.concentration || "---",
-      unit: "μg/m³",
-      icon: <Droplets className="h-5 w-5" />,
-      color: prediction?.pm25?.aqi ? getAQIColor(prediction.pm25.aqi) : "text-gray-500",
-      bgColor: "bg-blue-50",
-      borderColor: "border-blue-200",
-      trend: prediction?.pm25?.trend,
-      description: "Partículas finas"
-    },
-    {
-      title: "PM10",
-      value: prediction?.pm10?.concentration || "---",
-      unit: "μg/m³",
-      icon: <Eye className="h-5 w-5" />,
-      color: prediction?.pm10?.aqi ? getAQIColor(prediction.pm10.aqi) : "text-gray-500",
-      bgColor: "bg-purple-50",
-      borderColor: "border-purple-200",
-      trend: prediction?.pm10?.trend,
-      description: "Partículas gruesas"
-    },
-    {
-      title: "NO₂",
-      value: prediction?.no2?.concentration || "---",
-      unit: "ppb",
-      icon: <Wind className="h-5 w-5" />,
-      color: prediction?.no2?.aqi ? getAQIColor(prediction.no2.aqi) : "text-gray-500",
-      bgColor: "bg-orange-50",
-      borderColor: "border-orange-200",
-      trend: prediction?.no2?.trend,
-      description: "Dióxido de nitrógeno"
     }
   ]
 
@@ -134,7 +95,7 @@ export function MetricsCards({ prediction, isLoading, onDialogOpen, getAQIColor 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+        className="flex justify-center"
       >
         {metrics.map((metric, index) => (
           <motion.div
@@ -142,28 +103,38 @@ export function MetricsCards({ prediction, isLoading, onDialogOpen, getAQIColor 
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3, delay: 0.3 + index * 0.1 }}
+            className="w-full max-w-lg"
           >
             <Tooltip>
               <TooltipTrigger asChild>
-                <Card className={`${metric.bgColor} ${metric.borderColor} border-2 hover:shadow-lg transition-all duration-200 cursor-pointer group`}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <div className={`p-2 rounded-lg ${metric.bgColor} group-hover:scale-110 transition-transform duration-200`}>
+                <Card className="relative overflow-hidden bg-gradient-to-br from-white via-gray-50 to-blue-50 border-0 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer group">
+                  {/* Efectos de fondo decorativos */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-green-500/5" />
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-blue-500/10 to-transparent rounded-full -translate-y-12 translate-x-12" />
+                  <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-green-500/10 to-transparent rounded-full translate-y-10 -translate-x-10" />
+                  
+                  <CardContent className="relative p-6">
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
                           {metric.icon}
                         </div>
                         <div>
-                          <h3 className="font-semibold text-gray-900 text-sm">{metric.title}</h3>
+                          <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-700 transition-colors duration-200">
+                            {metric.title}
+                          </h3>
                           {metric.description && (
-                            <p className="text-xs text-gray-600">{metric.description}</p>
+                            <p className="text-sm text-gray-600 mt-1">{metric.description}</p>
                           )}
                         </div>
                       </div>
+                      
                       {metric.statusIcon && (
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/80 backdrop-blur-sm shadow-sm">
                           {metric.statusIcon}
                           {metric.status && (
-                            <span className="text-xs font-medium text-gray-700">
+                            <span className="text-sm font-semibold text-gray-700">
                               {metric.status}
                             </span>
                           )}
@@ -171,22 +142,36 @@ export function MetricsCards({ prediction, isLoading, onDialogOpen, getAQIColor 
                       )}
                     </div>
                     
-                    <div className="space-y-2">
-                      <div className="flex items-baseline gap-2">
-                        <span className={`text-2xl font-bold ${metric.color}`}>
-                          {isLoading ? "---" : metric.value}
+                    {/* Valor principal */}
+                    <div className="text-center space-y-3">
+                      <div className="flex items-center justify-center gap-3">
+                        <span className={`text-5xl font-bold ${metric.color} drop-shadow-sm`}>
+                          {isLoading ? (
+                            <div className="animate-pulse bg-gray-300 rounded-lg h-12 w-20"></div>
+                          ) : (
+                            metric.value
+                          )}
                         </span>
                         {metric.unit && (
-                          <span className="text-sm text-gray-600">{metric.unit}</span>
+                          <span className="text-lg text-gray-600 font-medium">{metric.unit}</span>
                         )}
                       </div>
                       
+                      {/* Trend indicator */}
                       {metric.trend && (
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-white/60 backdrop-blur-sm border border-white/50 shadow-sm">
                           {getTrendIcon(metric.trend)}
-                          <span className="text-xs text-gray-600 capitalize">
+                          <span className="text-sm font-medium text-gray-700 capitalize">
                             {metric.trend}
                           </span>
+                        </div>
+                      )}
+                      
+                      {/* Loading indicator */}
+                      {isLoading && (
+                        <div className="flex items-center justify-center gap-2 text-blue-600">
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent" />
+                          <span className="text-sm font-medium">Actualizando datos...</span>
                         </div>
                       )}
                     </div>
