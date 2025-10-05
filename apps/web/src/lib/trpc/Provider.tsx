@@ -19,7 +19,7 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
     trpc.createClient({
       links: [
         httpLink({
-          url: `http://localhost:8787/trpc`,
+          url: `https://atmos-api-production.ignacio658mg.workers.dev/trpc`,
         }),
       ],
     })
