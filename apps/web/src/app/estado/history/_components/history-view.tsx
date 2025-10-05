@@ -182,249 +182,188 @@ DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format
       : 'text-muted-foreground'
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+    <div className="h-screen bg-gradient-to-b from-background to-muted/20 overflow-y-scroll">
       <div className="max-w-[1600px] mx-auto">
         {/* Hero Section */}
         <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
-          <div className="px-6 lg:px-8 py-6">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <BarChart3 className="h-8 w-8 text-primary" />
-                  <h1 className="text-3xl lg:text-4xl font-bold tracking-tight">
-                    Análisis Histórico
-                  </h1>
-                </div>
-                <p className="text-muted-foreground">
-                  Tendencias de calidad del aire en California
-                  {appliedStartDate && appliedEndDate && (
-                    <span className="ml-2">
-                      • {format(appliedStartDate, 'PP', { locale: es })} - {format(appliedEndDate, 'PP', { locale: es })}
-                    </span>
-                  )}
-                </p>
-              </div>
-
+          <div className="px-4 py-3">
+            <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
-                <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Filter className="h-4 w-4" />
-                      Filtros
-                      {hasUnappliedChanges && (
-                        <Badge variant="destructive" className="h-4 w-4 p-0 flex items-center justify-center">
-                          !
-                        </Badge>
-                      )}
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="right" className="w-[400px] sm:w-[540px] overflow-y-auto">
-                    <SheetHeader>
-                      <SheetTitle>Configuración de Filtros</SheetTitle>
-                      <SheetDescription>
-                        Personaliza el período y granularidad de análisis
-                      </SheetDescription>
-                    </SheetHeader>
-
-                    <div className="mt-6 space-y-6">
-                      {/* Presets */}
-                      <div className="space-y-3">
-                        <Label className="text-sm font-semibold">Períodos Predefinidos</Label>
-                        <div className="grid grid-cols-2 gap-2">
-                          {[
-                            { label: '7 días', value: '7d' },
-                            { label: '30 días', value: '30d' },
-                            { label: '90 días', value: '90d' },
-                            { label: '1 año', value: '1y' },
-                          ].map((preset) => (
-                            <Button
-                              key={preset.value}
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handlePreset(preset.value as '7d' | '30d' | '90d' | '1y')}
-                              className="justify-start"
-                            >
-                              {preset.label}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Fechas */}
-                      <div className="space-y-4">
-                        <Label className="text-sm font-semibold">Período Personalizado</Label>
-                        <div className="grid gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="start-date" className="text-xs text-muted-foreground">Fecha Inicio</Label>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  id="start-date"
-                                  variant="outline"
-                                  className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !startDate && "text-muted-foreground"
-                                  )}
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {startDate ? format(startDate, "PPP", { locale: es }) : "Selecciona fecha"}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                  mode="single"
-                                  selected={startDate}
-                                  onSelect={(date) => date && setStartDate(date)}
-                                  disabled={(date) => (endDate && date > endDate) || date > new Date()}
-                                  initialFocus
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor="end-date" className="text-xs text-muted-foreground">Fecha Fin</Label>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  id="end-date"
-                                  variant="outline"
-                                  className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !endDate && "text-muted-foreground"
-                                  )}
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {endDate ? format(endDate, "PPP", { locale: es }) : "Selecciona fecha"}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                  mode="single"
-                                  selected={endDate}
-                                  onSelect={(date) => date && setEndDate(date)}
-                                  disabled={(date) => (startDate && date < startDate) || date > new Date()}
-                                  initialFocus
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Granularidad */}
-                      <div className="space-y-3">
-                        <Label className="text-sm font-semibold">Granularidad</Label>
-                        <ToggleGroup
-                          type="single"
-                          value={granularity}
-                          onValueChange={(value) => value && setGranularity(value as Granularity)}
-                          className="grid grid-cols-2 gap-2"
-                        >
-                          <ToggleGroupItem value="hourly" className="text-sm">
-                            Por Hora
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="daily" className="text-sm">
-                            Por Día
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="weekly" className="text-sm">
-                            Por Semana
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="monthly" className="text-sm">
-                            Por Mes
-                          </ToggleGroupItem>
-                        </ToggleGroup>
-                        <p className="text-xs text-muted-foreground">
-                          {granularity === 'hourly' && '💡 Ideal para períodos ≤ 7 días'}
-                          {granularity === 'daily' && '💡 Ideal para períodos de 7-90 días'}
-                          {granularity === 'weekly' && '💡 Ideal para períodos de 90-365 días'}
-                          {granularity === 'monthly' && '💡 Ideal para períodos > 365 días'}
-                        </p>
-                      </div>
-
-                      {/* Acciones */}
-                      <div className="flex gap-2 pt-4 border-t">
-                        <Button
-                          onClick={handleApplyFilters}
-                          disabled={!hasUnappliedChanges}
-                          className="flex-1"
-                        >
-                          Aplicar
-                        </Button>
-                        <Button
-                          onClick={handleResetFilters}
-                          variant="outline"
-                          disabled={!hasUnappliedChanges}
-                        >
-                          Cancelar
-                        </Button>
-                      </div>
-                    </div>
-                  </SheetContent>
-                </Sheet>
-
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Download className="h-4 w-4" />
-                  <span className="hidden sm:inline">Exportar</span>
-                </Button>
+                <BarChart3 className="h-5 w-5 text-primary" />
+                <h1 className="text-lg font-bold">Análisis Histórico</h1>
               </div>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Download className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline text-xs">Exportar</span>
+              </Button>
             </div>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="px-6 lg:px-8 py-8 space-y-8">
+        <div className="px-4 py-4 space-y-4">
+          {/* Filtros siempre visibles */}
+          <Card className="border">
+            <CardContent className="p-3">
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-3">
+                {/* Presets */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">Presets</Label>
+                  <div className="flex flex-wrap gap-1">
+                    {[
+                      { label: '7d', value: '7d' },
+                      { label: '30d', value: '30d' },
+                      { label: '90d', value: '90d' },
+                      { label: '1y', value: '1y' },
+                    ].map((preset) => (
+                      <Button
+                        key={preset.value}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePreset(preset.value as '7d' | '30d' | '90d' | '1y')}
+                        className="h-7 px-2 text-xs"
+                      >
+                        {preset.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Fecha Inicio */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">Inicio</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "w-full justify-start text-left font-normal h-7 text-xs",
+                          !startDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-1.5 h-3 w-3" />
+                        {startDate ? format(startDate, "dd/MM/yy") : "Inicio"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={startDate}
+                        onSelect={(date) => date && setStartDate(date)}
+                        disabled={(date) => (endDate && date > endDate) || date > new Date()}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Fecha Fin */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">Fin</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "w-full justify-start text-left font-normal h-7 text-xs",
+                          !endDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-1.5 h-3 w-3" />
+                        {endDate ? format(endDate, "dd/MM/yy") : "Fin"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={endDate}
+                        onSelect={(date) => date && setEndDate(date)}
+                        disabled={(date) => (startDate && date < startDate) || date > new Date()}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Granularidad + Aplicar */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">Granularidad</Label>
+                  <div className="flex gap-1">
+                    <ToggleGroup
+                      type="single"
+                      value={granularity}
+                      onValueChange={(value) => value && setGranularity(value as Granularity)}
+                      className="justify-start"
+                    >
+                      <ToggleGroupItem value="hourly" className="h-7 px-2 text-xs">H</ToggleGroupItem>
+                      <ToggleGroupItem value="daily" className="h-7 px-2 text-xs">D</ToggleGroupItem>
+                      <ToggleGroupItem value="weekly" className="h-7 px-2 text-xs">W</ToggleGroupItem>
+                      <ToggleGroupItem value="monthly" className="h-7 px-2 text-xs">M</ToggleGroupItem>
+                    </ToggleGroup>
+                    <Button
+                      onClick={handleApplyFilters}
+                      disabled={!hasUnappliedChanges}
+                      size="sm"
+                      className="h-7 px-2 text-xs flex-1"
+                    >
+                      {hasUnappliedChanges ? 'Aplicar' : 'OK'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           {/* Hero Stats */}
           {historicalData && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
               {/* AQI Promedio */}
-              <Card className={cn("border-2", getAQIColor(historicalData.stats?.avg ?? 0))}>
-                <CardHeader className="pb-3">
-                  <CardDescription className="text-xs font-medium">AQI Promedio</CardDescription>
-                  <CardTitle className="text-4xl lg:text-5xl font-bold tabular-nums">
-                    {Math.round(historicalData.stats?.avg ?? 0)}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <Badge variant="outline" className="font-medium">
-                      {getAQICategory(historicalData.stats?.avg ?? 0)}
-                    </Badge>
-                    <div className={cn("flex items-center gap-1 text-sm font-medium", trendColor)}>
-                      <TrendIcon className="h-4 w-4" />
-                      {historicalData.trend?.percentageChange.toFixed(1)}%
+              <Card className={cn("border", getAQIColor(historicalData.stats?.avg ?? 0))}>
+                <CardContent className="p-3">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-medium text-muted-foreground">AQI Promedio</p>
+                    <p className="text-2xl font-bold tabular-nums">
+                      {Math.round(historicalData.stats?.avg ?? 0)}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className="text-[10px] h-5 px-1.5">
+                        {getAQICategory(historicalData.stats?.avg ?? 0)}
+                      </Badge>
+                      <div className={cn("flex items-center gap-0.5 text-xs font-medium", trendColor)}>
+                        <TrendIcon className="h-3 w-3" />
+                        {historicalData.trend?.percentageChange.toFixed(1)}%
+                      </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               {/* AQI Mínimo */}
-              <Card className="border-2 border-muted">
-                <CardHeader className="pb-3">
-                  <CardDescription className="text-xs font-medium">Mejor Día</CardDescription>
-                  <CardTitle className="text-4xl lg:text-5xl font-bold tabular-nums text-green-600">
-                    {Math.round(historicalData.stats?.min ?? 0)}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Badge variant="outline" className="font-medium bg-green-50 text-green-700 border-green-200">
-                    {getAQICategory(historicalData.stats?.min ?? 0)}
-                  </Badge>
+              <Card className="border">
+                <CardContent className="p-3">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-medium text-muted-foreground">Mejor Día</p>
+                    <p className="text-2xl font-bold tabular-nums text-green-600">
+                      {Math.round(historicalData.stats?.min ?? 0)}
+                    </p>
+                    <Badge variant="outline" className="text-[10px] h-5 px-1.5 bg-green-50 text-green-700 border-green-200">
+                      {getAQICategory(historicalData.stats?.min ?? 0)}
+                    </Badge>
+                  </div>
                 </CardContent>
               </Card>
 
               {/* AQI Máximo */}
-              <Card className="border-2 border-muted">
-                <CardHeader className="pb-3">
-                  <CardDescription className="text-xs font-medium">Peor Día</CardDescription>
-                  <CardTitle className="text-4xl lg:text-5xl font-bold tabular-nums text-red-600">
-                    {Math.round(historicalData.stats?.max ?? 0)}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Badge variant="outline" className="font-medium bg-red-50 text-red-700 border-red-200">
-                    {getAQICategory(historicalData.stats?.max ?? 0)}
-                  </Badge>
+              <Card className="border">
+                <CardContent className="p-3">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-medium text-muted-foreground">Peor Día</p>
+                    <p className="text-2xl font-bold tabular-nums text-red-600">
+                      {Math.round(historicalData.stats?.max ?? 0)}
+                    </p>
+                    <Badge variant="outline" className="text-[10px] h-5 px-1.5 bg-red-50 text-red-700 border-red-200">
+                      {getAQICategory(historicalData.stats?.max ?? 0)}
+                    </Badge>
+                  </div>
                 </CardContent>
               </Card>
             </div>
