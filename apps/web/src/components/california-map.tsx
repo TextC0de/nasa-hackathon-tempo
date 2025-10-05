@@ -601,6 +601,18 @@ export const CaliforniaMap = React.memo(function CaliforniaMap({
 
   return (
     <div className={cn("relative w-full h-full overflow-hidden z-[1]", className)}>
+      {/* Indicador del área de análisis */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] pointer-events-none">
+        <div className="bg-background/90 backdrop-blur-sm border border-border rounded-lg px-4 py-2 shadow-lg">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+            <span className="text-sm font-semibold text-foreground">
+              Área de Análisis: California
+            </span>
+          </div>
+        </div>
+      </div>
+
       <MapContainer
         center={initialCenter || CALIFORNIA_CONFIG.center}
         zoom={initialZoom || LEAFLET_CONFIG.zoom.DEFAULT}
@@ -627,7 +639,7 @@ export const CaliforniaMap = React.memo(function CaliforniaMap({
               [tempoOverlayData.bounds.north, tempoOverlayData.bounds.east]
             ]}
             opacity={0.5}
-            zIndex={10}
+            zIndex={1}
           />
         )}
 

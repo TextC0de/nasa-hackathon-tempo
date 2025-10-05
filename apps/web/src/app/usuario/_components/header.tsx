@@ -22,12 +22,8 @@ import {
   RefreshCw,
   TrendingUp,
   Clock,
-  Settings,
-  Code,
-  BarChart3,
-  FileText
+  BarChart3
 } from "lucide-react"
-import Link from "next/link"
 
 interface Alert {
   id: string
@@ -252,38 +248,6 @@ export function Header({
                 </MenubarContent>
               </MenubarMenu>
 
-              {/* Menú Configuración */}
-              <MenubarMenu>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <MenubarTrigger className="flex items-center gap-1 sm:gap-2 cursor-help px-1 sm:px-2">
-                      <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
-                      <span className="hidden sm:inline text-xs sm:text-sm">Config</span>
-                    </MenubarTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    <p>Configuración y opciones avanzadas</p>
-                  </TooltipContent>
-                </Tooltip>
-                <MenubarContent>
-                  <Link href="/usuario/reportes">
-                    <MenubarItem>
-                      <FileText className="mr-2 h-4 w-4" />
-                      <span>Mis Reportes</span>
-                    </MenubarItem>
-                  </Link>
-                  <MenubarSeparator />
-                  <MenubarItem onClick={() => onDialogOpen("debug")}>
-                    <Code className="mr-2 h-4 w-4" />
-                    <span>Modo Debug/Desarrollo</span>
-                  </MenubarItem>
-                  <MenubarSeparator />
-                  <MenubarItem onClick={onRefetch}>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    <span>Actualizar Datos</span>
-                  </MenubarItem>
-                </MenubarContent>
-              </MenubarMenu>
             </Menubar>
           </div>
         </div>

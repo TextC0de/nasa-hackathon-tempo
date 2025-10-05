@@ -4,7 +4,8 @@ import dynamic from "next/dynamic"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Activity, Loader2, AlertCircle } from "lucide-react"
+import { Activity, Loader2, AlertCircle, MapPin, Satellite, BrainCircuit, ChevronRight } from "lucide-react"
+import { useState } from "react"
 
 // Importar el mapa dinámicamente
 const MapContainer = dynamic(
@@ -302,6 +303,8 @@ export function MapView({
   getAQIColor,
   getAQIBadge
 }: MapViewProps) {
+  const [panelExpanded, setPanelExpanded] = useState(true)
+
   // Calcular el centro del mapa para mostrar tanto el usuario como la estación
   const stationLat = prediction?.station?.latitude
   const stationLng = prediction?.station?.longitude
