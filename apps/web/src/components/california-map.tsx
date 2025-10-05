@@ -33,6 +33,11 @@ const TileLayer = dynamic(
   { ssr: false }
 )
 
+const ImageOverlay = dynamic(
+  () => import("react-leaflet").then((mod) => mod.ImageOverlay),
+  { ssr: false }
+)
+
 // Leaflet Control Configuration - Following Official Documentation
 const LEAFLET_CONFIG = {
   positions: {
@@ -515,6 +520,16 @@ interface CaliforniaMapProps {
   onMapTypeChange?: (mapType: keyof typeof MAP_TYPES) => void
   showMonitoringStations?: boolean
   showActiveFires?: boolean
+  showTempoOverlay?: boolean
+  tempoOverlayData?: {
+    imageUrl: string
+    bounds: {
+      north: number
+      south: number
+      east: number
+      west: number
+    }
+  } | null
   alerts?: AlertType[]
   fires?: FireDataPoint[]
   onStationClick?: (station: any) => void
@@ -531,6 +546,8 @@ export const CaliforniaMap = React.memo(function CaliforniaMap({
   onMapTypeChange,
   showMonitoringStations = true,
   showActiveFires = true,
+  showTempoOverlay = false,
+  tempoOverlayData = null,
   alerts = [],
   fires = [],
   onStationClick,
@@ -590,6 +607,19 @@ export const CaliforniaMap = React.memo(function CaliforniaMap({
           minZoom={LEAFLET_CONFIG.zoom.MIN}
         />
         
+        {/* TEMPO Satellite Overlay - Rendered first so it's behind markers */}
+        {showTempoOverlay && tempoOverlayData && (
+          <ImageOverlay
+            url={tempoOverlayData.imageUrl}
+            bounds={[
+              [tempoOverlayData.bounds.south, tempoOverlayData.bounds.west],
+              [tempoOverlayData.bounds.north, tempoOverlayData.bounds.east]
+            ]}
+            opacity={0.5}
+            zIndex={10}
+          />
+        )}
+
         {/* Monitoring Stations Layer - Optimizado con lazy loading */}
         {showMonitoringStations && <MonitoringStationsLayer onStationClick={onStationClick} />}
 

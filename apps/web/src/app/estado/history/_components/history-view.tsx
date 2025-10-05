@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Download, FileText, Calendar as CalendarIcon, TrendingDown, TrendingUp, Minus, BarChart3 } from "lucide-react"
+import { Download, FileText, Calendar as CalendarIcon, TrendingDown, TrendingUp, Minus, BarChart3, Clock, CalendarDays, CalendarRange, Circle, Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -14,6 +14,7 @@ import { format, differenceInDays, subDays, subYears } from "date-fns"
 import { es } from "date-fns/locale"
 import { HistoryChart } from "@/app/usuario/_components/history-chart"
 import { FloatingAIChat } from "./floating-ai-chat"
+import { HistoryLocationMap } from "./history-location-map"
 import { trpc } from "@/lib/trpc"
 
 interface HistoryViewProps {
@@ -44,9 +45,14 @@ function getAQICategory(aqi: number): string {
 }
 
 export function HistoryView({
-  latitude = 36.7783,
-  longitude = -119.4179
+  latitude: initialLatitude = 36.7783,
+  longitude: initialLongitude = -119.4179
 }: HistoryViewProps) {
+  // Estado de ubicación
+  const [latitude, setLatitude] = useState(initialLatitude)
+  const [longitude, setLongitude] = useState(initialLongitude)
+  const [radiusKm, setRadiusKm] = useState(50)
+
   // Estado de filtros
   const [startDate, setStartDate] = useState<Date | undefined>(undefined)
   const [endDate, setEndDate] = useState<Date | undefined>(undefined)
@@ -72,7 +78,7 @@ export function HistoryView({
     startDate: appliedStartDate?.toISOString() ?? '',
     endDate: appliedEndDate?.toISOString() ?? '',
     granularity: appliedGranularity,
-    radiusKm: 50,
+    radiusKm,
   }, {
     enabled: !!appliedStartDate && !!appliedEndDate,
   })
@@ -164,6 +170,15 @@ DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format
     setStartDate(start)
     setEndDate(end)
     setGranularity(suggestedGranularity)
+  }
+
+  const handleLocationChange = (lat: number, lng: number) => {
+    setLatitude(lat)
+    setLongitude(lng)
+  }
+
+  const handleRadiusChange = (radius: number) => {
+    setRadiusKm(radius)
   }
 
   const TrendIcon = historicalData?.trend?.direction === 'improving'
@@ -310,6 +325,19 @@ DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format
               </div>
             </CardContent>
           </Card>
+
+          {/* Mapa de ubicación */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
+            <HistoryLocationMap
+              latitude={latitude}
+              longitude={longitude}
+              radiusKm={radiusKm}
+              onLocationChange={handleLocationChange}
+              onRadiusChange={handleRadiusChange}
+              className="lg:col-span-3"
+            />
+          </div>
+
           {/* Hero Stats */}
           {historicalData && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">

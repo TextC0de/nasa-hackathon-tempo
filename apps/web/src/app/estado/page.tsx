@@ -6,10 +6,12 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { useMonitoringStations, type GroupedStation } from "@/hooks/use-monitoring-stations"
 import { useActiveFires, type FireDataPoint } from "@/hooks/use-active-fires"
 import { useAlerts } from "@/hooks/use-alerts"
+import { useCaliforniaTEMPOOverlay } from "@/hooks/use-tempo-overlay"
 import { DashboardHeader } from "./_components/dashboard-header"
 import { DashboardDialogs } from "./_components/dashboard-dialogs"
 import { StationWeatherDialog } from "./_components/station-weather-dialog"
 import { FireDialog } from "./_components/fire-dialog"
+import { TempoSidebar } from "./_components/tempo-sidebar"
 import { getAQIColor, getAQILevel, getAQIDetails } from "./_components/aqi-utils"
 
 // Importar el componente del mapa dinámicamente para evitar problemas de SSR
@@ -32,6 +34,8 @@ export default function EstadoOverviewPage() {
   const [openDialog, setOpenDialog] = useState<string | null>(null)
   const [showMonitoringStations, setShowMonitoringStations] = useState(true)
   const [showActiveFires, setShowActiveFires] = useState(true)
+  const [showTempoOverlay, setShowTempoOverlay] = useState(true)
+  const [currentPollutant, setCurrentPollutant] = useState<'NO2' | 'O3' | 'HCHO'>('NO2')
   const [isSubmittingAlert, setIsSubmittingAlert] = useState(false)
 
   // State para el Dialog de estación seleccionada
@@ -65,6 +69,9 @@ export default function EstadoOverviewPage() {
     updateAlertStatus,
     getActiveAlerts
   } = useAlerts()
+
+  // Hook para overlay TEMPO
+  const tempoOverlay = useCaliforniaTEMPOOverlay(currentPollutant)
 
   // Funciones para manejar alertas
   const handleSubmitAlert = async (alertData: any) => {
@@ -153,18 +160,36 @@ export default function EstadoOverviewPage() {
           handleDismissAlert={handleDismissAlert}
         />
 
-        <div className="flex-1 overflow-hidden">
-          <CaliforniaMap
-            className="h-full w-full"
-            mapType={mapType}
-            onMapTypeChange={(type) => setMapType(type as MapType)}
-            showMonitoringStations={showMonitoringStations}
-            showActiveFires={showActiveFires}
-            alerts={getActiveAlerts()}
-            fires={fires}
-            onStationClick={handleStationClick}
-            onFireClick={handleFireClick}
-          />
+        <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
+          {/* Mapa Principal */}
+          <div className="flex-1 lg:w-[65%]">
+            <CaliforniaMap
+              className="h-full w-full"
+              mapType={mapType}
+              onMapTypeChange={(type) => setMapType(type as MapType)}
+              showMonitoringStations={showMonitoringStations}
+              showActiveFires={showActiveFires}
+              showTempoOverlay={showTempoOverlay}
+              tempoOverlayData={tempoOverlay.overlay ?? null}
+              alerts={getActiveAlerts()}
+              fires={fires}
+              onStationClick={handleStationClick}
+              onFireClick={handleFireClick}
+            />
+          </div>
+
+          {/* Sidebar TEMPO */}
+          <div className="h-[400px] lg:h-full lg:w-[35%] border-t lg:border-t-0 lg:border-l border-border">
+            <TempoSidebar
+              metadata={tempoOverlay.metadata}
+              satellite={tempoOverlay.satellite}
+              isLoading={tempoOverlay.isLoading}
+              error={tempoOverlay.error ?? null}
+              onRefresh={tempoOverlay.refresh}
+              onPollutantChange={setCurrentPollutant}
+              currentPollutant={currentPollutant}
+            />
+          </div>
         </div>
 
       {/* Dialog de Estación con Clima */}
