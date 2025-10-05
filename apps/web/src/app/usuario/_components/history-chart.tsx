@@ -5,8 +5,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Loader2, TrendingDown, TrendingUp, Minus, Calendar, Clock } from "lucide-react"
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend } from "recharts"
-import { useState } from "react"
+import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend, PieChart, Pie, Cell } from "recharts"
+import { format, getWeek } from "date-fns"
+import { es } from "date-fns/locale"
+
+// Función para formatear fecha según granularidad
+function formatDateByGranularity(timestamp: string, granularity: 'hourly' | 'daily' | 'weekly' | 'monthly'): string {
+  const date = new Date(timestamp)
+  const year = date.getFullYear()
+
+  switch (granularity) {
+    case 'monthly':
+      // Mes: "ene 2024", "feb 2024"
+      return format(date, "MMM yyyy", { locale: es })
+
+    case 'weekly':
+      // Semana: "Sem 1 '24", "Sem 2 '24"
+      const weekNum = getWeek(date, { locale: es })
+      return `Sem ${weekNum} '${year.toString().slice(-2)}`
+
+    case 'daily':
+      // Día: "1 ene" o "1 ene '24" si cambia el año
+      return format(date, "d MMM", { locale: es })
+
+    case 'hourly':
+      // Hora: "1 ene 14:00"
+      return format(date, "d MMM HH:mm", { locale: es })
+
+    default:
+      return format(date, "d MMM", { locale: es })
+  }
+}
 
 // Función para obtener color basado en AQI
 function getAQIColor(aqi: number): string {
@@ -29,23 +58,35 @@ function getAQICategory(aqi: number): string {
 }
 
 // Tooltip personalizado para el chart
-function CustomTooltip({ active, payload }: any) {
+function CustomTooltip({ active, payload, granularity }: any) {
   if (!active || !payload || !payload[0]) return null
 
   const data = payload[0].payload
   const aqi = data.aqi_avg
   const color = getAQIColor(aqi)
 
+  // Formatear fecha para tooltip con más detalle
+  const formattedDate = (() => {
+    const date = new Date(data.timestamp)
+    switch (granularity) {
+      case 'monthly':
+        return format(date, "MMMM 'de' yyyy", { locale: es })
+      case 'weekly':
+        const weekNum = getWeek(date, { locale: es })
+        return `Semana ${weekNum} de ${date.getFullYear()}`
+      case 'daily':
+        return format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })
+      case 'hourly':
+        return format(date, "EEEE, d 'de' MMMM 'de' yyyy - HH:mm", { locale: es })
+      default:
+        return format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })
+    }
+  })()
+
   return (
     <div className="bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg p-3">
       <p className="text-xs text-muted-foreground mb-2">
-        {new Date(data.timestamp).toLocaleDateString('es-ES', {
-          weekday: 'short',
-          month: 'short',
-          day: 'numeric',
-          hour: data.hour !== undefined ? '2-digit' : undefined,
-          minute: data.hour !== undefined ? '2-digit' : undefined
-        })}
+        {formattedDate}
       </p>
       <div className="flex items-center gap-2">
         <span className="text-2xl font-bold" style={{ color }}>
@@ -72,17 +113,28 @@ function CustomTooltip({ active, payload }: any) {
 interface HistoryChartProps {
   latitude: number
   longitude: number
+  startDate: Date
+  endDate: Date
+  granularity: 'hourly' | 'daily' | 'weekly' | 'monthly'
+  radiusKm?: number
   className?: string
 }
 
-export function HistoryChart({ latitude, longitude, className }: HistoryChartProps) {
-  const [days, setDays] = useState(7)
-  const [radiusKm, setRadiusKm] = useState(50)
-
+export function HistoryChart({
+  latitude,
+  longitude,
+  startDate,
+  endDate,
+  granularity,
+  radiusKm = 50,
+  className
+}: HistoryChartProps) {
   const { data, isLoading, error } = trpc.obtenerHistoricoAqi.useQuery({
     latitude,
     longitude,
-    days,
+    startDate: startDate.toISOString(),
+    endDate: endDate.toISOString(),
+    granularity,
     radiusKm,
   })
 
@@ -94,7 +146,9 @@ export function HistoryChart({ latitude, longitude, className }: HistoryChartPro
             <Calendar className="h-5 w-5" />
             Histórico de Calidad del Aire
           </CardTitle>
-          <CardDescription>Últimos {days} días</CardDescription>
+          <CardDescription>
+            {format(startDate, 'PP', { locale: es })} - {format(endDate, 'PP', { locale: es })}
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-64">
           <div className="flex flex-col items-center space-y-2">
@@ -133,13 +187,15 @@ export function HistoryChart({ latitude, longitude, className }: HistoryChartPro
             <Calendar className="h-5 w-5" />
             Histórico de Calidad del Aire
           </CardTitle>
-          <CardDescription>Últimos {days} días</CardDescription>
+          <CardDescription>
+            {format(startDate, 'PP', { locale: es })} - {format(endDate, 'PP', { locale: es })}
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-64">
           <div className="text-center">
             <p className="text-sm text-muted-foreground">No hay datos históricos disponibles</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Intenta aumentar el radio de búsqueda
+              Intenta aumentar el radio de búsqueda o cambiar el rango de fechas
             </p>
           </div>
         </CardContent>
@@ -153,9 +209,27 @@ export function HistoryChart({ latitude, longitude, className }: HistoryChartPro
     aqi_avg: Math.round(d.aqi_avg),
     aqi_min: d.aqi_min ? Math.round(d.aqi_min) : undefined,
     aqi_max: d.aqi_max ? Math.round(d.aqi_max) : undefined,
+    o3_avg: d.o3_avg,
+    no2_avg: d.no2_avg,
+    pm25_avg: d.pm25_avg,
     dominant_pollutant: d.dominant_pollutant,
     hour: data.granularity === 'hourly' ? new Date(d.timestamp).getHours() : undefined
   }))
+
+  // Calcular porcentaje de contribución por contaminante
+  const pollutantStats = chartData.reduce((acc, point) => {
+    if (point.o3_avg) acc.o3_total += point.o3_avg
+    if (point.no2_avg) acc.no2_total += point.no2_avg
+    if (point.pm25_avg) acc.pm25_total += point.pm25_avg
+    return acc
+  }, { o3_total: 0, no2_total: 0, pm25_total: 0 })
+
+  const totalPollution = pollutantStats.o3_total + pollutantStats.no2_total + pollutantStats.pm25_total
+  const pollutantPercentages = totalPollution > 0 ? {
+    o3: (pollutantStats.o3_total / totalPollution) * 100,
+    no2: (pollutantStats.no2_total / totalPollution) * 100,
+    pm25: (pollutantStats.pm25_total / totalPollution) * 100,
+  } : { o3: 0, no2: 0, pm25: 0 }
 
   // Determinar icono de tendencia
   const TrendIcon = data.trend?.direction === 'improving'
@@ -176,6 +250,13 @@ export function HistoryChart({ latitude, longitude, className }: HistoryChartPro
       ? 'bg-red-50 dark:bg-red-950'
       : 'bg-yellow-50 dark:bg-yellow-950'
 
+  const granularityLabels = {
+    hourly: 'Datos por hora',
+    daily: 'Datos diarios',
+    weekly: 'Datos semanales',
+    monthly: 'Datos mensuales'
+  }
+
   return (
     <Card className={className}>
       <CardHeader>
@@ -190,31 +271,8 @@ export function HistoryChart({ latitude, longitude, className }: HistoryChartPro
               Histórico de Calidad del Aire
             </CardTitle>
             <CardDescription>
-              {data.granularity === 'hourly' ? 'Datos por hora' : 'Datos diarios'} - Últimos {days} días
+              {granularityLabels[data.granularity]} • {format(startDate, 'd MMM yyyy', { locale: es })} - {format(endDate, 'd MMM yyyy', { locale: es })}
             </CardDescription>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant={days === 7 ? "default" : "outline"}
-              size="sm"
-              onClick={() => setDays(7)}
-            >
-              7d
-            </Button>
-            <Button
-              variant={days === 30 ? "default" : "outline"}
-              size="sm"
-              onClick={() => setDays(30)}
-            >
-              30d
-            </Button>
-            <Button
-              variant={days === 90 ? "default" : "outline"}
-              size="sm"
-              onClick={() => setDays(90)}
-            >
-              90d
-            </Button>
           </div>
         </div>
       </CardHeader>
@@ -266,52 +324,125 @@ export function HistoryChart({ latitude, longitude, className }: HistoryChartPro
           </div>
         )}
 
-        {/* Chart */}
-        <div className="h-64 sm:h-80">
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Chart Principal - AQI */}
+          <div className="lg:col-span-2 h-64 sm:h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                <defs>
+                  <linearGradient id="aqiGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={getAQIColor(data.stats?.avg ?? 50)} stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor={getAQIColor(data.stats?.avg ?? 50)} stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis
+                  dataKey="timestamp"
+                  tickFormatter={(value) => formatDateByGranularity(value, data.granularity)}
+                  className="text-xs"
+                  stroke="hsl(var(--muted-foreground))"
+                />
+                <YAxis
+                  className="text-xs"
+                  stroke="hsl(var(--muted-foreground))"
+                  label={{ value: 'AQI', angle: -90, position: 'insideLeft', className: 'text-xs fill-muted-foreground' }}
+                />
+                <Tooltip content={<CustomTooltip granularity={data.granularity} />} />
+
+                {/* Líneas de referencia para categorías AQI */}
+                <ReferenceLine y={50} stroke="#10b981" strokeDasharray="3 3" opacity={0.3} />
+                <ReferenceLine y={100} stroke="#f59e0b" strokeDasharray="3 3" opacity={0.3} />
+                <ReferenceLine y={150} stroke="#f97316" strokeDasharray="3 3" opacity={0.3} />
+                <ReferenceLine y={200} stroke="#ef4444" strokeDasharray="3 3" opacity={0.3} />
+
+                <Area
+                  type="monotone"
+                  dataKey="aqi_avg"
+                  stroke={getAQIColor(data.stats?.avg ?? 50)}
+                  strokeWidth={2}
+                  fill="url(#aqiGradient)"
+                  dot={false}
+                  activeDot={{ r: 6 }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Pie Chart - Contribución por Contaminante */}
+          <div className="h-64 sm:h-80 flex flex-col">
+            <h4 className="text-sm font-semibold mb-2">Contribución por Contaminante</h4>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={[
+                    { name: 'O₃ (Ozono)', value: pollutantPercentages.o3, color: '#3b82f6' },
+                    { name: 'NO₂ (Dióxido de Nitrógeno)', value: pollutantPercentages.no2, color: '#ef4444' },
+                    { name: 'PM2.5 (Partículas)', value: pollutantPercentages.pm25, color: '#8b5cf6' },
+                  ]}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={40}
+                  outerRadius={80}
+                  paddingAngle={2}
+                  dataKey="value"
+                  label={({ name, percent }) => `${name.split(' ')[0]} ${(percent * 100).toFixed(0)}%`}
+                  labelLine={false}
+                >
+                  <Cell fill="#3b82f6" />
+                  <Cell fill="#ef4444" />
+                  <Cell fill="#8b5cf6" />
+                </Pie>
+                <Tooltip formatter={(value: number) => `${value.toFixed(1)}%`} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Chart de Contaminantes Individuales */}
+        <div className="h-64 sm:h-80 mt-4">
+          <h4 className="text-sm font-semibold mb-2">Tendencias por Contaminante (ppb / μg/m³)</h4>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-              <defs>
-                <linearGradient id="aqiGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={getAQIColor(data.stats?.avg ?? 50)} stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor={getAQIColor(data.stats?.avg ?? 50)} stopOpacity={0}/>
-                </linearGradient>
-              </defs>
+            <LineChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
               <XAxis
                 dataKey="timestamp"
-                tickFormatter={(value) => {
-                  const date = new Date(value)
-                  if (data.granularity === 'hourly') {
-                    return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
-                  }
-                  return date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })
-                }}
+                tickFormatter={(value) => formatDateByGranularity(value, data.granularity)}
                 className="text-xs"
                 stroke="hsl(var(--muted-foreground))"
               />
               <YAxis
                 className="text-xs"
                 stroke="hsl(var(--muted-foreground))"
-                label={{ value: 'AQI', angle: -90, position: 'insideLeft', className: 'text-xs fill-muted-foreground' }}
+                label={{ value: 'Concentración', angle: -90, position: 'insideLeft', className: 'text-xs fill-muted-foreground' }}
               />
-              <Tooltip content={<CustomTooltip />} />
-
-              {/* Líneas de referencia para categorías AQI */}
-              <ReferenceLine y={50} stroke="#10b981" strokeDasharray="3 3" opacity={0.3} />
-              <ReferenceLine y={100} stroke="#f59e0b" strokeDasharray="3 3" opacity={0.3} />
-              <ReferenceLine y={150} stroke="#f97316" strokeDasharray="3 3" opacity={0.3} />
-              <ReferenceLine y={200} stroke="#ef4444" strokeDasharray="3 3" opacity={0.3} />
-
-              <Area
+              <Tooltip content={<CustomTooltip granularity={data.granularity} />} />
+              <Legend />
+              <Line
                 type="monotone"
-                dataKey="aqi_avg"
-                stroke={getAQIColor(data.stats?.avg ?? 50)}
+                dataKey="o3_avg"
+                stroke="#3b82f6"
                 strokeWidth={2}
-                fill="url(#aqiGradient)"
                 dot={false}
-                activeDot={{ r: 6 }}
+                name="O₃ (Ozono)"
               />
-            </AreaChart>
+              <Line
+                type="monotone"
+                dataKey="no2_avg"
+                stroke="#ef4444"
+                strokeWidth={2}
+                dot={false}
+                name="NO₂"
+              />
+              <Line
+                type="monotone"
+                dataKey="pm25_avg"
+                stroke="#8b5cf6"
+                strokeWidth={2}
+                dot={false}
+                name="PM2.5"
+              />
+            </LineChart>
           </ResponsiveContainer>
         </div>
 

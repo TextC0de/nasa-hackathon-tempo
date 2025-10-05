@@ -1,6 +1,6 @@
 {
-  "id": "ec832c9a-07e5-4ce8-8bb2-252ea7120ad8",
-  "prevId": "f38485dc-fc42-4911-9c22-e99a742c9d31",
+  "id": "a34ac1fa-f237-4a5a-9d16-f22301bc7685",
+  "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1074,7 +1074,7 @@
         },
         "unit": {
           "name": "unit",
-          "type": "varchar(20)",
+          "type": "varchar(50)",
           "primaryKey": false,
           "notNull": true
         },

@@ -1,5 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS postgis;
---> statement-breakpoint
+CREATE TYPE "public"."gravedad" AS ENUM('low', 'intermediate', 'critical');--> statement-breakpoint
+CREATE TYPE "public"."tipo_incidente" AS ENUM('fire', 'smoke', 'dust');--> statement-breakpoint
 CREATE TABLE "airnow_forecasts" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"date_forecast" date NOT NULL,
@@ -100,6 +101,56 @@ CREATE TABLE "aq_stations" (
 	"deleted_at" timestamp with time zone
 );
 --> statement-breakpoint
+CREATE TABLE "aqi_measurements" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"station_id" integer NOT NULL,
+	"lat" real NOT NULL,
+	"lng" real NOT NULL,
+	"timestamp" timestamp with time zone NOT NULL,
+	"parameter" varchar(10) NOT NULL,
+	"value" real NOT NULL,
+	"unit" varchar(50) NOT NULL,
+	"aqi" integer NOT NULL,
+	"category" integer NOT NULL,
+	"site_name" varchar(255),
+	"agency_name" varchar(255),
+	"provider" varchar(50) DEFAULT 'airnow' NOT NULL,
+	"quality_flag" varchar(10),
+	"raw_concentration" real,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"deleted_at" timestamp with time zone
+);
+--> statement-breakpoint
+CREATE TABLE "alerts" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"title" varchar(255) NOT NULL,
+	"description" text NOT NULL,
+	"urgency" varchar(20) DEFAULT 'medium' NOT NULL,
+	"location" geometry(Point, 4326) NOT NULL,
+	"location_name" varchar(255),
+	"status" varchar(20) DEFAULT 'active' NOT NULL,
+	"alert_type" varchar(50),
+	"resolved_at" timestamp with time zone,
+	"dismissed_at" timestamp with time zone,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"deleted_at" timestamp with time zone
+);
+--> statement-breakpoint
+CREATE TABLE "user_reports" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"email" text NOT NULL,
+	"latitud" numeric(10, 7) NOT NULL,
+	"longitud" numeric(10, 7) NOT NULL,
+	"descripcion" text,
+	"gravedad" "gravedad" NOT NULL,
+	"tipo" "tipo_incidente" NOT NULL,
+	"fecha_reporte" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE INDEX "airnow_fc_forecast_date_idx" ON "airnow_forecasts" USING btree ("date_forecast");--> statement-breakpoint
 CREATE INDEX "airnow_fc_issue_date_idx" ON "airnow_forecasts" USING btree ("date_issue");--> statement-breakpoint
 CREATE INDEX "airnow_fc_spatial_idx" ON "airnow_forecasts" USING btree ("latitude","longitude");--> statement-breakpoint
@@ -122,4 +173,15 @@ CREATE INDEX "firms_frp_idx" ON "firms_fire_points" USING btree ("frp");--> stat
 CREATE INDEX "aq_stations_location_idx" ON "aq_stations" USING gist ("location");--> statement-breakpoint
 CREATE INDEX "aq_stations_provider_idx" ON "aq_stations" USING btree ("provider");--> statement-breakpoint
 CREATE INDEX "aq_stations_parameter_idx" ON "aq_stations" USING btree ("parameter");--> statement-breakpoint
-CREATE INDEX "aq_stations_provider_param_idx" ON "aq_stations" USING btree ("provider","parameter");
+CREATE INDEX "aq_stations_provider_param_idx" ON "aq_stations" USING btree ("provider","parameter");--> statement-breakpoint
+CREATE INDEX "aqi_meas_station_param_time_idx" ON "aqi_measurements" USING btree ("station_id","parameter","timestamp");--> statement-breakpoint
+CREATE INDEX "aqi_meas_location_time_idx" ON "aqi_measurements" USING btree ("lat","lng","timestamp");--> statement-breakpoint
+CREATE INDEX "aqi_meas_timestamp_idx" ON "aqi_measurements" USING btree ("timestamp");--> statement-breakpoint
+CREATE INDEX "aqi_meas_parameter_idx" ON "aqi_measurements" USING btree ("parameter");--> statement-breakpoint
+CREATE UNIQUE INDEX "aqi_meas_unique_idx" ON "aqi_measurements" USING btree ("station_id","parameter","timestamp");--> statement-breakpoint
+CREATE INDEX "alerts_location_idx" ON "alerts" USING gist ("location");--> statement-breakpoint
+CREATE INDEX "alerts_status_idx" ON "alerts" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "alerts_urgency_idx" ON "alerts" USING btree ("urgency");--> statement-breakpoint
+CREATE INDEX "alerts_type_idx" ON "alerts" USING btree ("alert_type");--> statement-breakpoint
+CREATE INDEX "alerts_status_urgency_idx" ON "alerts" USING btree ("status","urgency");--> statement-breakpoint
+CREATE INDEX "alerts_created_at_idx" ON "alerts" USING btree ("created_at");
