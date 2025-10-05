@@ -127,6 +127,9 @@ export function StationDetailDialog({ open, onOpenChange, station }: StationDeta
             <HistoryChart
               latitude={station.latitude}
               longitude={station.longitude}
+              startDate={new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)}
+              endDate={new Date()}
+              granularity="daily"
             />
           </div>
 

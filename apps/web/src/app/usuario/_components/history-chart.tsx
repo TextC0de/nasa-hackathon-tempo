@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { trpc } from "@/lib/trpc"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -488,10 +488,21 @@ export function HistoryChart({
 export function HistoryChartCompact({ latitude, longitude, className }: HistoryChartProps) {
   const [days, setDays] = useState(7)
 
+  const { startDate, endDate } = useMemo(() => {
+    const end = new Date()
+    const start = new Date()
+    start.setDate(start.getDate() - days)
+    return {
+      startDate: start.toISOString(),
+      endDate: end.toISOString()
+    }
+  }, [days])
+
   const { data, isLoading } = trpc.obtenerHistoricoAqi.useQuery({
     latitude,
     longitude,
-    days,
+    startDate,
+    endDate,
     radiusKm: 50,
   })
 

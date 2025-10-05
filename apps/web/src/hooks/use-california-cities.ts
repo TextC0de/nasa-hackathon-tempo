@@ -94,7 +94,7 @@ export function useCityPopulation(cityName: string, options: { enabled?: boolean
   const { enabled = true } = options
 
   const { data, isLoading, error } = trpc.obtenerPoblacionCiudad.useQuery(
-    { cityName },
+    { nombre: cityName },
     {
       enabled: enabled && !!cityName,
       staleTime: 1000 * 60 * 60 * 24, // 24 horas (datos de población no cambian rápido)
