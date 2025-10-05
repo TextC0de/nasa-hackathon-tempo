@@ -83,7 +83,7 @@ export function StationDetailDialog({ open, onOpenChange, station }: StationDeta
                     {station.latitude.toFixed(4)}°, {station.longitude.toFixed(4)}°
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {station.distanceKm.toFixed(2)} km de tu ubicación
+                    {Number(station.distanceKm).toFixed(2)} km de tu ubicación
                   </p>
                 </div>
 

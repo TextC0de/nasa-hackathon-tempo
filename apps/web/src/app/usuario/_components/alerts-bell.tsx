@@ -209,7 +209,7 @@ export function AlertsBell({
                           {alert.distanceKm !== undefined && (
                             <>
                               <span>•</span>
-                              <span>{alert.distanceKm.toFixed(1)} km</span>
+                              <span>{Number(alert.distanceKm).toFixed(1)} km</span>
                             </>
                           )}
                           {alert.aqi && (

@@ -183,7 +183,7 @@ function createStationMarkerIcon(aqi: number | null, distanceKm: number, provide
   if (!L) return null
 
   const displayAqi = aqi !== null ? aqi.toString() : '?'
-  const displayDistance = distanceKm.toFixed(1)
+  const displayDistance = Number(distanceKm).toFixed(1)
   const stationColor = '#f97316' // Naranja fijo para estaciones
 
   return L.divIcon({
@@ -428,7 +428,7 @@ export function MapView({
                   </p>
                   <div className="pt-2 border-t">
                     <p className="text-xs text-muted-foreground">Distancia</p>
-                    <p className="font-semibold">{prediction.stations.O3.distanceKm.toFixed(2)} km</p>
+                    <p className="font-semibold">{Number(prediction.stations.O3.distanceKm).toFixed(2)} km</p>
                   </div>
                 </div>
               </Popup>
@@ -453,7 +453,7 @@ export function MapView({
                   </p>
                   <div className="pt-2 border-t">
                     <p className="text-xs text-muted-foreground">Distancia</p>
-                    <p className="font-semibold">{prediction.stations.NO2.distanceKm.toFixed(2)} km</p>
+                    <p className="font-semibold">{Number(prediction.stations.NO2.distanceKm).toFixed(2)} km</p>
                   </div>
                 </div>
               </Popup>
@@ -478,7 +478,7 @@ export function MapView({
                   </p>
                   <div className="pt-2 border-t">
                     <p className="text-xs text-muted-foreground">Distancia</p>
-                    <p className="font-semibold">{prediction.stations.PM25.distanceKm.toFixed(2)} km</p>
+                    <p className="font-semibold">{Number(prediction.stations.PM25.distanceKm).toFixed(2)} km</p>
                   </div>
                 </div>
               </Popup>
