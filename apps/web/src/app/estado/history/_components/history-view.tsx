@@ -2,19 +2,19 @@
 
 import { useState, useMemo, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Download, FileText, Calendar as CalendarIcon, TrendingDown, TrendingUp, Minus, Filter, BarChart3 } from "lucide-react"
+import { Download, FileText, Calendar as CalendarIcon, TrendingDown, TrendingUp, Minus, BarChart3, Clock, CalendarDays, CalendarRange, Circle, Menu, X, AlertCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Label } from "@/components/ui/label"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Badge } from "@/components/ui/badge"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 import { format, differenceInDays, subDays, subYears } from "date-fns"
 import { es } from "date-fns/locale"
 import { HistoryChart } from "@/app/usuario/_components/history-chart"
 import { FloatingAIChat } from "./floating-ai-chat"
+import { HistoryLocationMap } from "./history-location-map"
 import { trpc } from "@/lib/trpc"
 
 interface HistoryViewProps {
@@ -45,9 +45,17 @@ function getAQICategory(aqi: number): string {
 }
 
 export function HistoryView({
-  latitude = 36.7783,
-  longitude = -119.4179
+  latitude: initialLatitude = 36.7783,
+  longitude: initialLongitude = -119.4179
 }: HistoryViewProps) {
+  // Estado de UI
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+
+  // Estado de ubicación
+  const [latitude, setLatitude] = useState(initialLatitude)
+  const [longitude, setLongitude] = useState(initialLongitude)
+  const [radiusKm, setRadiusKm] = useState(50)
+
   // Estado de filtros
   const [startDate, setStartDate] = useState<Date | undefined>(undefined)
   const [endDate, setEndDate] = useState<Date | undefined>(undefined)
@@ -55,7 +63,6 @@ export function HistoryView({
   const [appliedStartDate, setAppliedStartDate] = useState<Date | undefined>(undefined)
   const [appliedEndDate, setAppliedEndDate] = useState<Date | undefined>(undefined)
   const [appliedGranularity, setAppliedGranularity] = useState<Granularity>('daily')
-  const [filtersOpen, setFiltersOpen] = useState(false)
 
   // Inicializar fechas
   useEffect(() => {
@@ -68,13 +75,13 @@ export function HistoryView({
   }, [])
 
   // Datos históricos
-  const { data: historicalData, isLoading } = trpc.obtenerHistoricoAqi.useQuery({
+  const { data: historicalData, isLoading, error } = trpc.obtenerHistoricoAqi.useQuery({
     latitude,
     longitude,
     startDate: appliedStartDate?.toISOString() ?? '',
     endDate: appliedEndDate?.toISOString() ?? '',
     granularity: appliedGranularity,
-    radiusKm: 50,
+    radiusKm,
   }, {
     enabled: !!appliedStartDate && !!appliedEndDate,
   })
@@ -130,7 +137,6 @@ DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format
     setAppliedStartDate(startDate)
     setAppliedEndDate(endDate)
     setAppliedGranularity(granularity)
-    setFiltersOpen(false)
   }
 
   const handleResetFilters = () => {
@@ -169,6 +175,15 @@ DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format
     setGranularity(suggestedGranularity)
   }
 
+  const handleLocationChange = (lat: number, lng: number) => {
+    setLatitude(lat)
+    setLongitude(lng)
+  }
+
+  const handleRadiusChange = (radius: number) => {
+    setRadiusKm(radius)
+  }
+
   const TrendIcon = historicalData?.trend?.direction === 'improving'
     ? TrendingDown
     : historicalData?.trend?.direction === 'worsening'
@@ -182,256 +197,338 @@ DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format
       : 'text-muted-foreground'
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-      <div className="max-w-[1600px] mx-auto">
-        {/* Hero Section */}
-        <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
-          <div className="px-6 lg:px-8 py-6">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <BarChart3 className="h-8 w-8 text-primary" />
-                  <h1 className="text-3xl lg:text-4xl font-bold tracking-tight">
-                    Análisis Histórico
-                  </h1>
-                </div>
-                <p className="text-muted-foreground">
-                  Tendencias de calidad del aire en California
-                  {appliedStartDate && appliedEndDate && (
-                    <span className="ml-2">
-                      • {format(appliedStartDate, 'PP', { locale: es })} - {format(appliedEndDate, 'PP', { locale: es })}
-                    </span>
-                  )}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Filter className="h-4 w-4" />
-                      Filtros
-                      {hasUnappliedChanges && (
-                        <Badge variant="destructive" className="h-4 w-4 p-0 flex items-center justify-center">
-                          !
-                        </Badge>
-                      )}
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="right" className="w-[400px] sm:w-[540px] overflow-y-auto">
-                    <SheetHeader>
-                      <SheetTitle>Configuración de Filtros</SheetTitle>
-                      <SheetDescription>
-                        Personaliza el período y granularidad de análisis
-                      </SheetDescription>
-                    </SheetHeader>
-
-                    <div className="mt-6 space-y-6">
-                      {/* Presets */}
-                      <div className="space-y-3">
-                        <Label className="text-sm font-semibold">Períodos Predefinidos</Label>
-                        <div className="grid grid-cols-2 gap-2">
-                          {[
-                            { label: '7 días', value: '7d' },
-                            { label: '30 días', value: '30d' },
-                            { label: '90 días', value: '90d' },
-                            { label: '1 año', value: '1y' },
-                          ].map((preset) => (
-                            <Button
-                              key={preset.value}
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handlePreset(preset.value as '7d' | '30d' | '90d' | '1y')}
-                              className="justify-start"
-                            >
-                              {preset.label}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Fechas */}
-                      <div className="space-y-4">
-                        <Label className="text-sm font-semibold">Período Personalizado</Label>
-                        <div className="grid gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="start-date" className="text-xs text-muted-foreground">Fecha Inicio</Label>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  id="start-date"
-                                  variant="outline"
-                                  className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !startDate && "text-muted-foreground"
-                                  )}
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {startDate ? format(startDate, "PPP", { locale: es }) : "Selecciona fecha"}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                  mode="single"
-                                  selected={startDate}
-                                  onSelect={(date) => date && setStartDate(date)}
-                                  disabled={(date) => (endDate && date > endDate) || date > new Date()}
-                                  initialFocus
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor="end-date" className="text-xs text-muted-foreground">Fecha Fin</Label>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  id="end-date"
-                                  variant="outline"
-                                  className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !endDate && "text-muted-foreground"
-                                  )}
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {endDate ? format(endDate, "PPP", { locale: es }) : "Selecciona fecha"}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                  mode="single"
-                                  selected={endDate}
-                                  onSelect={(date) => date && setEndDate(date)}
-                                  disabled={(date) => (startDate && date < startDate) || date > new Date()}
-                                  initialFocus
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Granularidad */}
-                      <div className="space-y-3">
-                        <Label className="text-sm font-semibold">Granularidad</Label>
-                        <ToggleGroup
-                          type="single"
-                          value={granularity}
-                          onValueChange={(value) => value && setGranularity(value as Granularity)}
-                          className="grid grid-cols-2 gap-2"
-                        >
-                          <ToggleGroupItem value="hourly" className="text-sm">
-                            Por Hora
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="daily" className="text-sm">
-                            Por Día
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="weekly" className="text-sm">
-                            Por Semana
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="monthly" className="text-sm">
-                            Por Mes
-                          </ToggleGroupItem>
-                        </ToggleGroup>
-                        <p className="text-xs text-muted-foreground">
-                          {granularity === 'hourly' && '💡 Ideal para períodos ≤ 7 días'}
-                          {granularity === 'daily' && '💡 Ideal para períodos de 7-90 días'}
-                          {granularity === 'weekly' && '💡 Ideal para períodos de 90-365 días'}
-                          {granularity === 'monthly' && '💡 Ideal para períodos > 365 días'}
-                        </p>
-                      </div>
-
-                      {/* Acciones */}
-                      <div className="flex gap-2 pt-4 border-t">
-                        <Button
-                          onClick={handleApplyFilters}
-                          disabled={!hasUnappliedChanges}
-                          className="flex-1"
-                        >
-                          Aplicar
-                        </Button>
-                        <Button
-                          onClick={handleResetFilters}
-                          variant="outline"
-                          disabled={!hasUnappliedChanges}
-                        >
-                          Cancelar
-                        </Button>
-                      </div>
-                    </div>
-                  </SheetContent>
-                </Sheet>
-
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Download className="h-4 w-4" />
-                  <span className="hidden sm:inline">Exportar</span>
-                </Button>
-              </div>
+    <div className="h-screen bg-gradient-to-b from-background to-muted/20 flex flex-col">
+      {/* Header */}
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-40 shrink-0">
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden h-8 w-8"
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              >
+                {isSidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+              </Button>
+              <BarChart3 className="h-5 w-5 text-primary" />
+              <h1 className="text-lg font-bold">Análisis Histórico</h1>
             </div>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Download className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline text-xs">Exportar</span>
+            </Button>
           </div>
         </div>
+      </div>
 
-        {/* Main Content */}
-        <div className="px-6 lg:px-8 py-8 space-y-8">
-          {/* Hero Stats */}
-          {historicalData && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+      {/* Main Layout: Sidebar + Content */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full grid grid-cols-1 lg:grid-cols-[320px_1fr]">
+
+          {/* Sidebar con Filtros */}
+          <aside className={cn(
+            "border-r bg-background overflow-y-auto",
+            "fixed inset-y-0 left-0 z-50 w-[280px] transform transition-transform lg:relative lg:translate-x-0",
+            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          )}>
+            <div className="p-4 space-y-4">
+              <div>
+                <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <CalendarIcon className="h-4 w-4 text-primary" />
+                  Período de Análisis
+                </h2>
+
+                {/* Presets Mejorados */}
+                <div className="space-y-2">
+                  {[
+                    { label: 'Última semana', value: '7d', days: '7 días', icon: CalendarIcon },
+                    { label: 'Último mes', value: '30d', days: '30 días', icon: CalendarIcon },
+                    { label: 'Últimos 3 meses', value: '90d', days: '90 días', icon: CalendarDays },
+                    { label: 'Último año', value: '1y', days: '365 días', icon: CalendarRange },
+                  ].map((preset) => (
+                    <Button
+                      key={preset.value}
+                      variant="outline"
+                      onClick={() => handlePreset(preset.value as '7d' | '30d' | '90d' | '1y')}
+                      className="w-full h-auto py-2 px-3 justify-start"
+                    >
+                      <preset.icon className="h-4 w-4 mr-3 shrink-0" />
+                      <div className="text-left flex-1">
+                        <div className="font-semibold text-sm">{preset.label}</div>
+                        <div className="text-[10px] text-muted-foreground">{preset.days}</div>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+
+                {/* O personalizado */}
+                <div className="mt-3 pt-3 border-t space-y-2">
+                  <Label className="text-xs font-medium">Personalizado</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !startDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-1.5 h-3 w-3" />
+                          {startDate ? format(startDate, "dd/MM/yy") : "Inicio"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={startDate}
+                          onSelect={(date) => date && setStartDate(date)}
+                          disabled={(date) => (endDate && date > endDate) || date > new Date()}
+                        />
+                      </PopoverContent>
+                    </Popover>
+
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !endDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-1.5 h-3 w-3" />
+                          {endDate ? format(endDate, "dd/MM/yy") : "Fin"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={endDate}
+                          onSelect={(date) => date && setEndDate(date)}
+                          disabled={(date) => (startDate && date < startDate) || date > new Date()}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+              </div>
+
+              {/* Agrupar Datos */}
+              <div>
+                <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-primary" />
+                  Agrupar Datos
+                </h2>
+                <ToggleGroup
+                  type="single"
+                  value={granularity}
+                  onValueChange={(value) => value && setGranularity(value as Granularity)}
+                  className="grid grid-cols-2 gap-2"
+                >
+                  <ToggleGroupItem value="hourly" className="h-auto py-2 px-3">
+                    <div className="flex flex-col items-start text-left w-full">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-3 w-3" />
+                        <span className="text-xs font-medium">Por hora</span>
+                      </div>
+                      <span className="text-[9px] text-muted-foreground">Detalle máx</span>
+                    </div>
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="daily" className="h-auto py-2 px-3">
+                    <div className="flex flex-col items-start text-left w-full">
+                      <div className="flex items-center gap-2">
+                        <CalendarIcon className="h-3 w-3" />
+                        <span className="text-xs font-medium">Por día</span>
+                      </div>
+                      <span className="text-[9px] text-muted-foreground">Recomendado</span>
+                    </div>
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="weekly" className="h-auto py-2 px-3">
+                    <div className="flex flex-col items-start text-left w-full">
+                      <div className="flex items-center gap-2">
+                        <CalendarDays className="h-3 w-3" />
+                        <span className="text-xs font-medium">Por semana</span>
+                      </div>
+                      <span className="text-[9px] text-muted-foreground">Tendencias</span>
+                    </div>
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="monthly" className="h-auto py-2 px-3">
+                    <div className="flex flex-col items-start text-left w-full">
+                      <div className="flex items-center gap-2">
+                        <CalendarRange className="h-3 w-3" />
+                        <span className="text-xs font-medium">Por mes</span>
+                      </div>
+                      <span className="text-[9px] text-muted-foreground">Vista general</span>
+                    </div>
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+
+              {/* Radio de Búsqueda */}
+              <div>
+                <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <Circle className="h-4 w-4 text-primary" />
+                  Radio de Búsqueda
+                </h2>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: 'Urbano', value: 25, desc: '25 km' },
+                    { label: 'Regional', value: 50, desc: '50 km' },
+                    { label: 'Amplio', value: 100, desc: '100 km' },
+                  ].map((preset) => (
+                    <Button
+                      key={preset.value}
+                      variant={radiusKm === preset.value ? "default" : "outline"}
+                      onClick={() => setRadiusKm(preset.value)}
+                      className="h-auto py-2 px-2"
+                    >
+                      <div className="flex flex-col items-center gap-1 w-full">
+                        <Circle className="h-3 w-3" />
+                        <div className="text-xs font-semibold">{preset.label}</div>
+                        <div className="text-[9px] opacity-70">{preset.desc}</div>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Botón Aplicar */}
+              <Button
+                onClick={handleApplyFilters}
+                disabled={!hasUnappliedChanges}
+                className="w-full"
+                size="lg"
+              >
+                {hasUnappliedChanges ? 'Aplicar Cambios' : 'Filtros Aplicados ✓'}
+              </Button>
+            </div>
+          </aside>
+
+          {/* Área de Contenido Principal */}
+          <main className="overflow-y-auto bg-muted/5">
+            <div className="p-4 space-y-4">
+
+              {/* Mapa */}
+              <HistoryLocationMap
+                latitude={latitude}
+                longitude={longitude}
+                radiusKm={radiusKm}
+                onLocationChange={handleLocationChange}
+                onRadiusChange={handleRadiusChange}
+              />
+
+              {/* Loading State */}
+              {isLoading && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {[1, 2, 3].map((i) => (
+                    <Card key={i} className="border">
+                      <CardContent className="p-3">
+                        <div className="space-y-2">
+                          <div className="h-3 w-20 bg-muted animate-pulse rounded" />
+                          <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+                          <div className="h-5 w-24 bg-muted animate-pulse rounded" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+
+              {/* Error State */}
+              {error && (
+                <Card className="border-destructive bg-destructive/5">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                      <div className="space-y-1">
+                        <h3 className="text-sm font-semibold text-destructive">Error al cargar datos</h3>
+                        <p className="text-xs text-muted-foreground">
+                          No se pudieron obtener los datos históricos. Por favor, intenta nuevamente.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Empty State */}
+              {!isLoading && !error && historicalData && historicalData.data.length === 0 && (
+                <Card className="border-dashed">
+                  <CardContent className="p-6">
+                    <div className="flex flex-col items-center justify-center text-center space-y-2">
+                      <BarChart3 className="h-10 w-10 text-muted-foreground/50" />
+                      <h3 className="text-sm font-semibold">Sin datos disponibles</h3>
+                      <p className="text-xs text-muted-foreground max-w-sm">
+                        No hay datos históricos para esta ubicación y período.
+                        Intenta ajustar las fechas o el radio de búsqueda.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Stats Cards */}
+              {!isLoading && !error && historicalData && historicalData.data.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {/* AQI Promedio */}
-              <Card className={cn("border-2", getAQIColor(historicalData.stats?.avg ?? 0))}>
-                <CardHeader className="pb-3">
-                  <CardDescription className="text-xs font-medium">AQI Promedio</CardDescription>
-                  <CardTitle className="text-4xl lg:text-5xl font-bold tabular-nums">
-                    {Math.round(historicalData.stats?.avg ?? 0)}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <Badge variant="outline" className="font-medium">
-                      {getAQICategory(historicalData.stats?.avg ?? 0)}
-                    </Badge>
-                    <div className={cn("flex items-center gap-1 text-sm font-medium", trendColor)}>
-                      <TrendIcon className="h-4 w-4" />
-                      {historicalData.trend?.percentageChange.toFixed(1)}%
+              <Card className={cn("border", getAQIColor(historicalData.stats?.avg ?? 0))}>
+                <CardContent className="p-3">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-medium text-muted-foreground">AQI Promedio</p>
+                    <p className="text-2xl font-bold tabular-nums">
+                      {Math.round(historicalData.stats?.avg ?? 0)}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className="text-[10px] h-5 px-1.5">
+                        {getAQICategory(historicalData.stats?.avg ?? 0)}
+                      </Badge>
+                      <div className={cn("flex items-center gap-0.5 text-xs font-medium", trendColor)}>
+                        <TrendIcon className="h-3 w-3" />
+                        {historicalData.trend?.percentageChange.toFixed(1)}%
+                      </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               {/* AQI Mínimo */}
-              <Card className="border-2 border-muted">
-                <CardHeader className="pb-3">
-                  <CardDescription className="text-xs font-medium">Mejor Día</CardDescription>
-                  <CardTitle className="text-4xl lg:text-5xl font-bold tabular-nums text-green-600">
-                    {Math.round(historicalData.stats?.min ?? 0)}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Badge variant="outline" className="font-medium bg-green-50 text-green-700 border-green-200">
-                    {getAQICategory(historicalData.stats?.min ?? 0)}
-                  </Badge>
+              <Card className="border">
+                <CardContent className="p-3">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-medium text-muted-foreground">Mejor Día</p>
+                    <p className="text-2xl font-bold tabular-nums text-green-600">
+                      {Math.round(historicalData.stats?.min ?? 0)}
+                    </p>
+                    <Badge variant="outline" className="text-[10px] h-5 px-1.5 bg-green-50 text-green-700 border-green-200">
+                      {getAQICategory(historicalData.stats?.min ?? 0)}
+                    </Badge>
+                  </div>
                 </CardContent>
               </Card>
 
               {/* AQI Máximo */}
-              <Card className="border-2 border-muted">
-                <CardHeader className="pb-3">
-                  <CardDescription className="text-xs font-medium">Peor Día</CardDescription>
-                  <CardTitle className="text-4xl lg:text-5xl font-bold tabular-nums text-red-600">
-                    {Math.round(historicalData.stats?.max ?? 0)}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Badge variant="outline" className="font-medium bg-red-50 text-red-700 border-red-200">
-                    {getAQICategory(historicalData.stats?.max ?? 0)}
-                  </Badge>
+              <Card className="border">
+                <CardContent className="p-3">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-medium text-muted-foreground">Peor Día</p>
+                    <p className="text-2xl font-bold tabular-nums text-red-600">
+                      {Math.round(historicalData.stats?.max ?? 0)}
+                    </p>
+                    <Badge variant="outline" className="text-[10px] h-5 px-1.5 bg-red-50 text-red-700 border-red-200">
+                      {getAQICategory(historicalData.stats?.max ?? 0)}
+                    </Badge>
+                  </div>
                 </CardContent>
               </Card>
             </div>
           )}
 
           {/* Charts */}
-          {appliedStartDate && appliedEndDate && (
+          {!isLoading && !error && appliedStartDate && appliedEndDate && historicalData && historicalData.data.length > 0 && (
             <HistoryChart
               latitude={latitude}
               longitude={longitude}
@@ -442,71 +539,73 @@ DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format
           )}
 
           {/* Insights Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Tendencia */}
-            {historicalData?.trend && (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <TrendIcon className={cn("h-5 w-5", trendColor)} />
-                    <CardTitle className="text-lg">Tendencia del Período</CardTitle>
+          {!isLoading && !error && historicalData && historicalData.data.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+              {/* Tendencia */}
+              {historicalData?.trend && (
+                <Card>
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <TrendIcon className={cn("h-3.5 w-3.5", trendColor)} />
+                      <h3 className="text-xs font-semibold">Tendencia</h3>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mb-2">{historicalData.trend.message}</p>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-muted-foreground">Cambio</span>
+                        <span className={cn("font-bold", trendColor)}>
+                          {historicalData.trend.percentageChange > 0 ? '+' : ''}
+                          {historicalData.trend.percentageChange.toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-muted-foreground">Datos</span>
+                        <span className="font-semibold">{historicalData.data.length}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-muted-foreground">Período</span>
+                        <span className="font-semibold">{daysDiff} días</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Fuentes */}
+              <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950 border-blue-200 dark:border-blue-800">
+                <CardContent className="p-3">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <FileText className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                    <h3 className="text-xs font-semibold text-blue-900 dark:text-blue-100">Info de Datos</h3>
                   </div>
-                  <CardDescription>{historicalData.trend.message}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center py-2 border-b">
-                      <span className="text-sm text-muted-foreground">Cambio Total</span>
-                      <span className={cn("text-xl font-bold", trendColor)}>
-                        {historicalData.trend.percentageChange > 0 ? '+' : ''}
-                        {historicalData.trend.percentageChange.toFixed(1)}%
-                      </span>
+                  <div className="space-y-1 text-xs text-blue-800 dark:text-blue-200">
+                    <div className="flex justify-between">
+                      <span className="text-[10px]">Fuente:</span>
+                      <span className="text-[10px] font-medium">EPA Stations</span>
                     </div>
-                    <div className="flex justify-between items-center py-2 border-b">
-                      <span className="text-sm text-muted-foreground">Puntos de Datos</span>
-                      <span className="text-lg font-semibold">{historicalData.data.length}</span>
+                    <div className="flex justify-between">
+                      <span className="text-[10px]">Cobertura:</span>
+                      <span className="text-[10px] font-medium">California</span>
                     </div>
-                    <div className="flex justify-between items-center py-2">
-                      <span className="text-sm text-muted-foreground">Período Analizado</span>
-                      <span className="text-lg font-semibold">{daysDiff} días</span>
+                    <div className="flex justify-between">
+                      <span className="text-[10px]">Radio:</span>
+                      <span className="text-[10px] font-medium">{radiusKm} km</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[10px]">Actualización:</span>
+                      <span className="text-[10px] font-medium">Diaria</span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            )}
+            </div>
+          )}
 
-            {/* Fuentes */}
-            <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950 border-blue-200 dark:border-blue-800">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  <CardTitle className="text-lg text-blue-900 dark:text-blue-100">
-                    Información de Datos
-                  </CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm text-blue-800 dark:text-blue-200">
-                <div className="flex justify-between">
-                  <span className="font-medium">Fuente:</span>
-                  <span>EPA Stations</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Cobertura:</span>
-                  <span>California</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Radio:</span>
-                  <span>50 km</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Actualización:</span>
-                  <span>Diaria</span>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </main>
+
           </div>
         </div>
-      </div>
 
       {/* Floating AI Chat */}
       <FloatingAIChat context={aiContext} />

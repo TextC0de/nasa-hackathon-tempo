@@ -5,7 +5,7 @@ import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport } from "ai"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Bot, Send, Loader2, X, Sparkles, Minimize2, Maximize2 } from "lucide-react"
+import { Bot, Send, Loader2, X, Sparkles, Minimize2, Maximize2, RotateCcw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -103,15 +103,26 @@ export function FloatingAIChat({ context }: FloatingAIChatProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const { messages, sendMessage, status, error } = useChat({
+  // Usar ref para context que cambia en el tiempo
+  const contextRef = useRef(context)
+
+  useEffect(() => {
+    contextRef.current = context
+    console.log('🔄 Contexto actualizado:', context ? `${context.length} caracteres` : 'Sin datos')
+  }, [context])
+
+  const { messages, sendMessage, status, error, setMessages } = useChat({
     transport: new DefaultChatTransport({
       api: '/api/chat',
-      body: () => {
-        console.log('🤖 Enviando contexto al chat:', context ? 'Con datos' : 'Sin datos')
-        return { context }
-      },
+      body: () => ({
+        context: contextRef.current ?? null,
+      }),
     }),
   })
+
+  const handleReset = useCallback(() => {
+    setMessages([])
+  }, [setMessages])
 
   // Auto-scroll optimizado - solo durante streaming
   useEffect(() => {
@@ -192,6 +203,16 @@ export function FloatingAIChat({ context }: FloatingAIChatProps) {
           </div>
         </div>
         <div className="flex items-center gap-0.5">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleReset}
+            disabled={messages.length === 0}
+            className="h-7 w-7"
+            title="Resetear chat"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"

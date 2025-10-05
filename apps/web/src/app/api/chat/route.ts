@@ -9,6 +9,10 @@ export async function POST(req: Request) {
   const { messages, context }: { messages: UIMessage[]; context?: string } = await req.json()
 
   console.log('🤖 Chat API - Contexto recibido:', context ? 'SÍ' : 'NO')
+  if (context) {
+    console.log('📊 Primeros 500 caracteres del contexto:', context.substring(0, 500))
+    console.log('📏 Longitud total del contexto:', context.length, 'caracteres')
+  }
 
   // Sistema de prompting con contexto de datos históricos
   const systemPrompt = `Eres un asistente experto en análisis de calidad del aire y datos ambientales para California.
@@ -48,14 +52,11 @@ FORMATO DE RESPUESTA:
 - Usa emojis ocasionalmente: 📊 datos, 🌡️ temperatura, 💨 viento, 🏥 salud, ⚠️ advertencia`
 
   const result = streamText({
-    model: openai('gpt-4o', {
-      // Usando prompt caching para reducir costos
-      structuredOutputs: true,
-    }),
+    model: openai('gpt-4o'),
     system: systemPrompt,
     messages: convertToModelMessages(messages),
     temperature: 0.7,
-    maxTokens: 1000,
+    maxOutputTokens: 1000,
   })
 
   return result.toUIMessageStreamResponse()

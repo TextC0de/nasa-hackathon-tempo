@@ -10,6 +10,8 @@ import { obtenerPrediccionMeteorologicaProcedure } from './procedures/obtener-pr
 import { obtenerClimaActualProcedure } from './procedures/obtener-clima-actual'
 import { obtenerAlturaDelTerrenoProcedure } from './procedures/obtener-altura-del-terreno'
 import { obtenerDatosTEMPOProcedure } from './procedures/obtener-datos-tempo'
+import { obtenerImagenTEMPOProcedure } from './procedures/obtener-imagen-tempo'
+import { analizarImpactoIncendioProcedure } from './procedures/analizar-impacto-incendio'
 import { obtenerHistoricoAqiProcedure } from './procedures/obtener-historico-aqi'
 import { crearAlertaProcedure } from './procedures/crear-alerta'
 import { listarAlertasProcedure } from './procedures/listar-alertas'
@@ -17,6 +19,8 @@ import { actualizarAlertaProcedure } from './procedures/actualizar-alerta'
 import { obtenerAlertasActivasProcedure } from './procedures/obtener-alertas-activas'
 import { crearReporteUsuarioProcedure } from './procedures/crear-reporte-usuario'
 import { obtenerReportesUsuarioProcedure } from './procedures/obtener-reporte-usuario'
+import { obtenerPoblacionCiudadProcedure } from './procedures/obtener-poblacion-ciudad'
+import { obtenerPoblacionCondadoProcedure } from './procedures/obtener-poblacion-condado'
 
 export const appRouter = router({
   hello: helloProcedure,
@@ -30,6 +34,8 @@ export const appRouter = router({
   predecirAqi: predecirAqiProcedure,
   obtenerAlturaDelTerreno: obtenerAlturaDelTerrenoProcedure,
   obtenerDatosTEMPO: obtenerDatosTEMPOProcedure,
+  obtenerImagenTEMPO: obtenerImagenTEMPOProcedure,
+  analizarImpactoIncendio: analizarImpactoIncendioProcedure,
   obtenerHistoricoAqi: obtenerHistoricoAqiProcedure,
   crearAlerta: crearAlertaProcedure,
   listarAlertas: listarAlertasProcedure,
@@ -37,6 +43,8 @@ export const appRouter = router({
   obtenerAlertasActivas: obtenerAlertasActivasProcedure,
   crearReporteUsuario: crearReporteUsuarioProcedure,
   obtenerReportesUsuario: obtenerReportesUsuarioProcedure,
+  obtenerPoblacionCiudad: obtenerPoblacionCiudadProcedure,
+  obtenerPoblacionCondado: obtenerPoblacionCondadoProcedure,
 })
 
 export type AppRouter = typeof appRouter
