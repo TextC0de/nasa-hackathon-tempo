@@ -84,10 +84,18 @@ export const obtenerPoblacionAfectadaProcedure = publicProcedure
           // Llamar a AirNow API para obtener AQI actual
           const url = `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${ciudad.lat}&longitude=${ciudad.lng}&distance=50&API_KEY=${airnowApiKey}`
 
+          console.log(`🔄 [POBLACIÓN] Consultando AQI para ${ciudad.nombre}...`)
+          console.log(`   URL: ${url.replace(airnowApiKey, 'API_KEY_HIDDEN')}`)
+
           const response = await fetch(url)
 
+          console.log(`📡 [POBLACIÓN] Respuesta para ${ciudad.nombre}: ${response.status} ${response.statusText}`)
+
           if (!response.ok) {
-            console.warn(`⚠️  No se pudo obtener AQI para ${ciudad.nombre}`)
+            const errorText = await response.text()
+            console.warn(`⚠️  [POBLACIÓN] No se pudo obtener AQI para ${ciudad.nombre}`)
+            console.warn(`   Status: ${response.status} ${response.statusText}`)
+            console.warn(`   Error body: ${errorText.substring(0, 200)}`)
             return {
               ...ciudad,
               aqi: null,
@@ -103,10 +111,16 @@ export const obtenerPoblacionAfectadaProcedure = publicProcedure
             ParameterName: string
           }>
 
+          console.log(`✅ [POBLACIÓN] Datos recibidos para ${ciudad.nombre}: ${data.length} parámetros`)
+          if (data.length > 0) {
+            console.log(`   AQI values: ${data.map(d => `${d.ParameterName}=${d.AQI}`).join(', ')}`)
+          }
+
           // Tomar el AQI más alto de todos los parámetros
           const aqiMax = data.length > 0 ? Math.max(...data.map((d) => d.AQI)) : null
 
           if (aqiMax === null) {
+            console.warn(`⚠️  [POBLACIÓN] No hay datos de AQI para ${ciudad.nombre}`)
             return {
               ...ciudad,
               aqi: null,
@@ -118,6 +132,8 @@ export const obtenerPoblacionAfectadaProcedure = publicProcedure
 
           const clasificacion = categorizarAQI(aqiMax)
 
+          console.log(`✅ [POBLACIÓN] ${ciudad.nombre}: AQI ${aqiMax} (${clasificacion.categoria})`)
+
           return {
             ...ciudad,
             aqi: aqiMax,
@@ -126,7 +142,11 @@ export const obtenerPoblacionAfectadaProcedure = publicProcedure
             severidad: clasificacion.severidad,
           }
         } catch (error) {
-          console.error(`❌ Error obteniendo AQI para ${ciudad.nombre}:`, error)
+          console.error(`❌ [POBLACIÓN] Error obteniendo AQI para ${ciudad.nombre}:`, error)
+          if (error instanceof Error) {
+            console.error(`   Message: ${error.message}`)
+            console.error(`   Stack: ${error.stack?.substring(0, 300)}`)
+          }
           return {
             ...ciudad,
             aqi: null,
