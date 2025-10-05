@@ -639,9 +639,12 @@ export const CaliforniaMap = React.memo(function CaliforniaMap({
           minZoom={LEAFLET_CONFIG.zoom.MIN}
         />
         
-        {/* TEMPO Satellite Overlay - Pane con z-index 450 (entre overlayPane:400 y shadowPane:500, debajo de markerPane:600) */}
+        {/* City Boundaries Pane - z-index 350 (más atrás que todo) */}
+        <Pane name="cityBoundariesPane" style={{ zIndex: 350 }} />
+
+        {/* TEMPO Satellite Overlay - Pane con z-index 400 (debajo de ciudades y marcadores) */}
         {showTempoOverlay && tempoOverlayData && (
-          <Pane name="tempoPane" style={{ zIndex: 450 }}>
+          <Pane name="tempoPane" style={{ zIndex: 400 }}>
             <ImageOverlay
               url={tempoOverlayData.imageUrl}
               bounds={[

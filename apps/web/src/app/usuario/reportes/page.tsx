@@ -48,10 +48,11 @@ const ReportMap = dynamic(() => import("@/components/report-map").then(mod => ({
 export default function UserReportsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  // Ubicación por defecto: Los Ángeles, California (igual que /usuario)
   const [formData, setFormData] = useState<ReportFormData>({
     email: '',
-    latitud: 0,
-    longitud: 0,
+    latitud: 34.0522,
+    longitud: -118.2437,
     descripcion: '',
     gravedad: '',
     tipo: ''
@@ -142,8 +143,8 @@ export default function UserReportsPage() {
     setIsSubmitted(false)
     setFormData({
       email: '',
-      latitud: 0,
-      longitud: 0,
+      latitud: 34.0522,
+      longitud: -118.2437,
       descripcion: '',
       gravedad: '',
       tipo: ''

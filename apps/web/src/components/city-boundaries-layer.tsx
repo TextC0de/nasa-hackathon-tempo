@@ -90,6 +90,7 @@ function CityBoundariesLayerInner({
 
     // Crear capa de GeoJSON
     const geojsonLayer = L.geoJSON(geojsonData, {
+      pane: 'cityBoundariesPane', // Usar pane personalizado con z-index bajo
       style: (feature) => {
         const nombre = feature?.properties?.nombre
         const ciudad = nombre ? ciudadesMap.get(nombre) : null
@@ -101,6 +102,7 @@ function CityBoundariesLayerInner({
           color: getPolygonColor(aqi),
           weight: 2,
           opacity: 0.6,
+          zIndex: 0,
         }
       },
       onEachFeature: (feature, layer) => {

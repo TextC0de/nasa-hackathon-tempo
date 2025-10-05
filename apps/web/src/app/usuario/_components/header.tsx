@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -20,7 +21,8 @@ import {
   WifiOff,
   RefreshCw,
   Clock,
-  Database
+  Database,
+  FileText
 } from "lucide-react"
 
 interface Alert {
@@ -195,6 +197,24 @@ export function Header({
                 </TooltipContent>
               </Tooltip>
             )}
+
+            {/* Botón de Reportes */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link href="/usuario/reportes">
+                  <Button
+                    variant="ghost"
+                    className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 bg-orange-600/10 hover:bg-orange-600/20 rounded-lg transition-colors"
+                  >
+                    <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-orange-600" />
+                    <span className="hidden sm:inline text-xs sm:text-sm font-medium text-orange-600">Reportes</span>
+                  </Button>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>Gestionar reportes de contaminación</p>
+              </TooltipContent>
+            </Tooltip>
 
             {/* Campanita de alertas */}
             <AlertsBell

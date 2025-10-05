@@ -85,6 +85,7 @@ function CitiesLayerInner({ data, onCityClick }: {
     data.ciudades.forEach((ciudad: any) => {
       const marker = L.marker([ciudad.lat, ciudad.lng], {
         icon: createCityIcon(ciudad.aqi, ciudad.poblacion),
+        zIndexOffset: -100 // Mantener ciudades detrás de estaciones e incendios
       })
 
       // Popup con información
