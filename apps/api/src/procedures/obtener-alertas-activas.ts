@@ -90,7 +90,7 @@ export const obtenerAlertasActivasProcedure = publicProcedure
           lat: alert.latitude,
           lng: alert.longitude,
         },
-        timestamp: alert.createdAt.toISOString(),
+        timestamp: alert.createdAt,
         distanceKm: alert.distanceKm,
         createdBy: 'Sistema de Alertas',
       }
