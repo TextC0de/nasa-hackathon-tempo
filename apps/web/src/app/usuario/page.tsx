@@ -9,6 +9,9 @@ import { MapView } from "./_components/map-view"
 import { DebugDialog } from "./_components/debug-dialog"
 import { MetricsDialog, TEMPODialog, WeatherDialog, PollutantsDialog } from "./_components/dialogs"
 import { RecommendationsPanel, RecommendationsPanelCompact } from "./_components/recommendations-panel"
+import { WelcomeCard } from "./_components/welcome-card"
+import { MetricsCards } from "./_components/metrics-cards"
+import { QuickActions } from "./_components/quick-actions"
 import { getAQIColor, getAQIBadge, getAQILevel } from "./_components/utils"
 
 import "leaflet/dist/leaflet.css"
@@ -139,58 +142,80 @@ export default function UsuarioPage() {
           getAQIColor={getAQIColor}
           getAQILevel={getAQILevel}
           locations={CALIFORNIA_LOCATIONS}
-          alerts={alerts}
+          alerts={alerts as any}
           unreadAlertsCount={newAlertsCount}
           onMarkAlertAsRead={markAsRead}
           onMarkAllAlertsAsRead={markAllAsRead}
           isAlertRead={isRead}
         />
 
-        {/* Main Layout: Desktop = Side by Side, Mobile = Stacked */}
-        <div className="h-[calc(100vh-60px)]">
-          <div className="h-full flex flex-col lg:flex-row">
-            {/* Mapa - Ocupa todo en móvil, lado izquierdo en desktop */}
-            <div className="h-[50vh] lg:h-full lg:w-[60%] relative">
-              <MapView
-                searchLat={searchLat}
-                searchLng={searchLng}
-                currentLocation={currentLocation}
-                prediction={prediction}
-                isLoading={isLoading}
-                error={error}
-                onDialogOpen={setOpenDialog}
-                getAQIColor={getAQIColor}
-                getAQIBadge={getAQIBadge}
-                onLocationUpdate={handleLocationUpdate}
-              />
+        {/* Main Content */}
+        <div className="min-h-[calc(100vh-60px)] bg-gradient-to-br from-blue-50/30 via-white to-green-50/30">
+          <div className="container mx-auto px-4 py-6 space-y-8">
+            
+            {/* Welcome Card */}
+            <WelcomeCard
+              currentLocation={currentLocation}
+              prediction={prediction}
+              isLoading={isLoading}
+              onDialogOpen={setOpenDialog}
+              getAQIColor={getAQIColor}
+              getAQILevel={getAQILevel}
+            />
+
+            {/* Metrics Cards */}
+            <MetricsCards
+              prediction={prediction}
+              isLoading={isLoading}
+              onDialogOpen={setOpenDialog}
+              getAQIColor={getAQIColor}
+            />
+
+            {/* Quick Actions */}
+            <QuickActions
+              onDialogOpen={setOpenDialog}
+              onRefetch={refetch}
+              isLoading={isLoading}
+              unreadAlertsCount={newAlertsCount}
+            />
+
+            {/* Map and Recommendations */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Map */}
+              <div className="lg:col-span-1">
+                <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+                  <div className="h-96 lg:h-[500px]">
+                    <MapView
+                      searchLat={searchLat}
+                      searchLng={searchLng}
+                      currentLocation={currentLocation}
+                      prediction={prediction}
+                      isLoading={isLoading}
+                      error={error}
+                      onDialogOpen={setOpenDialog}
+                      getAQIColor={getAQIColor}
+                      getAQIBadge={getAQIBadge}
+                      onLocationUpdate={handleLocationUpdate}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Recommendations */}
+              {prediction?.general && (
+                <div className="lg:col-span-1">
+                  <div className="bg-white rounded-xl shadow-lg border border-gray-200 h-96 lg:h-[500px] overflow-y-auto">
+                    <div className="p-6">
+                      <RecommendationsPanel
+                        aqi={prediction.general.aqi}
+                        dominantPollutant={prediction.general.dominantParameter}
+                        category={prediction.general.category}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-
-            {/* Panel de Recomendaciones */}
-            {prediction?.general && (
-              <>
-                {/* Desktop: Sidebar derecho */}
-                <div className="hidden lg:block lg:w-[40%] bg-muted/30 border-l border-border">
-                  <div className="h-full overflow-y-auto p-6">
-                    <RecommendationsPanel
-                      aqi={prediction.general.aqi}
-                      dominantPollutant={prediction.general.dominantParameter}
-                      category={prediction.general.category}
-                    />
-                  </div>
-                </div>
-
-                {/* Mobile: Panel inferior */}
-                <div className="lg:hidden h-[50vh] overflow-y-auto bg-background border-t border-border">
-                  <div className="p-4">
-                    <RecommendationsPanel
-                      aqi={prediction.general.aqi}
-                      dominantPollutant={prediction.general.dominantParameter}
-                      category={prediction.general.category}
-                    />
-                  </div>
-                </div>
-              </>
-            )}
           </div>
         </div>
 

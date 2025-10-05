@@ -161,21 +161,23 @@ export default function UserReportsPage() {
 
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-white to-green-50/30">
       {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 shadow-sm">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center gap-4">
             <Link href="/usuario">
-              <Button variant="ghost" size="sm" className="gap-2">
+              <Button variant="outline" size="sm" className="gap-2 bg-white/80 hover:bg-white border-blue-200 hover:border-blue-300">
                 <ArrowLeft className="h-4 w-4" />
-                Volver
+                Volver al Dashboard
               </Button>
             </Link>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-foreground">Reportes</h1>
-              <p className="text-muted-foreground">
-                Gestiona y visualiza todos los reportes de contaminación
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+                Mis Reportes
+              </h1>
+              <p className="text-gray-600">
+                Gestiona y visualiza todos tus reportes de contaminación
               </p>
             </div>
           </div>
@@ -185,13 +187,13 @@ export default function UserReportsPage() {
       {/* Contenido principal */}
       <div className="container mx-auto px-4 py-8">
         {/* Formulario de reporte */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-orange-500" />
+        <Card className="mb-8 border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+          <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 border-b border-orange-200">
+            <CardTitle className="flex items-center gap-2 text-orange-700">
+              <AlertTriangle className="h-5 w-5" />
               Reportar Contaminación
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-orange-600">
               Ayúdanos a identificar y resolver problemas de contaminación en California
             </CardDescription>
           </CardHeader>
