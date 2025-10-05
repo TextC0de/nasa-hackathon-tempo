@@ -1,6 +1,10 @@
 "use client"
 
 import { useState, useMemo } from "react"
+
+// Forzar rendering del lado del cliente solamente (evitar SSR/SSG)
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
 import { trpc } from "@/lib/trpc"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
