@@ -46,7 +46,18 @@ const envSchema = z.object({
    * URL of the Python ML service that serves XGBoost NO2 predictions
    * Local: http://localhost:8000 | Production: https://your-ml-service.workers.dev
    */
-  ML_SERVICE_URL: z.string().url('ML_SERVICE_URL must be a valid URL'),
+  ML_SERVICE_URL: z.string().url('ML_SERVICE_URL must be a valid URL').optional(),
+
+  /**
+   * Enable ML predictions
+   * Set to "true" to enable XGBoost ML predictions for NO2
+   * Default: "false" (uses fallback predictions)
+   */
+  ML_ENABLED: z
+    .string()
+    .optional()
+    .default('false')
+    .transform((val) => val === 'true'),
 })
 
 export type Env = z.infer<typeof envSchema>
