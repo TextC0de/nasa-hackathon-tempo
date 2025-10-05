@@ -459,6 +459,38 @@ export class ImageServerClient {
 
     const data = (await response.json()) as IdentifyResponse;
     console.log(`[ImageServer] Identify data retrieved:`, data);
+
+    // Verificar si la respuesta contiene un error (ArcGIS retorna 200 OK con error en JSON)
+    if ((data as any).error) {
+      const errorCode = (data as any).error.code || 500;
+      const errorMessage = (data as any).error.message || 'Unknown error';
+      const errorDetails = (data as any).error.details || [];
+
+      console.error(`[ImageServer] ❌ Identify returned error in JSON:`, {
+        code: errorCode,
+        message: errorMessage,
+        details: errorDetails,
+        datasetPath,
+        geometry,
+        time: options.time ? new Date(options.time).toISOString() : 'N/A'
+      });
+
+      // Error 498/499 = autenticación inválida/requerida
+      if (errorCode === 498 || errorCode === 499) {
+        throw new AuthenticationError(
+          `${errorMessage} for ${datasetPath}`,
+          errorCode
+        );
+      }
+
+      // Otros errores del servicio
+      throw new ServiceError(
+        `Service error: ${errorMessage}`,
+        errorCode,
+        JSON.stringify(errorDetails)
+      );
+    }
+
     return data;
   }
 

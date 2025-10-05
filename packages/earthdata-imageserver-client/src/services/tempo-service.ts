@@ -235,10 +235,23 @@ export class TEMPOService {
     const timestamp = options.timestamp instanceof Date ? options.timestamp : new Date(options.timestamp);
     const pollutant = options.pollutant || 'NO2';
 
+    console.log(`[TEMPO] 🔍 getDataAtPoint called:`, {
+      pollutant,
+      location: location.toString(),
+      timestamp: timestamp.toISOString(),
+      timestampUnix: timestamp.getTime()
+    });
+
     // Validar que el timestamp esté en el rango disponible
     await this.validateTimestamp(pollutant, timestamp);
 
     const datasetPath = TEMPO_DATASETS[pollutant];
+
+    console.log(`[TEMPO] 📡 Calling identify for ${pollutant} at ${location.toString()}`);
+
+    // Generar curl de ejemplo para debugging manual
+    const curlExample = `curl "https://gis.earthdata.nasa.gov/image/rest/services/${datasetPath}/ImageServer/identify?geometry=%7B%22x%22%3A${location.longitude}%2C%22y%22%3A${location.latitude}%7D&geometryType=esriGeometryPoint&f=json&time=${timestamp.getTime()}"`;
+    console.log(`[TEMPO] 🧪 Test with curl:\n${curlExample}`);
 
     // Usar identify para obtener valor en el punto
     const result = await this.client.identify(
@@ -247,20 +260,25 @@ export class TEMPOService {
       { time: timestamp.getTime() }
     );
 
+    console.log(`[TEMPO] ✅ identify result for ${pollutant}:`, result);
+
     // Verificar si hay datos
     const value = result.value === 'NoData' || result.value === undefined
       ? null
       : typeof result.value === 'string'
         ? parseFloat(result.value)
-        : result.value; 
+        : result.value;
 
     if (value === null) {
+      console.warn(`[TEMPO] ⚠️ No data available for ${pollutant} at ${location.toString()} on ${timestamp.toISOString()}`);
       throw new NoDataError(
         `No ${pollutant} data available at ${location.toString()} for ${timestamp.toISOString()}`,
         location,
         timestamp
       );
     }
+
+    console.log(`[TEMPO] ✨ ${pollutant} value retrieved: ${value} ${TEMPO_UNITS[pollutant]}`);
 
     return {
       pollutant,
@@ -358,6 +376,13 @@ export class TEMPOService {
       ? options.timeRange.end
       : new Date(options.timeRange.end);
 
+    console.log(`[TEMPO] 📊 getDataTimeSeries called:`, {
+      pollutant,
+      location: location.toString(),
+      timeRange: `${start.toISOString()} - ${end.toISOString()}`,
+      intervalHours
+    });
+
     // Validar rango temporal
     const extent = await this.getTemporalExtent(pollutant);
     if (!extent.isWithinRange(start) || !extent.isWithinRange(end)) {
@@ -381,28 +406,43 @@ export class TEMPOService {
       currentTime = new Date(currentTime.getTime() + intervalHours * 60 * 60 * 1000);
     }
 
+    console.log(`[TEMPO] 🕐 Generated ${timestamps.length} timestamps to fetch (UTC hours 12-23 only)`);
+
     // Obtener datos para cada timestamp (en paralelo con límite)
     const data: TimeSeriesPoint[] = [];
     const BATCH_SIZE = 5; // Limitar requests paralelos
 
+    console.log(`[TEMPO] 🔄 Processing ${timestamps.length} timestamps in batches of ${BATCH_SIZE}...`);
+
     for (let i = 0; i < timestamps.length; i += BATCH_SIZE) {
       const batch = timestamps.slice(i, i + BATCH_SIZE);
+      const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+      const totalBatches = Math.ceil(timestamps.length / BATCH_SIZE);
+
+      console.log(`[TEMPO] 📦 Batch ${batchNum}/${totalBatches}: Processing ${batch.length} timestamps...`);
+      console.log(`[TEMPO] 📅 Timestamps in this batch:`, batch.map(t => t.toISOString()));
+
       const batchResults = await Promise.allSettled(
         batch.map(timestamp =>
           this.getDataAtPoint({ location, timestamp, pollutant })
         )
       );
 
+      let successCount = 0;
+      let failCount = 0;
+
       for (let j = 0; j < batchResults.length; j++) {
         const result = batchResults[j];
         const timestamp = batch[j];
 
         if (result.status === 'fulfilled') {
+          successCount++;
           data.push({
             timestamp,
             value: result.value.value,
           });
         } else {
+          failCount++;
           // Determinar razón del fallo
           const errorMsg = result.reason?.message || '';
           let reason: 'no_data' | 'outside_coverage' | 'error' = 'error';
@@ -413,6 +453,11 @@ export class TEMPOService {
             reason = 'outside_coverage';
           }
 
+          console.warn(`[TEMPO] ⚠️ Failed for ${timestamp.toISOString()}: ${errorMsg.substring(0, 100)}`, {
+            reason,
+            fullError: result.reason
+          });
+
           data.push({
             timestamp,
             value: null,
@@ -420,7 +465,13 @@ export class TEMPOService {
           });
         }
       }
+
+      console.log(`[TEMPO] ✅ Batch ${batchNum} complete: ${successCount} success, ${failCount} failed`);
     }
+
+    const totalSuccess = data.filter(d => d.value !== null).length;
+    const totalFailed = data.filter(d => d.value === null).length;
+    console.log(`[TEMPO] 🎉 TimeSeries complete: ${totalSuccess} success, ${totalFailed} failed out of ${data.length} total`);
 
     // Calcular estadísticas
     const validValues = data.map(d => d.value).filter((v): v is number => v !== null);

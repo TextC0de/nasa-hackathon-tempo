@@ -541,6 +541,7 @@ interface CaliforniaMapProps {
   onStationClick?: (station: any) => void
   onFireClick?: (fire: FireDataPoint) => void
   onCityClick?: (city: any) => void
+  onCitiesLoadingChange?: (isLoading: boolean) => void
   onMapClick?: (e: L.LeafletMouseEvent) => void
   initialCenter?: [number, number]
   initialZoom?: number
@@ -558,6 +559,7 @@ export const CaliforniaMap = React.memo(function CaliforniaMap({
   showTempoOverlay = false,
   tempoOverlayData = null,
   alerts = [],
+  onCitiesLoadingChange,
   fires = [],
   onStationClick,
   onFireClick,
@@ -653,7 +655,7 @@ export const CaliforniaMap = React.memo(function CaliforniaMap({
         <AlertMarkers alerts={alerts} />
 
         {/* Cities Layer - Población afectada */}
-        {showCities && <CitiesLayer onCityClick={onCityClick} />}
+        {showCities && <CitiesLayer onCityClick={onCityClick} onLoadingChange={onCitiesLoadingChange} />}
 
         {/* City Boundaries Layer - Límites de ciudades con hover */}
         {showCityBoundaries && (

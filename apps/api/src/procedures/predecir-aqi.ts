@@ -714,6 +714,33 @@ export const predecirAqiProcedure = publicProcedure
                 ],
                 mlUsed: mlPrediction !== null,
                 mlPredictionPpb: mlPrediction,
+                // Metadata del modelo ML
+                modelInfo: mlPrediction !== null
+                  ? {
+                      modelType: 'XGBoost',
+                      modelVersion: 'v1.0',
+                      detectionMethod: 'Machine Learning (Supervised)',
+                      trainedOn: '59,239 samples (Jan-Jul 2024)',
+                      features: 64,
+                      performance: {
+                        r2: 0.404,
+                        mae: 3.03,
+                        rmse: 4.77,
+                        unit: 'ppb',
+                      },
+                      confidenceLevel: 'Medium',
+                      notes: 'XGBoost regression model with TEMPO satellite + meteorological features',
+                    }
+                  : {
+                      modelType: 'Physics-based',
+                      modelVersion: 'N/A',
+                      detectionMethod: 'EPA Ground Truth (Current)',
+                      trainedOn: 'N/A',
+                      features: 0,
+                      performance: null,
+                      confidenceLevel: 'High',
+                      notes: 'Direct measurement from EPA AirNow station',
+                    },
               },
             }
           })()

@@ -7,7 +7,7 @@ import { useAlertPolling } from "@/hooks/use-alert-polling"
 import { Header } from "./_components/header"
 import { MapView } from "./_components/map-view"
 import { DebugDialog } from "./_components/debug-dialog"
-import { MetricsDialog, TEMPODialog, WeatherDialog, PollutantsDialog } from "./_components/dialogs"
+import { MetricsDialog, TEMPODialog, WeatherDialog, PollutantsDialog, DataPanelDialog } from "./_components/dialogs"
 import { RecommendationsPanel, RecommendationsPanelCompact } from "./_components/recommendations-panel"
 import { getAQIColor, getAQIBadge, getAQILevel } from "./_components/utils"
 
@@ -89,6 +89,15 @@ export default function UsuarioPage() {
     setDebugLng(location.lng.toString())
   }
 
+  // Función para actualizar ubicación desde el mapa (drag)
+  const handleLocationUpdate = (lat: number, lng: number) => {
+    setSearchLat(lat)
+    setSearchLng(lng)
+    setDebugLat(lat.toString())
+    setDebugLng(lng.toString())
+    setCurrentLocation({ name: "Ubicación personalizada", lat, lng })
+  }
+
   // Función para búsqueda manual (debug)
   const handleDebugSearch = () => {
     const lat = parseFloat(debugLat)
@@ -152,6 +161,7 @@ export default function UsuarioPage() {
                 onDialogOpen={setOpenDialog}
                 getAQIColor={getAQIColor}
                 getAQIBadge={getAQIBadge}
+                onLocationUpdate={handleLocationUpdate}
               />
             </div>
 
@@ -221,6 +231,16 @@ export default function UsuarioPage() {
           open={openDialog === "pollutants"}
           onOpenChange={(open) => !open && setOpenDialog(null)}
           prediction={prediction}
+        />
+
+        <DataPanelDialog
+          open={openDialog === "data-panel"}
+          onOpenChange={(open) => !open && setOpenDialog(null)}
+          currentLocation={currentLocation}
+          searchLat={searchLat}
+          searchLng={searchLng}
+          prediction={prediction}
+          onOpenPollutantsDialog={() => setOpenDialog("pollutants")}
         />
       </div>
     </TooltipProvider>

@@ -39,6 +39,7 @@ export default function EstadoOverviewPage() {
   const [showCityBoundaries, setShowCityBoundaries] = useState(true)
   const [currentPollutant, setCurrentPollutant] = useState<'NO2' | 'O3' | 'HCHO'>('NO2')
   const [isSubmittingAlert, setIsSubmittingAlert] = useState(false)
+  const [isLoadingCities, setIsLoadingCities] = useState(true)
 
   // State para el Dialog de estación seleccionada
   const [selectedStation, setSelectedStation] = useState<GroupedStation | null>(null)
@@ -129,6 +130,14 @@ export default function EstadoOverviewPage() {
     setFireDialogOpen(true)
   }
 
+  // Handler para estado de carga de ciudades
+  const handleCitiesLoadingChange = (loading: boolean) => {
+    setIsLoadingCities(loading)
+  }
+
+  // Estado de carga combinado: estaciones Y ciudades deben estar cargadas
+  const isLoadingMapData = isLoading || isLoadingCities
+
   return (
     <SelectedCityProvider>
       <TooltipProvider>
@@ -166,21 +175,25 @@ export default function EstadoOverviewPage() {
         <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
           {/* Mapa Principal */}
           <div className="flex-1 lg:w-[65%] relative">
-            {/* Overlay de carga de incendios */}
-            {isLoadingFires && (
+            {/* Overlay de carga - Estaciones, Ciudades e Incendios */}
+            {(isLoadingMapData || isLoadingFires) && (
               <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-[1000] flex items-center justify-center">
                 <div className="bg-card rounded-lg shadow-lg p-6 border border-border max-w-sm mx-4">
                   <div className="flex flex-col items-center space-y-4">
                     <div className="relative">
                       <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-2xl">🔥</span>
+                        <span className="text-2xl">{isLoadingFires ? '🔥' : '🗺️'}</span>
                       </div>
                     </div>
                     <div className="text-center space-y-2">
-                      <h3 className="font-semibold text-lg">Cargando datos de incendios</h3>
+                      <h3 className="font-semibold text-lg">
+                        {isLoadingFires ? 'Cargando datos de incendios' : 'Cargando datos del mapa'}
+                      </h3>
                       <p className="text-sm text-muted-foreground">
-                        Obteniendo información de NASA FIRMS...
+                        {isLoadingFires
+                          ? 'Obteniendo información de NASA FIRMS...'
+                          : 'Obteniendo estaciones y ciudades...'}
                       </p>
                     </div>
                     <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
@@ -204,6 +217,7 @@ export default function EstadoOverviewPage() {
               fires={fires}
               onStationClick={handleStationClick}
               onFireClick={handleFireClick}
+              onCitiesLoadingChange={handleCitiesLoadingChange}
             />
           </div>
 

@@ -16,13 +16,11 @@ import {
 import {
   MapPin,
   Activity,
-  Cloud,
   Wifi,
   WifiOff,
   RefreshCw,
-  TrendingUp,
   Clock,
-  BarChart3
+  Database
 } from "lucide-react"
 
 interface Alert {
@@ -177,8 +175,27 @@ export function Header({
             )}
           </div>
 
-          {/* Alertas Bell + Menubar */}
+          {/* Alertas Bell + Botón Datos + Menubar */}
           <div className="ml-auto flex items-center gap-1 flex-shrink-0">
+            {/* Botón de Datos en Tiempo Real */}
+            {prediction?.general && prediction?.stations && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    onClick={() => onDialogOpen("data-panel")}
+                    className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors"
+                  >
+                    <Database className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline text-xs sm:text-sm font-medium">Datos</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>Ver datos de estaciones y modelos</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
             {/* Campanita de alertas */}
             <AlertsBell
               alerts={alerts}
@@ -212,39 +229,6 @@ export function Header({
                       <span>{loc.name}</span>
                     </MenubarItem>
                   ))}
-                </MenubarContent>
-              </MenubarMenu>
-
-              {/* Menú Datos */}
-              <MenubarMenu>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <MenubarTrigger className="flex items-center gap-1 sm:gap-2 cursor-help px-1 sm:px-2">
-                      <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
-                      <span className="hidden sm:inline text-xs sm:text-sm">Datos</span>
-                    </MenubarTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    <p>Ver detalles de calidad del aire</p>
-                  </TooltipContent>
-                </Tooltip>
-                <MenubarContent>
-                  <MenubarItem onClick={() => onDialogOpen("metrics")}>
-                    <TrendingUp className="mr-2 h-4 w-4" />
-                    <span>Métricas Detalladas</span>
-                  </MenubarItem>
-                  <MenubarItem onClick={() => onDialogOpen("tempo")}>
-                    <Activity className="mr-2 h-4 w-4" />
-                    <span>Datos TEMPO (Satelital)</span>
-                  </MenubarItem>
-                  <MenubarItem onClick={() => onDialogOpen("weather")}>
-                    <Cloud className="mr-2 h-4 w-4" />
-                    <span>Condiciones Meteorológicas</span>
-                  </MenubarItem>
-                  <MenubarItem onClick={() => onDialogOpen("pollutants")}>
-                    <Activity className="mr-2 h-4 w-4" />
-                    <span>Contaminantes AirNow</span>
-                  </MenubarItem>
                 </MenubarContent>
               </MenubarMenu>
 

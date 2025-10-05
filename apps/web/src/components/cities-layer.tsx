@@ -31,6 +31,7 @@ interface CitiesLayerProps {
     lat: number
     lng: number
   }) => void
+  onLoadingChange?: (isLoading: boolean) => void
 }
 
 const getMarkerColor = (aqi: number | null) => {
@@ -133,14 +134,14 @@ function CitiesLayerInner({ data, onCityClick }: {
   return null
 }
 
-export function CitiesLayer({ onCityClick }: CitiesLayerProps) {
+export function CitiesLayer({ onCityClick, onLoadingChange }: CitiesLayerProps) {
   // Estado local con ciudades base (se muestran inmediatamente)
   const [ciudadesData, setCiudadesData] = useState({
     ciudades: CIUDADES_BASE.map(c => ({ ...c, aqi: null, categoria: null, color: null }))
   })
 
   // Query para obtener AQI actualizado (en segundo plano)
-  const { data } = trpc.obtenerPoblacionAfectada.useQuery(
+  const { data, isLoading } = trpc.obtenerPoblacionAfectada.useQuery(
     {},
     {
       // No bloquear la UI mientras carga
@@ -148,6 +149,11 @@ export function CitiesLayer({ onCityClick }: CitiesLayerProps) {
       staleTime: 2 * 60 * 1000, // Considerar stale después de 2 minutos
     }
   )
+
+  // Reportar estado de carga al padre
+  useEffect(() => {
+    onLoadingChange?.(isLoading)
+  }, [isLoading, onLoadingChange])
 
   // Actualizar ciudades cuando llegue data con AQI
   useEffect(() => {

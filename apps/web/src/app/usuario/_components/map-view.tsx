@@ -1,11 +1,9 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Activity, Loader2, AlertCircle, MapPin, Satellite, BrainCircuit, ChevronRight } from "lucide-react"
-import { useState } from "react"
+import { Loader2, AlertCircle } from "lucide-react"
 
 // Importar el mapa dinámicamente
 const MapContainer = dynamic(
@@ -290,6 +288,23 @@ interface MapViewProps {
   onDialogOpen: (dialog: string) => void
   getAQIColor: (aqi: number) => string
   getAQIBadge: (aqi: number) => { color: string; label: string }
+  onLocationUpdate?: (lat: number, lng: number) => void
+}
+
+// California bbox constraints
+const CALIFORNIA_BBOX = {
+  lon_min: -125.0,
+  lat_min: 32.0,
+  lon_max: -114.0,
+  lat_max: 42.0,
+}
+
+// Función para restringir coordenadas al bbox de California
+function constrainToCalifornia(lat: number, lng: number): { lat: number; lng: number } {
+  return {
+    lat: Math.max(CALIFORNIA_BBOX.lat_min, Math.min(CALIFORNIA_BBOX.lat_max, lat)),
+    lng: Math.max(CALIFORNIA_BBOX.lon_min, Math.min(CALIFORNIA_BBOX.lon_max, lng)),
+  }
 }
 
 export function MapView({
@@ -301,10 +316,9 @@ export function MapView({
   error,
   onDialogOpen,
   getAQIColor,
-  getAQIBadge
+  getAQIBadge,
+  onLocationUpdate
 }: MapViewProps) {
-  const [panelExpanded, setPanelExpanded] = useState(true)
-
   // Calcular el centro del mapa para mostrar tanto el usuario como la estación
   const stationLat = prediction?.station?.latitude
   const stationLng = prediction?.station?.longitude
@@ -312,6 +326,24 @@ export function MapView({
   const mapCenter = stationLat && stationLng
     ? [(searchLat + stationLat) / 2, (searchLng + stationLng) / 2] as [number, number]
     : [searchLat, searchLng] as [number, number]
+
+  // Verificar si los datos están completamente cargados
+  const isDataComplete = prediction?.general && prediction?.stations
+
+  // Handler para cuando se mueve el marker
+  const handleMarkerDragEnd = (event: any) => {
+    if (!onLocationUpdate) return
+
+    const { lat, lng } = event.target.getLatLng()
+    const constrained = constrainToCalifornia(lat, lng)
+
+    // Si las coordenadas fueron restringidas, actualizar la posición del marker
+    if (constrained.lat !== lat || constrained.lng !== lng) {
+      event.target.setLatLng([constrained.lat, constrained.lng])
+    }
+
+    onLocationUpdate(constrained.lat, constrained.lng)
+  }
 
   return (
     <div className="h-full w-full relative">
@@ -348,6 +380,10 @@ export function MapView({
           <Marker
             position={[searchLat, searchLng]}
             icon={createUserIcon(prediction?.general?.aqi ?? null)}
+            draggable={true}
+            eventHandlers={{
+              dragend: handleMarkerDragEnd,
+            }}
           >
             <Popup>
               <div className="text-sm space-y-2">
@@ -355,6 +391,9 @@ export function MapView({
                 <p className="font-medium">{currentLocation.name}</p>
                 <p className="text-xs text-muted-foreground">
                   {searchLat.toFixed(4)}, {searchLng.toFixed(4)}
+                </p>
+                <p className="text-xs text-green-600 font-medium">
+                  💡 Arrastra el marcador para cambiar ubicación
                 </p>
                 {prediction?.general && (
                   <div className="pt-2 border-t">
@@ -491,12 +530,13 @@ export function MapView({
       </div>
 
       {/* Loading overlay */}
-      {isLoading && (
+      {(isLoading || !isDataComplete) && !error && (
         <div className="absolute inset-0 bg-background/50 backdrop-blur-sm z-[999] flex items-center justify-center">
           <Card className="p-6">
             <div className="flex flex-col items-center space-y-2">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <p className="text-sm text-muted-foreground">Cargando datos de calidad del aire...</p>
+              <p className="text-xs text-muted-foreground">Obteniendo estaciones y datos satelitales...</p>
             </div>
           </Card>
         </div>
