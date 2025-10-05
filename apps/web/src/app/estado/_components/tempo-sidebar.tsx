@@ -2,14 +2,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { AlertCircle, RefreshCw, Satellite, Info } from "lucide-react"
+import { AlertCircle, RefreshCw, Satellite, Info, Users } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { ChevronDown } from "lucide-react"
+import { PoblacionAfectada } from "./poblacion-afectada"
 
 interface TempoSidebarProps {
   metadata?: {
@@ -123,10 +130,10 @@ export function TempoSidebar({
         <div>
           <div className="flex items-center gap-2 mb-2">
             <Satellite className="h-5 w-5 text-primary" />
-            <h2 className="text-2xl font-bold">Datos Satelitales</h2>
+            <h2 className="text-2xl font-bold">Panel de Análisis</h2>
           </div>
           <p className="text-sm text-muted-foreground">
-            {satellite?.fullName || 'TEMPO - NASA'}
+            Datos satelitales y población afectada
           </p>
         </div>
 
@@ -145,7 +152,7 @@ export function TempoSidebar({
           ))}
         </div>
 
-        {/* Estado General */}
+        {/* Estado Actual (siempre visible) */}
         {isLoading ? (
           <Card>
             <CardHeader>
@@ -179,104 +186,110 @@ export function TempoSidebar({
           </Card>
         ) : null}
 
-        {/* Info del Contaminante */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <span className="text-2xl">{pollutantInfo.icon}</span>
-              {pollutantInfo.name}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Fuente principal:</p>
-              <p className="text-sm">{pollutantInfo.fuente}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                {currentPollutant === 'O3' ? 'Beneficio:' : 'Efectos en salud:'}
-              </p>
-              <p className="text-sm">{pollutantInfo.efectos}</p>
-            </div>
+        {/* Acordiones para secciones colapsables */}
+        <Accordion type="multiple" defaultValue={["contaminante", "recomendaciones"]} className="space-y-2">
+          {/* Info del Contaminante */}
+          <AccordionItem value="contaminante" className="border rounded-lg px-4">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-2 text-left">
+                <span className="text-xl">{pollutantInfo.icon}</span>
+                <span className="font-semibold">{pollutantInfo.name}</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-3 pt-2 pb-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Fuente principal:</p>
+                <p className="text-sm">{pollutantInfo.fuente}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  {currentPollutant === 'O3' ? 'Beneficio:' : 'Efectos en salud:'}
+                </p>
+                <p className="text-sm">{pollutantInfo.efectos}</p>
+              </div>
 
-            {/* Valor científico (colapsable) */}
-            {metadata?.center.valueFormatted && (
-              <Collapsible>
-                <CollapsibleTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-                  <Info className="h-3 w-3" />
-                  Valor técnico
-                  <ChevronDown className="h-3 w-3" />
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-2 p-3 bg-muted rounded-md">
-                  <p className="text-xs font-mono">{metadata.center.valueFormatted}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Medido en el centro de California
-                  </p>
-                </CollapsibleContent>
-              </Collapsible>
-            )}
-          </CardContent>
-        </Card>
+              {/* Valor científico (colapsable) */}
+              {metadata?.center.valueFormatted && (
+                <Collapsible>
+                  <CollapsibleTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+                    <Info className="h-3 w-3" />
+                    Valor técnico
+                    <ChevronDown className="h-3 w-3" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2 p-3 bg-muted rounded-md">
+                    <p className="text-xs font-mono">{metadata.center.valueFormatted}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Medido en el centro de California
+                    </p>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
+            </AccordionContent>
+          </AccordionItem>
 
-        {/* Recomendaciones */}
-        {metadata && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Recomendaciones</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              {metadata.interpretation.color === 'green' && (
-                <>
-                  <p>✅ Excelente momento para actividades al aire libre</p>
-                  <p>✅ Calidad del aire óptima</p>
-                </>
-              )}
-              {metadata.interpretation.color === 'yellow' && (
-                <>
-                  <p>⚠️ Grupos sensibles deben considerar reducir exposición prolongada</p>
-                  <p>✅ La mayoría de las personas pueden realizar actividades normales</p>
-                </>
-              )}
-              {(metadata.interpretation.color === 'orange' || metadata.interpretation.color === 'red') && (
-                <>
-                  <p>🚫 Evitar ejercicio intenso al aire libre</p>
-                  <p>🏠 Considerar permanecer en interiores</p>
-                  <p>😷 Grupos sensibles deben usar protección</p>
-                </>
-              )}
-              {metadata.interpretation.color === 'purple' && (
-                <>
-                  <p>🚨 Alerta de salud - evitar exposición al aire libre</p>
-                  <p>🏠 Permanecer en interiores con ventanas cerradas</p>
-                  <p>😷 Usar mascarilla si debe salir</p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        )}
+          {/* Recomendaciones */}
+          {metadata && (
+            <AccordionItem value="recomendaciones" className="border rounded-lg px-4">
+              <AccordionTrigger className="hover:no-underline">
+                <span className="font-semibold">Recomendaciones</span>
+              </AccordionTrigger>
+              <AccordionContent className="space-y-2 text-sm pt-2 pb-4">
+                {metadata.interpretation.color === 'green' && (
+                  <>
+                    <p>✅ Excelente momento para actividades al aire libre</p>
+                    <p>✅ Calidad del aire óptima</p>
+                  </>
+                )}
+                {metadata.interpretation.color === 'yellow' && (
+                  <>
+                    <p>⚠️ Grupos sensibles deben considerar reducir exposición prolongada</p>
+                    <p>✅ La mayoría de las personas pueden realizar actividades normales</p>
+                  </>
+                )}
+                {(metadata.interpretation.color === 'orange' || metadata.interpretation.color === 'red') && (
+                  <>
+                    <p>🚫 Evitar ejercicio intenso al aire libre</p>
+                    <p>🏠 Considerar permanecer en interiores</p>
+                    <p>😷 Grupos sensibles deben usar protección</p>
+                  </>
+                )}
+                {metadata.interpretation.color === 'purple' && (
+                  <>
+                    <p>🚨 Alerta de salud - evitar exposición al aire libre</p>
+                    <p>🏠 Permanecer en interiores con ventanas cerradas</p>
+                    <p>😷 Usar mascarilla si debe salir</p>
+                  </>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          )}
 
-        {/* Info del Satélite */}
-        {satellite && (
-          <Card className="bg-primary/5">
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Satellite className="h-4 w-4" />
-                Información del Satélite
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-xs space-y-1 text-muted-foreground">
-              <p>
-                <span className="font-medium">Satélite:</span> {satellite.name}
-              </p>
-              <p>
-                <span className="font-medium">Agencia:</span> {satellite.agency}
-              </p>
-              <p>
-                <span className="font-medium">Resolución:</span> {satellite.resolution}
-              </p>
-            </CardContent>
-          </Card>
-        )}
+          {/* Población Afectada */}
+          <PoblacionAfectada />
+
+          {/* Info del Satélite */}
+          {satellite && (
+            <AccordionItem value="satelite" className="border rounded-lg px-4 bg-primary/5">
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center gap-2">
+                  <Satellite className="h-4 w-4" />
+                  <span className="font-semibold text-sm">Información del Satélite</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="text-xs space-y-1 text-muted-foreground pt-2 pb-4">
+                <p>
+                  <span className="font-medium">Satélite:</span> {satellite.name}
+                </p>
+                <p>
+                  <span className="font-medium">Agencia:</span> {satellite.agency}
+                </p>
+                <p>
+                  <span className="font-medium">Resolución:</span> {satellite.resolution}
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+          )}
+        </Accordion>
 
         {/* Botón de Refresh */}
         <Button onClick={onRefresh} disabled={isLoading} className="w-full" variant="outline">

@@ -21,6 +21,7 @@ import { crearReporteUsuarioProcedure } from './procedures/crear-reporte-usuario
 import { obtenerReportesUsuarioProcedure } from './procedures/obtener-reporte-usuario'
 import { obtenerPoblacionCiudadProcedure } from './procedures/obtener-poblacion-ciudad'
 import { obtenerPoblacionCondadoProcedure } from './procedures/obtener-poblacion-condado'
+import { obtenerPoblacionAfectadaProcedure } from './procedures/obtener-poblacion-afectada'
 
 export const appRouter = router({
   hello: helloProcedure,
@@ -45,6 +46,7 @@ export const appRouter = router({
   obtenerReportesUsuario: obtenerReportesUsuarioProcedure,
   obtenerPoblacionCiudad: obtenerPoblacionCiudadProcedure,
   obtenerPoblacionCondado: obtenerPoblacionCondadoProcedure,
+  obtenerPoblacionAfectada: obtenerPoblacionAfectadaProcedure,
 })
 
 export type AppRouter = typeof appRouter

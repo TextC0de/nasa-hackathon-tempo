@@ -1,53 +1,53 @@
 {
-  "train_date": "2025-10-05T10:07:59.660618",
-  "n_samples_train": 14876,
-  "n_samples_test": 4944,
-  "n_features": 60,
-  "mae_test": 4.905399341707368,
-  "rmse_test": 6.777241178132789,
-  "r2_test": 0.16288421656771856,
-  "mae_physics_baseline": 5.318539892432564,
-  "improvement_pct": 7.76793178355264,
+  "train_date": "2025-10-05T12:58:23.406493",
+  "n_samples_train": 44434,
+  "n_samples_test": 14805,
+  "n_features": 64,
+  "mae_test": 3.0297296537926286,
+  "rmse_test": 4.773285881303545,
+  "r2_test": 0.4039376515924187,
+  "mae_physics_baseline": 4.391618534827219,
+  "improvement_pct": 31.011092385057797,
   "top_features": [
     {
       "feature": "no2_upwind_30km_avg",
-      "importance": 0.09503737092018127
-    },
-    {
-      "feature": "no2_upwind_30km_std",
-      "importance": 0.09041370451450348
-    },
-    {
-      "feature": "distance_to_nearest_city_km",
-      "importance": 0.05732008442282677
-    },
-    {
-      "feature": "hour",
-      "importance": 0.05003102496266365
-    },
-    {
-      "feature": "urban_proximity_index",
-      "importance": 0.04696529358625412
+      "importance": 0.09479378908872604
     },
     {
       "feature": "no2_upwind_30km_max",
-      "importance": 0.04596911370754242
+      "importance": 0.06850958615541458
+    },
+    {
+      "feature": "distance_to_nearest_city_km",
+      "importance": 0.04672769084572792
+    },
+    {
+      "feature": "no2_upwind_30km_std",
+      "importance": 0.04374527558684349
+    },
+    {
+      "feature": "wind_speed_x_upwind_no2",
+      "importance": 0.03958962857723236
+    },
+    {
+      "feature": "day_of_year",
+      "importance": 0.03873655945062637
+    },
+    {
+      "feature": "hour_sin",
+      "importance": 0.03770563006401062
+    },
+    {
+      "feature": "urban_proximity_index",
+      "importance": 0.03408313915133476
     },
     {
       "feature": "month",
-      "importance": 0.04501403868198395
+      "importance": 0.03156672790646553
     },
     {
-      "feature": "no2_upwind_20km_max",
-      "importance": 0.03986434265971184
-    },
-    {
-      "feature": "gradient_center_avg",
-      "importance": 0.037800196558237076
-    },
-    {
-      "feature": "gradient_upwind_downwind",
-      "importance": 0.032938819378614426
+      "feature": "no2_upwind_10km_std",
+      "importance": 0.03055480495095253
     }
   ]
 }

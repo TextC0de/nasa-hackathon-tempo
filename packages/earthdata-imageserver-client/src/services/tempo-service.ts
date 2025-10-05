@@ -319,6 +319,112 @@ export class TEMPOService {
     };
   }
 
+  /**
+   * Obtener serie temporal de contaminante en un punto
+   *
+   * Obtiene mediciones horarias en un rango de tiempo.
+   *
+   * @param options - Opciones de consulta
+   * @returns Serie temporal con estadísticas
+   * @throws {TimeRangeError} Si el rango temporal está fuera del disponible
+   *
+   * @example
+   * ```typescript
+   * const timeSeries = await tempo.getDataTimeSeries({
+   *   location: { latitude: 34.05, longitude: -118.24 },
+   *   timeRange: {
+   *     start: new Date('2025-10-01T00:00:00Z'),
+   *     end: new Date('2025-10-01T23:00:00Z')
+   *   },
+   *   pollutant: 'HCHO',
+   *   intervalHours: 1
+   * });
+   *
+   * console.log(`${timeSeries.data.length} measurements`);
+   * console.log(`Mean: ${timeSeries.statistics.mean}`);
+   * ```
+   */
+  async getDataTimeSeries(options: TEMPOTimeSeriesQuery): Promise<PollutantTimeSeries> {
+    const location = normalizeGeoPoint(options.location);
+    const pollutant = options.pollutant || 'NO2';
+    const intervalHours = options.intervalHours || 1;
+
+    const start = options.timeRange.start instanceof Date
+      ? options.timeRange.start
+      : new Date(options.timeRange.start);
+    const end = options.timeRange.end instanceof Date
+      ? options.timeRange.end
+      : new Date(options.timeRange.end);
+
+    // Validar rango temporal
+    const extent = await this.getTemporalExtent(pollutant);
+    if (!extent.isWithinRange(start) || !extent.isWithinRange(end)) {
+      throw new TimeRangeError(
+        `Requested time range ${start.toISOString()} - ${end.toISOString()} is outside available range`,
+        { start: extent.start, end: extent.end }
+      );
+    }
+
+    // Generar timestamps para cada intervalo
+    const timestamps: Date[] = [];
+    let currentTime = new Date(start);
+    while (currentTime <= end) {
+      timestamps.push(new Date(currentTime));
+      currentTime = new Date(currentTime.getTime() + intervalHours * 60 * 60 * 1000);
+    }
+
+    // Obtener datos para cada timestamp (en paralelo con límite)
+    const data: TimeSeriesPoint[] = [];
+    const BATCH_SIZE = 5; // Limitar requests paralelos
+
+    for (let i = 0; i < timestamps.length; i += BATCH_SIZE) {
+      const batch = timestamps.slice(i, i + BATCH_SIZE);
+      const batchResults = await Promise.allSettled(
+        batch.map(timestamp =>
+          this.getDataAtPoint({ location, timestamp, pollutant })
+        )
+      );
+
+      for (let j = 0; j < batchResults.length; j++) {
+        const result = batchResults[j];
+        const timestamp = batch[j];
+
+        if (result.status === 'fulfilled') {
+          data.push({
+            timestamp,
+            value: result.value.value,
+          });
+        } else {
+          // Si falla (NoData), agregar null
+          data.push({
+            timestamp,
+            value: null,
+          });
+        }
+      }
+    }
+
+    // Calcular estadísticas
+    const validValues = data.map(d => d.value).filter((v): v is number => v !== null);
+    const statistics = {
+      min: validValues.length > 0 ? Math.min(...validValues) : 0,
+      max: validValues.length > 0 ? Math.max(...validValues) : 0,
+      mean: validValues.length > 0
+        ? validValues.reduce((a, b) => a + b, 0) / validValues.length
+        : 0,
+      count: validValues.length,
+    };
+
+    return {
+      pollutant,
+      location,
+      timeRange: { start, end },
+      data,
+      unit: TEMPO_UNITS[pollutant],
+      statistics,
+    };
+  }
+
   // ============================================================================
   // MÉTODOS DE CONVENIENCIA - Shortcuts por pollutant
   // ============================================================================
@@ -371,6 +477,27 @@ export class TEMPOService {
    */
   async getHCHOInRegion(options: Omit<TEMPORegionQuery, 'pollutant'>): Promise<PollutantRegionData> {
     return this.getDataInRegion({ ...options, pollutant: 'HCHO' });
+  }
+
+  /**
+   * Obtener serie temporal de NO2 (shortcut)
+   */
+  async getNO2TimeSeries(options: Omit<TEMPOTimeSeriesQuery, 'pollutant'>): Promise<PollutantTimeSeries> {
+    return this.getDataTimeSeries({ ...options, pollutant: 'NO2' });
+  }
+
+  /**
+   * Obtener serie temporal de O3 (shortcut)
+   */
+  async getO3TimeSeries(options: Omit<TEMPOTimeSeriesQuery, 'pollutant'>): Promise<PollutantTimeSeries> {
+    return this.getDataTimeSeries({ ...options, pollutant: 'O3' });
+  }
+
+  /**
+   * Obtener serie temporal de HCHO (shortcut)
+   */
+  async getHCHOTimeSeries(options: Omit<TEMPOTimeSeriesQuery, 'pollutant'>): Promise<PollutantTimeSeries> {
+    return this.getDataTimeSeries({ ...options, pollutant: 'HCHO' });
   }
 
   // ============================================================================
