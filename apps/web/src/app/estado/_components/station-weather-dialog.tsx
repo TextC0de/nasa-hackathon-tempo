@@ -38,9 +38,9 @@ interface StationWeatherDialogProps {
 }
 
 /**
- * Dialog profesional que muestra información completa de una estación:
- * - Calidad del aire (todos los parámetros)
- * - Clima en tiempo real
+ * Professional dialog that shows complete station information:
+ * - Air quality (all parameters)
+ * - Real-time weather
  */
 export function StationWeatherDialog({
   station,
@@ -51,28 +51,28 @@ export function StationWeatherDialog({
 }: StationWeatherDialogProps) {
   const [activeTab, setActiveTab] = useState<"air" | "weather" | "forecast">("air")
 
-  // Query de clima actual (solo se ejecuta si la estación está seleccionada)
+  // Current weather query (only executes if station is selected)
   const { data: climaData, isLoading: climaLoading } = trpc.obtenerClimaActual.useQuery(
     {
       latitud: station?.Latitude ?? 0,
       longitud: station?.Longitude ?? 0
     },
     {
-      enabled: !!station && open, // Solo fetch cuando hay estación y dialog está abierto
-      staleTime: 5 * 60 * 1000, // Cache 5 minutos
+      enabled: !!station && open, // Only fetch when there's a station and dialog is open
+      staleTime: 5 * 60 * 1000, // Cache 5 minutes
     }
   )
 
-  // Query de pronóstico (48 horas futuras)
+  // Forecast query (48 hours ahead)
   const { data: forecastData, isLoading: forecastLoading } = trpc.obtenerPrediccionMeteorologica.useQuery(
     {
       latitud: station?.Latitude ?? 0,
       longitud: station?.Longitude ?? 0,
-      horasPronostico: 48 // T+48h desde ahora
+      horasPronostico: 48 // T+48h from now
     },
     {
-      enabled: !!station && open, // Solo fetch cuando hay estación y dialog está abierto
-      staleTime: 15 * 60 * 1000, // Cache 15 minutos (pronóstico cambia menos frecuentemente)
+      enabled: !!station && open, // Only fetch when there's a station and dialog is open
+      staleTime: 15 * 60 * 1000, // Cache 15 minutes (forecast changes less frequently)
     }
   )
 
@@ -81,10 +81,10 @@ export function StationWeatherDialog({
   const dominantAqiColor = getAQIColor(station.dominantAQI)
   const dominantAqiCategory = getAQICategory(station.dominantAQI)
 
-  // Formatear timestamp
+  // Format timestamp
   const formatTimestamp = (timestamp: string) => {
     try {
-      return new Date(timestamp).toLocaleString('es-ES', {
+      return new Date(timestamp).toLocaleString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
@@ -96,38 +96,38 @@ export function StationWeatherDialog({
     }
   }
 
-  // Obtener descripción del clima según código
+  // Get weather description by code
   const getWeatherDescription = (code: number | null): string => {
-    if (code === null) return 'Desconocido'
+    if (code === null) return 'Unknown'
 
     const weatherCodes: Record<number, string> = {
-      0: 'Despejado',
-      1: 'Mayormente despejado',
-      2: 'Parcialmente nublado',
-      3: 'Nublado',
-      45: 'Niebla',
-      48: 'Niebla con escarcha',
-      51: 'Llovizna ligera',
-      53: 'Llovizna moderada',
-      55: 'Llovizna densa',
-      61: 'Lluvia ligera',
-      63: 'Lluvia moderada',
-      65: 'Lluvia fuerte',
-      71: 'Nieve ligera',
-      73: 'Nieve moderada',
-      75: 'Nieve fuerte',
-      80: 'Chubascos ligeros',
-      81: 'Chubascos moderados',
-      82: 'Chubascos violentos',
-      95: 'Tormenta',
-      96: 'Tormenta con granizo ligero',
-      99: 'Tormenta con granizo fuerte'
+      0: 'Clear',
+      1: 'Mainly clear',
+      2: 'Partly cloudy',
+      3: 'Cloudy',
+      45: 'Fog',
+      48: 'Depositing rime fog',
+      51: 'Light drizzle',
+      53: 'Moderate drizzle',
+      55: 'Dense drizzle',
+      61: 'Light rain',
+      63: 'Moderate rain',
+      65: 'Heavy rain',
+      71: 'Light snow',
+      73: 'Moderate snow',
+      75: 'Heavy snow',
+      80: 'Light showers',
+      81: 'Moderate showers',
+      82: 'Violent showers',
+      95: 'Thunderstorm',
+      96: 'Thunderstorm with light hail',
+      99: 'Thunderstorm with heavy hail'
     }
 
-    return weatherCodes[code] ?? 'Desconocido'
+    return weatherCodes[code] ?? 'Unknown'
   }
 
-  // Obtener dirección del viento
+  // Get wind direction
   const getWindDirection = (degrees: number | null): string => {
     if (degrees === null) return 'N/A'
 
@@ -136,7 +136,7 @@ export function StationWeatherDialog({
     return directions[index]
   }
 
-  // Obtener icono del clima según código
+  // Get weather icon by code
   const getWeatherIcon = (code: number | null) => {
     if (code === null) return <Cloud className="h-5 w-5 text-gray-400" />
 
@@ -151,13 +151,13 @@ export function StationWeatherDialog({
     return <Cloud className="h-5 w-5 text-gray-400" />
   }
 
-  // Agrupar pronóstico por día
+  // Group forecast by day
   const groupForecastByDay = (hourlyData: any) => {
     const days: { [key: string]: any[] } = {}
 
     hourlyData.time?.forEach((time: string, idx: number) => {
       const date = new Date(time)
-      const dayKey = date.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })
+      const dayKey = date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
 
       if (!days[dayKey]) {
         days[dayKey] = []
@@ -225,13 +225,13 @@ export function StationWeatherDialog({
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-xs text-gray-600 mb-1">Estado General</div>
+                  <div className="text-xs text-gray-600 mb-1">Overall Status</div>
                   <div className="font-semibold" style={{ color: dominantAqiColor }}>
                     {dominantAqiCategory.emoji} {dominantAqiCategory.category}
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-gray-600 mb-1">Parámetro Predominante</div>
+                  <div className="text-xs text-gray-600 mb-1">Dominant Parameter</div>
                   <div className="font-semibold text-gray-900">{station.dominantParameter}</div>
                 </div>
               </div>
@@ -244,34 +244,34 @@ export function StationWeatherDialog({
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="air" className="flex items-center gap-2">
               <Activity className="h-4 w-4" />
-              Calidad del Aire
+              Air Quality
             </TabsTrigger>
             <TabsTrigger value="weather" className="flex items-center gap-2">
               <Cloud className="h-4 w-4" />
-              Clima Actual
+              Current Weather
             </TabsTrigger>
             <TabsTrigger value="forecast" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
-              Pronóstico 48h
+              48h Forecast
             </TabsTrigger>
           </TabsList>
 
-          {/* Tab: Calidad del Aire */}
+          {/* Tab: Air Quality */}
           <TabsContent value="air" className="space-y-4">
             <div>
               <div className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
-                Parámetros Monitoreados ({station.measurements.length})
+                Monitored Parameters ({station.measurements.length})
               </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50">
                     <tr className="border-b border-gray-200">
-                      <th className="py-3 px-3 text-left font-semibold text-gray-700">Parámetro</th>
+                      <th className="py-3 px-3 text-left font-semibold text-gray-700">Parameter</th>
                       <th className="py-3 px-3 text-center font-semibold text-gray-700">AQI</th>
-                      <th className="py-3 px-3 text-left font-semibold text-gray-700">Categoría</th>
-                      <th className="py-3 px-3 text-right font-semibold text-gray-700">Valor</th>
+                      <th className="py-3 px-3 text-left font-semibold text-gray-700">Category</th>
+                      <th className="py-3 px-3 text-right font-semibold text-gray-700">Value</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -296,7 +296,7 @@ export function StationWeatherDialog({
                               </span>
                             </td>
                             <td className="py-3 px-3 text-xs text-gray-600">
-                              {isValid ? category : 'Sin datos'}
+                              {isValid ? category : 'No data'}
                             </td>
                             <td className="py-3 px-3 text-xs text-gray-600 text-right">
                               {measurement.RawConcentration > 0
@@ -312,24 +312,24 @@ export function StationWeatherDialog({
             </div>
           </TabsContent>
 
-          {/* Tab: Clima Actual */}
+          {/* Tab: Current Weather */}
           <TabsContent value="weather" className="space-y-4">
             {climaLoading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                  <p className="text-sm text-muted-foreground">Cargando datos de clima...</p>
+                  <p className="text-sm text-muted-foreground">Loading weather data...</p>
                 </div>
               </div>
             ) : climaData?.current ? (
               <div className="space-y-4">
                 {/* Weather Cards Grid */}
                 <div className="grid grid-cols-2 gap-3">
-                  {/* Temperatura */}
+                  {/* Temperature */}
                   <div className="p-4 rounded-lg bg-gradient-to-br from-orange-50 to-red-50 border border-orange-200">
                     <div className="flex items-center gap-2 mb-2">
                       <Thermometer className="h-5 w-5 text-orange-600" />
-                      <span className="text-xs font-semibold text-gray-700">Temperatura</span>
+                      <span className="text-xs font-semibold text-gray-700">Temperature</span>
                     </div>
                     <div className="text-2xl font-bold text-gray-900">
                       {climaData.current.temperature !== null
@@ -338,16 +338,16 @@ export function StationWeatherDialog({
                     </div>
                     {climaData.current.apparentTemperature !== null && (
                       <div className="text-xs text-gray-600 mt-1">
-                        Sensación: {climaData.current.apparentTemperature.toFixed(1)}°C
+                        Feels like: {climaData.current.apparentTemperature.toFixed(1)}°C
                       </div>
                     )}
                   </div>
 
-                  {/* Viento */}
+                  {/* Wind */}
                   <div className="p-4 rounded-lg bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200">
                     <div className="flex items-center gap-2 mb-2">
                       <Wind className="h-5 w-5 text-blue-600" />
-                      <span className="text-xs font-semibold text-gray-700">Viento</span>
+                      <span className="text-xs font-semibold text-gray-700">Wind</span>
                     </div>
                     <div className="text-2xl font-bold text-gray-900">
                       {climaData.current.windSpeed !== null
@@ -361,11 +361,11 @@ export function StationWeatherDialog({
                     )}
                   </div>
 
-                  {/* Humedad */}
+                  {/* Humidity */}
                   <div className="p-4 rounded-lg bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-200">
                     <div className="flex items-center gap-2 mb-2">
                       <Droplets className="h-5 w-5 text-teal-600" />
-                      <span className="text-xs font-semibold text-gray-700">Humedad</span>
+                      <span className="text-xs font-semibold text-gray-700">Humidity</span>
                     </div>
                     <div className="text-2xl font-bold text-gray-900">
                       {climaData.current.humidity !== null
@@ -373,15 +373,15 @@ export function StationWeatherDialog({
                         : 'N/A'}
                     </div>
                     <div className="text-xs text-gray-600 mt-1">
-                      Relativa
+                      Relative
                     </div>
                   </div>
 
-                  {/* Presión */}
+                  {/* Pressure */}
                   <div className="p-4 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200">
                     <div className="flex items-center gap-2 mb-2">
                       <Gauge className="h-5 w-5 text-purple-600" />
-                      <span className="text-xs font-semibold text-gray-700">Presión</span>
+                      <span className="text-xs font-semibold text-gray-700">Pressure</span>
                     </div>
                     <div className="text-2xl font-bold text-gray-900">
                       {climaData.current.pressure !== null
@@ -389,7 +389,7 @@ export function StationWeatherDialog({
                         : 'N/A'}
                     </div>
                     <div className="text-xs text-gray-600 mt-1">
-                      Superficie
+                      Surface
                     </div>
                   </div>
                 </div>
@@ -400,7 +400,7 @@ export function StationWeatherDialog({
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600 flex items-center gap-2">
                         <Eye className="h-4 w-4" />
-                        Clima:
+                        Weather:
                       </span>
                       <span className="font-medium">
                         {getWeatherDescription(climaData.current.weatherCode)}
@@ -410,7 +410,7 @@ export function StationWeatherDialog({
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600 flex items-center gap-2">
                         <Cloud className="h-4 w-4" />
-                        Nubes:
+                        Clouds:
                       </span>
                       <span className="font-medium">
                         {climaData.current.cloudCover !== null
@@ -422,7 +422,7 @@ export function StationWeatherDialog({
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600 flex items-center gap-2">
                         <Droplets className="h-4 w-4" />
-                        Precipitación:
+                        Precipitation:
                       </span>
                       <span className="font-medium">
                         {climaData.current.precipitation !== null
@@ -435,7 +435,7 @@ export function StationWeatherDialog({
                       <div className="flex items-center justify-between">
                         <span className="text-gray-600 flex items-center gap-2">
                           <Wind className="h-4 w-4" />
-                          Ráfagas:
+                          Gusts:
                         </span>
                         <span className="font-medium">
                           {climaData.current.windGusts.toFixed(1)} m/s
@@ -447,25 +447,25 @@ export function StationWeatherDialog({
 
                 {/* Timestamp */}
                 <div className="text-xs text-center text-muted-foreground pt-2 border-t">
-                  Datos meteorológicos de {formatTimestamp(climaData.current.timestamp)}
+                  Weather data from {formatTimestamp(climaData.current.timestamp)}
                 </div>
               </div>
             ) : (
               <div className="text-center py-12">
                 <p className="text-sm text-muted-foreground">
-                  No hay datos de clima disponibles
+                  No weather data available
                 </p>
               </div>
             )}
           </TabsContent>
 
-          {/* Tab: Pronóstico */}
+          {/* Tab: Forecast */}
           <TabsContent value="forecast" className="space-y-4">
             {forecastLoading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                  <p className="text-sm text-muted-foreground">Cargando pronóstico...</p>
+                  <p className="text-sm text-muted-foreground">Loading forecast...</p>
                 </div>
               </div>
             ) : forecastData?.weather_data?.hourly ? (
@@ -475,7 +475,7 @@ export function StationWeatherDialog({
                   <div className="p-3 rounded-lg bg-gradient-to-br from-orange-50 to-red-50 border border-orange-200">
                     <div className="flex items-center gap-2 mb-1">
                       <Thermometer className="h-4 w-4 text-orange-600" />
-                      <span className="text-xs font-semibold text-gray-700">Temp. Máx</span>
+                      <span className="text-xs font-semibold text-gray-700">Max Temp</span>
                     </div>
                     <div className="text-xl font-bold text-gray-900">
                       {forecastData.weather_data.hourly.temperature_2m
@@ -492,7 +492,7 @@ export function StationWeatherDialog({
                   <div className="p-3 rounded-lg bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200">
                     <div className="flex items-center gap-2 mb-1">
                       <Thermometer className="h-4 w-4 text-blue-600" />
-                      <span className="text-xs font-semibold text-gray-700">Temp. Mín</span>
+                      <span className="text-xs font-semibold text-gray-700">Min Temp</span>
                     </div>
                     <div className="text-xl font-bold text-gray-900">
                       {forecastData.weather_data.hourly.temperature_2m
@@ -509,7 +509,7 @@ export function StationWeatherDialog({
                   <div className="p-3 rounded-lg bg-gradient-to-br from-blue-100 to-blue-50 border border-blue-300">
                     <div className="flex items-center gap-2 mb-1">
                       <Droplets className="h-4 w-4 text-blue-700" />
-                      <span className="text-xs font-semibold text-gray-700">Precipitación</span>
+                      <span className="text-xs font-semibold text-gray-700">Precipitation</span>
                     </div>
                     <div className="text-xl font-bold text-gray-900">
                       {forecastData.weather_data.hourly.precipitation
@@ -526,7 +526,7 @@ export function StationWeatherDialog({
                   <div className="p-3 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200">
                     <div className="flex items-center gap-2 mb-1">
                       <Wind className="h-4 w-4 text-purple-600" />
-                      <span className="text-xs font-semibold text-gray-700">Viento Máx</span>
+                      <span className="text-xs font-semibold text-gray-700">Max Wind</span>
                     </div>
                     <div className="text-xl font-bold text-gray-900">
                       {forecastData.weather_data.hourly.windspeed_10m
@@ -545,7 +545,7 @@ export function StationWeatherDialog({
                 <div className="space-y-3">
                   <div className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                     <Clock className="h-4 w-4" />
-                    Pronóstico por Hora (próximas {forecastData.forecast_hours}h)
+                    Hourly Forecast (next {forecastData.forecast_hours}h)
                   </div>
 
                   <div className="max-h-[400px] overflow-y-auto space-y-4 pr-2">
@@ -585,7 +585,7 @@ export function StationWeatherDialog({
                                 <div className="flex items-center justify-between gap-4">
                                   {/* Hour + Weather Icon */}
                                   <div className="flex items-center gap-3 flex-1 min-w-[140px]">
-                                    {isNow && <Badge variant="default" className="text-xs">Ahora</Badge>}
+                                    {isNow && <Badge variant="default" className="text-xs">Now</Badge>}
                                     <span className="font-semibold text-gray-900 w-12">
                                       {hour.toString().padStart(2, '0')}:00
                                     </span>
@@ -636,7 +636,7 @@ export function StationWeatherDialog({
             ) : (
               <div className="text-center py-12">
                 <p className="text-sm text-muted-foreground">
-                  No hay datos de pronóstico disponibles
+                  No forecast data available
                 </p>
               </div>
             )}
@@ -646,8 +646,8 @@ export function StationWeatherDialog({
         {/* Footer */}
         <div className="pt-4 border-t border-gray-200">
           <div className="text-xs text-gray-500 space-y-1">
-            <div>Código AQS: {station.FullAQSCode}</div>
-            <div>Mediciones: {station.measurements.length} parámetros</div>
+            <div>AQS Code: {station.FullAQSCode}</div>
+            <div>Measurements: {station.measurements.length} parameters</div>
           </div>
         </div>
       </DialogContent>

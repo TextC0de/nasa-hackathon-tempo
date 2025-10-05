@@ -112,7 +112,7 @@ export function ExportDataButtons() {
       URL.revokeObjectURL(url)
     } catch (error) {
       console.error('Error downloading CSV:', error)
-      alert('Error al descargar CSV. Por favor intenta nuevamente.')
+      alert('Error downloading CSV. Please try again.')
     }
   }
 
@@ -123,10 +123,10 @@ export function ExportDataButtons() {
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <Download className="h-4 w-4" />
-          <CardTitle className="text-sm">Exportar Datos</CardTitle>
+          <CardTitle className="text-sm">Export Data</CardTitle>
         </div>
         <CardDescription className="text-xs">
-          Descarga los datos de calidad del aire en diferentes formatos
+          Download air quality data in different formats
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
@@ -137,7 +137,7 @@ export function ExportDataButtons() {
           className="w-full justify-start"
         >
           <FileJson className="mr-2 h-4 w-4" />
-          Descargar GeoJSON
+          Download GeoJSON
           <span className="ml-auto text-xs text-muted-foreground">.geojson</span>
         </Button>
 
@@ -148,14 +148,14 @@ export function ExportDataButtons() {
           className="w-full justify-start"
         >
           <FileSpreadsheet className="mr-2 h-4 w-4" />
-          Descargar CSV
+          Download CSV
           <span className="ml-auto text-xs text-muted-foreground">.csv</span>
         </Button>
 
         <div className="pt-2 border-t">
           <p className="text-[10px] text-muted-foreground">
-            💡 Los datos incluyen información actualizada de {ciudadesData.ciudades.length} ciudades
-            principales de California
+            Data includes updated information from {ciudadesData.ciudades.length} major
+            California cities
           </p>
         </div>
       </CardContent>

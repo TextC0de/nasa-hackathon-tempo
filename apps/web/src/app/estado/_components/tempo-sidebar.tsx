@@ -48,25 +48,25 @@ interface TempoSidebarProps {
 
 const POLLUTANT_INFO = {
   NO2: {
-    name: 'Dióxido de Nitrógeno',
+    name: 'Nitrogen Dioxide',
     shortName: 'NO₂',
     icon: '🚗',
-    fuente: 'Principalmente de vehículos y plantas de energía',
-    efectos: 'Irrita las vías respiratorias, agrava el asma',
+    source: 'Mainly from vehicles and power plants',
+    effects: 'Irritates respiratory tract, aggravates asthma',
   },
   O3: {
-    name: 'Ozono Estratosférico',
+    name: 'Stratospheric Ozone',
     shortName: 'O₃',
     icon: '🛡️',
-    fuente: 'Capa protectora en la atmósfera superior',
-    efectos: 'Nos protege de la radiación UV del sol',
+    source: 'Protective layer in the upper atmosphere',
+    effects: 'Protects us from the sun\'s UV radiation',
   },
   HCHO: {
-    name: 'Formaldehído',
+    name: 'Formaldehyde',
     shortName: 'HCHO',
     icon: '🏭',
-    fuente: 'Industrias, incendios forestales, vehículos',
-    efectos: 'Irritante ocular y respiratorio',
+    source: 'Industries, forest fires, vehicles',
+    effects: 'Eye and respiratory irritant',
   },
 }
 
@@ -113,12 +113,12 @@ export function TempoSidebar({
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Error al cargar datos TEMPO: {error.message}
+            Error loading TEMPO data: {error.message}
           </AlertDescription>
         </Alert>
         <Button onClick={onRefresh} className="mt-4 w-full">
           <RefreshCw className="mr-2 h-4 w-4" />
-          Reintentar
+          Retry
         </Button>
       </div>
     )
@@ -131,14 +131,14 @@ export function TempoSidebar({
         <div>
           <div className="flex items-center gap-2 mb-2">
             <Satellite className="h-5 w-5 text-primary" />
-            <h2 className="text-2xl font-bold">Panel de Análisis</h2>
+            <h2 className="text-2xl font-bold">Analysis Panel</h2>
           </div>
           <p className="text-sm text-muted-foreground">
-            Datos satelitales y población afectada
+            Satellite data and affected population
           </p>
         </div>
 
-        {/* Selector de Contaminante */}
+        {/* Pollutant selector */}
         <div className="flex gap-2">
           {(['NO2', 'O3', 'HCHO'] as const).map((pollutant) => (
             <Button
@@ -153,10 +153,10 @@ export function TempoSidebar({
           ))}
         </div>
 
-        {/* Panel de Ciudad Seleccionada/Hover */}
+        {/* Selected/Hovered City Panel */}
         <CityDetailPanel />
 
-        {/* Estado Actual (siempre visible) */}
+        {/* Current Status (always visible) */}
         {isLoading ? (
           <Card>
             <CardHeader>
@@ -170,7 +170,7 @@ export function TempoSidebar({
           <Card className="border-2">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span>Estado Actual</span>
+                <span>Current Status</span>
                 <Badge
                   className={`${getColorClass(metadata.interpretation.color)} text-white`}
                   variant="default"
@@ -179,7 +179,7 @@ export function TempoSidebar({
                 </Badge>
               </CardTitle>
               <CardDescription>
-                Última actualización: {metadata.timestampLocal}
+                Last update: {metadata.timestampLocal}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -190,9 +190,9 @@ export function TempoSidebar({
           </Card>
         ) : null}
 
-        {/* Acordiones para secciones colapsables */}
+        {/* Accordions for collapsible sections */}
         <Accordion type="multiple" defaultValue={["contaminante", "recomendaciones"]} className="space-y-2">
-          {/* Info del Contaminante */}
+          {/* Pollutant Info */}
           <AccordionItem value="contaminante" className="border rounded-lg px-4">
             <AccordionTrigger className="hover:no-underline">
               <div className="flex items-center gap-2 text-left">
@@ -202,28 +202,28 @@ export function TempoSidebar({
             </AccordionTrigger>
             <AccordionContent className="space-y-3 pt-2 pb-4">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Fuente principal:</p>
-                <p className="text-sm">{pollutantInfo.fuente}</p>
+                <p className="text-sm font-medium text-muted-foreground">Main source:</p>
+                <p className="text-sm">{pollutantInfo.source}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  {currentPollutant === 'O3' ? 'Beneficio:' : 'Efectos en salud:'}
+                  {currentPollutant === 'O3' ? 'Benefit:' : 'Health effects:'}
                 </p>
-                <p className="text-sm">{pollutantInfo.efectos}</p>
+                <p className="text-sm">{pollutantInfo.effects}</p>
               </div>
 
-              {/* Valor científico (colapsable) */}
+              {/* Scientific value (collapsible) */}
               {metadata?.center.valueFormatted && (
                 <Collapsible>
                   <CollapsibleTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
                     <Info className="h-3 w-3" />
-                    Valor técnico
+                    Technical value
                     <ChevronDown className="h-3 w-3" />
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mt-2 p-3 bg-muted rounded-md">
                     <p className="text-xs font-mono">{metadata.center.valueFormatted}</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Medido en el centro de California
+                      Measured at California center
                     </p>
                   </CollapsibleContent>
                 </Collapsible>
@@ -231,74 +231,74 @@ export function TempoSidebar({
             </AccordionContent>
           </AccordionItem>
 
-          {/* Recomendaciones */}
+          {/* Recommendations */}
           {metadata && (
             <AccordionItem value="recomendaciones" className="border rounded-lg px-4">
               <AccordionTrigger className="hover:no-underline">
-                <span className="font-semibold">Recomendaciones</span>
+                <span className="font-semibold">Recommendations</span>
               </AccordionTrigger>
               <AccordionContent className="space-y-2 text-sm pt-2 pb-4">
                 {metadata.interpretation.color === 'green' && (
                   <>
-                    <p>✅ Excelente momento para actividades al aire libre</p>
-                    <p>✅ Calidad del aire óptima</p>
+                    <p>✅ Excellent time for outdoor activities</p>
+                    <p>✅ Optimal air quality</p>
                   </>
                 )}
                 {metadata.interpretation.color === 'yellow' && (
                   <>
-                    <p>⚠️ Grupos sensibles deben considerar reducir exposición prolongada</p>
-                    <p>✅ La mayoría de las personas pueden realizar actividades normales</p>
+                    <p>⚠️ Sensitive groups should consider reducing prolonged exposure</p>
+                    <p>✅ Most people can perform normal activities</p>
                   </>
                 )}
                 {(metadata.interpretation.color === 'orange' || metadata.interpretation.color === 'red') && (
                   <>
-                    <p>🚫 Evitar ejercicio intenso al aire libre</p>
-                    <p>🏠 Considerar permanecer en interiores</p>
-                    <p>😷 Grupos sensibles deben usar protección</p>
+                    <p>🚫 Avoid intense outdoor exercise</p>
+                    <p>🏠 Consider staying indoors</p>
+                    <p>😷 Sensitive groups should use protection</p>
                   </>
                 )}
                 {metadata.interpretation.color === 'purple' && (
                   <>
-                    <p>🚨 Alerta de salud - evitar exposición al aire libre</p>
-                    <p>🏠 Permanecer en interiores con ventanas cerradas</p>
-                    <p>😷 Usar mascarilla si debe salir</p>
+                    <p>🚨 Health alert - avoid outdoor exposure</p>
+                    <p>🏠 Stay indoors with windows closed</p>
+                    <p>😷 Use mask if you must go out</p>
                   </>
                 )}
               </AccordionContent>
             </AccordionItem>
           )}
 
-          {/* Población Afectada */}
+          {/* Affected Population */}
           <PoblacionAfectada />
 
-          {/* Info del Satélite */}
+          {/* Satellite Info */}
           {satellite && (
             <AccordionItem value="satelite" className="border rounded-lg px-4 bg-primary/5">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <Satellite className="h-4 w-4" />
-                  <span className="font-semibold text-sm">Información del Satélite</span>
+                  <span className="font-semibold text-sm">Satellite Information</span>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="text-xs space-y-1 text-muted-foreground pt-2 pb-4">
                 <p>
-                  <span className="font-medium">Satélite:</span> {satellite.name}
+                  <span className="font-medium">Satellite:</span> {satellite.name}
                 </p>
                 <p>
-                  <span className="font-medium">Agencia:</span> {satellite.agency}
+                  <span className="font-medium">Agency:</span> {satellite.agency}
                 </p>
                 <p>
-                  <span className="font-medium">Resolución:</span> {satellite.resolution}
+                  <span className="font-medium">Resolution:</span> {satellite.resolution}
                 </p>
               </AccordionContent>
             </AccordionItem>
           )}
         </Accordion>
 
-        {/* Botón de Refresh */}
+        {/* Refresh button */}
         <Button onClick={onRefresh} disabled={isLoading} className="w-full" variant="outline">
           <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-          {isLoading ? 'Actualizando...' : 'Actualizar datos'}
+          {isLoading ? 'Updating...' : 'Update data'}
         </Button>
       </div>
     </div>

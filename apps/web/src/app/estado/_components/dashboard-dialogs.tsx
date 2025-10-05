@@ -19,12 +19,12 @@ import { AlertForm } from "@/components/alert-form"
 import { ActiveAlerts } from "@/components/active-alerts"
 
 const AIR_QUALITY_LEVELS = [
-  { color: "bg-green-500", label: "Bueno" },
-  { color: "bg-yellow-500", label: "Moderado" },
-  { color: "bg-orange-500", label: "Insalubre para grupos sensibles" },
-  { color: "bg-red-500", label: "Insalubre" },
-  { color: "bg-purple-500", label: "Muy insalubre" },
-  { color: "bg-red-800", label: "Peligroso" }
+  { color: "bg-green-500", label: "Good" },
+  { color: "bg-yellow-500", label: "Moderate" },
+  { color: "bg-orange-500", label: "Unhealthy for Sensitive Groups" },
+  { color: "bg-red-500", label: "Unhealthy" },
+  { color: "bg-purple-500", label: "Very Unhealthy" },
+  { color: "bg-red-800", label: "Hazardous" }
 ] as const
 
 interface DashboardDialogsProps {
@@ -91,11 +91,11 @@ export function DashboardDialogs({
 }: DashboardDialogsProps) {
   return (
     <>
-      {/* Ubicación actual */}
+      {/* Current location */}
       <Dialog open={openDialog === "location"} onOpenChange={(open) => !open && setOpenDialog(null)}>
         <DialogContent className="max-w-sm z-[10001] mx-4">
           <DialogHeader>
-            <DialogTitle className="text-sm sm:text-base">Ubicación Actual</DialogTitle>
+            <DialogTitle className="text-sm sm:text-base">Current Location</DialogTitle>
           </DialogHeader>
           <Card>
             <CardContent className="p-4">
@@ -103,23 +103,23 @@ export function DashboardDialogs({
                 <Badge variant="secondary" className="text-sm">California, USA</Badge>
               </div>
               <CardDescription className="text-xs">
-                Coordenadas: 36.7783° N, 119.4179° W
+                Coordinates: 36.7783° N, 119.4179° W
               </CardDescription>
             </CardContent>
           </Card>
         </DialogContent>
       </Dialog>
 
-      {/* Controles de capas */}
+      {/* Layer controls */}
       <Dialog open={openDialog === "layers"} onOpenChange={(open) => !open && setOpenDialog(null)}>
         <DialogContent className="max-w-sm z-[10001] mx-4">
           <DialogHeader>
-            <DialogTitle className="text-sm sm:text-base">Controles de Capas</DialogTitle>
+            <DialogTitle className="text-sm sm:text-base">Layer Controls</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Exterior</CardTitle>
+                <CardTitle className="text-sm">Outdoor</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center space-x-2">
@@ -132,7 +132,7 @@ export function DashboardDialogs({
                     htmlFor="air-stations"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                   >
-                    Estaciones de calidad del aire
+                    Air quality stations
                   </label>
                   {stats && (
                     <Badge variant="secondary" className="ml-auto text-xs">
@@ -150,7 +150,7 @@ export function DashboardDialogs({
                     htmlFor="fires"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                   >
-                    🔥 Incendios activos
+                    🔥 Active fires
                   </label>
                   {fireStats && fireStats.totalFires > 0 && (
                     <Badge variant="destructive" className="ml-auto text-xs">
@@ -168,7 +168,7 @@ export function DashboardDialogs({
                     htmlFor="cities"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                   >
-                    🏙️ Ciudades
+                    🏙️ Cities
                   </label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -181,14 +181,14 @@ export function DashboardDialogs({
                     htmlFor="tempo-overlay"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                   >
-                    🛰️ Overlay TEMPO
+                    🛰️ TEMPO Overlay
                   </label>
                 </div>
                 {showTempoOverlay && (
                   <div className="space-y-2 pl-6">
                     <div className="flex items-center justify-between">
                       <label className="text-xs text-muted-foreground">
-                        Opacidad
+                        Opacity
                       </label>
                       <span className="text-xs font-medium">
                         {Math.round(tempoOpacity * 100)}%
@@ -211,11 +211,11 @@ export function DashboardDialogs({
         </DialogContent>
       </Dialog>
 
-      {/* Leyenda de calidad del aire */}
+      {/* Air quality legend */}
       <Dialog open={openDialog === "legend"} onOpenChange={(open) => !open && setOpenDialog(null)}>
         <DialogContent className="max-w-sm z-[10001] mx-4">
           <DialogHeader>
-            <DialogTitle className="text-sm sm:text-base">Índice de Calidad del Aire</DialogTitle>
+            <DialogTitle className="text-sm sm:text-base">Air Quality Index</DialogTitle>
           </DialogHeader>
           <Card>
             <CardContent className="p-4">
@@ -235,22 +235,22 @@ export function DashboardDialogs({
         </DialogContent>
       </Dialog>
 
-      {/* Alertas */}
+      {/* Alerts */}
       <Dialog open={openDialog === "alerts"} onOpenChange={(open) => !open && setOpenDialog(null)}>
         <DialogContent className="max-w-md sm:max-w-4xl z-[10001] mx-4">
           <DialogHeader>
             <DialogTitle className="text-sm sm:text-base flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-orange-500" />
-              Sistema de Alertas
+              Alert System
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {/* Formulario de nueva alerta */}
+            {/* New alert form */}
             <Card className="border-blue-200 bg-blue-50">
               <CardHeader className="pb-3">
-                <CardTitle className="text-blue-800 text-sm">Crear Nueva Alerta</CardTitle>
+                <CardTitle className="text-blue-800 text-sm">Create New Alert</CardTitle>
                 <CardDescription className="text-blue-700 text-xs">
-                  Reporta problemas de calidad del aire o estaciones que no funcionan
+                  Report air quality issues or malfunctioning stations
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
@@ -261,12 +261,12 @@ export function DashboardDialogs({
               </CardContent>
             </Card>
 
-            {/* Alertas activas */}
+            {/* Active alerts */}
             <Card className="border-orange-200 bg-orange-50">
               <CardHeader className="pb-3">
-                <CardTitle className="text-orange-800 text-sm">Alertas Activas</CardTitle>
+                <CardTitle className="text-orange-800 text-sm">Active Alerts</CardTitle>
                 <CardDescription className="text-orange-700 text-xs">
-                  {getActiveAlerts().length} alerta(s) pendiente(s)
+                  {getActiveAlerts().length} pending alert(s)
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
@@ -281,35 +281,35 @@ export function DashboardDialogs({
         </DialogContent>
       </Dialog>
 
-      {/* Datos Históricos */}
+      {/* Historical Data */}
       <Dialog open={openDialog === "historical"} onOpenChange={(open) => !open && setOpenDialog(null)}>
         <DialogContent className="max-w-sm z-[10001] mx-4">
           <DialogHeader>
-            <DialogTitle className="text-sm sm:text-base">Datos Históricos</DialogTitle>
+            <DialogTitle className="text-sm sm:text-base">Historical Data</DialogTitle>
           </DialogHeader>
           <Card>
             <CardContent className="p-4">
               <div className="text-center text-muted-foreground">
                 <Calendar className="h-8 w-8 mx-auto mb-2" />
-                <p className="text-sm">Gráfico de datos históricos</p>
-                <p className="text-xs mt-1">Sin datos disponibles</p>
+                <p className="text-sm">Historical data chart</p>
+                <p className="text-xs mt-1">No data available</p>
               </div>
             </CardContent>
           </Card>
         </DialogContent>
       </Dialog>
 
-      {/* Métricas en Tiempo Real */}
+      {/* Real-Time Metrics */}
       <Dialog open={openDialog === "metrics"} onOpenChange={(open) => !open && setOpenDialog(null)}>
         <DialogContent className="max-w-md z-[10001] mx-4">
           <DialogHeader>
             <DialogTitle className="text-sm sm:text-base flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
-              Métricas en Tiempo Real
+              Real-Time Metrics
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {/* Estado de conexión */}
+            {/* Connection status */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
@@ -320,28 +320,28 @@ export function DashboardDialogs({
                   ) : (
                     <Wifi className="h-4 w-4 text-green-500" />
                   )}
-                  Estado de Conexión
+                  Connection Status
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
-                    {isLoading ? "Conectando a AirNow API..." : error ? "Error de conexión" : "Conectado"}
+                    {isLoading ? "Connecting to AirNow API..." : error ? "Connection error" : "Connected"}
                   </span>
                   <Badge variant={error ? "destructive" : "default"}>
-                    {isLoading ? "Conectando" : error ? "Error" : "Activo"}
+                    {isLoading ? "Connecting" : error ? "Error" : "Active"}
                   </Badge>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Estadísticas de estaciones */}
+            {/* Station statistics */}
             {stats && (
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <Map className="h-4 w-4 text-blue-500" />
-                    Estaciones de Monitoreo
+                    Monitoring Stations
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -352,30 +352,30 @@ export function DashboardDialogs({
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-green-600">{stats.active}</div>
-                      <div className="text-xs text-muted-foreground">Activas</div>
+                      <div className="text-xs text-muted-foreground">Active</div>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center">
                       <div className="text-lg font-semibold text-purple-600">{stats.parameters}</div>
-                      <div className="text-xs text-muted-foreground">Parámetros</div>
+                      <div className="text-xs text-muted-foreground">Parameters</div>
                     </div>
                     <div className="text-center">
                       <div className="text-lg font-semibold text-orange-600">{stats.agencies}</div>
-                      <div className="text-xs text-muted-foreground">Agencias</div>
+                      <div className="text-xs text-muted-foreground">Agencies</div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             )}
 
-            {/* Calidad del aire promedio */}
+            {/* Average air quality */}
             {stats && stats.avgAQI && (
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <Activity className="h-4 w-4 text-orange-500" />
-                    Calidad del Aire Promedio
+                    Average Air Quality
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -387,25 +387,25 @@ export function DashboardDialogs({
                       {getAQILevel(Math.round(stats.avgAQI))}
                     </div>
                     <Badge variant="outline" className="mt-2">
-                      Índice de Calidad del Aire
+                      Air Quality Index
                     </Badge>
                   </div>
                 </CardContent>
               </Card>
             )}
 
-            {/* Información de actualización */}
+            {/* Update information */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Clock className="h-4 w-4 text-gray-500" />
-                  Última Actualización
+                  Last Update
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-center">
                   <div className="text-sm font-medium">
-                    {new Date().toLocaleString('es-ES', {
+                    {new Date().toLocaleString('en-US', {
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric',
@@ -414,7 +414,7 @@ export function DashboardDialogs({
                     })}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    Datos actualizados cada 5 minutos
+                    Data updated every 5 minutes
                   </div>
                 </div>
               </CardContent>
@@ -423,18 +423,18 @@ export function DashboardDialogs({
         </DialogContent>
       </Dialog>
 
-      {/* Preferencias */}
+      {/* Preferences */}
       <Dialog open={openDialog === "preferences"} onOpenChange={(open) => !open && setOpenDialog(null)}>
         <DialogContent className="max-w-sm z-[10001] mx-4">
           <DialogHeader>
-            <DialogTitle className="text-sm sm:text-base">Preferencias</DialogTitle>
+            <DialogTitle className="text-sm sm:text-base">Preferences</DialogTitle>
           </DialogHeader>
           <Card>
             <CardContent className="p-4">
               <div className="text-center text-muted-foreground">
                 <Settings className="h-8 w-8 mx-auto mb-2" />
-                <p className="text-sm">Configuración de usuario</p>
-                <p className="text-xs mt-1">Próximamente disponible</p>
+                <p className="text-sm">User settings</p>
+                <p className="text-xs mt-1">Coming soon</p>
               </div>
             </CardContent>
           </Card>
