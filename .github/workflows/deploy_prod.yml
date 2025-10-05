@@ -50,5 +50,5 @@ jobs:
           npx wrangler deploy \
             --env=production \
             --minify \
-            --config wrangler.jsonc ||
+            --config wrangler.toml ||
             (echo "Deployment failed. Checking Wrangler version and permissions..." && exit 1)
