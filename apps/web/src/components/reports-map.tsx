@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo } from "react"
 import dynamic from "next/dynamic"
-import L from "leaflet"
 import { UserReport } from "@/lib/report-types"
 import { ReportMarkers } from "./report-markers"
 import { MapLegend } from "./map-legend"

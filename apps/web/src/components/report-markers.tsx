@@ -2,15 +2,25 @@
 
 import React, { useEffect } from "react"
 import { Marker } from "react-leaflet"
-import L from "leaflet"
 import { UserReport } from "@/lib/report-types"
 import { getSeverityConfig, getTypeConfig } from "@/lib/report-utils"
 
+// Lazy import de Leaflet solo en el cliente
+const getLeaflet = () => {
+  if (typeof window !== 'undefined') {
+    return require('leaflet')
+  }
+  return null
+}
+
 // Configuración de iconos personalizados para reportes
 const createReportIcon = (severity: string, type: string) => {
+  const L = getLeaflet()
+  if (!L) return null
+
   const severityConfig = getSeverityConfig(severity)
   const typeConfig = getTypeConfig(type)
-  
+
   // Colores basados en severidad
   const severityColors = {
     'low': '#22c55e',      // green-500
@@ -20,9 +30,9 @@ const createReportIcon = (severity: string, type: string) => {
     'intermedio': '#eab308',
     'critico': '#ef4444'
   }
-  
+
   const color = severityColors[severity as keyof typeof severityColors] || '#6b7280'
-  
+
   return L.divIcon({
     html: `
       <div class="report-marker" style="
@@ -77,17 +87,21 @@ export function ReportMarkers({ reports, selectedReportId, onReportClick }: Repo
       {reports.map((report) => {
         const lat = parseFloat(report.latitud)
         const lng = parseFloat(report.longitud)
-        
+
         if (isNaN(lat) || isNaN(lng)) {
           return null
         }
 
+        const icon = createReportIcon(report.gravedad, report.tipo)
+        if (!icon) {
+          return null
+        }
 
         return (
           <Marker
             key={report.id}
             position={[lat, lng]}
-            icon={createReportIcon(report.gravedad, report.tipo)}
+            icon={icon}
             eventHandlers={{
               click: () => {
                 if (onReportClick) {
