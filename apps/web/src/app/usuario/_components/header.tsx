@@ -24,8 +24,10 @@ import {
   Clock,
   Settings,
   Code,
-  BarChart3
+  BarChart3,
+  FileText
 } from "lucide-react"
+import Link from "next/link"
 
 interface Alert {
   id: string
@@ -264,6 +266,13 @@ export function Header({
                   </TooltipContent>
                 </Tooltip>
                 <MenubarContent>
+                  <Link href="/usuario/reportes">
+                    <MenubarItem>
+                      <FileText className="mr-2 h-4 w-4" />
+                      <span>Mis Reportes</span>
+                    </MenubarItem>
+                  </Link>
+                  <MenubarSeparator />
                   <MenubarItem onClick={() => onDialogOpen("debug")}>
                     <Code className="mr-2 h-4 w-4" />
                     <span>Modo Debug/Desarrollo</span>
