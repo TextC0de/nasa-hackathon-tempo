@@ -255,20 +255,22 @@ def calculate_epa_historical_features(epa_df):
         station_data = epa_df[epa_df['station_id'] == station_id].copy()
         station_data = station_data.sort_values('timestamp')
 
+        # Eliminar duplicados de timestamp (tomar la última medición si hay duplicados)
+        station_data = station_data.drop_duplicates(subset=['timestamp'], keep='last')
+
         # Asegurar que timestamp es el índice
         station_data = station_data.set_index('timestamp')
 
         # Calcular rolling windows
-        # rolling('24H') usa ventana de tiempo real (no N observaciones)
-        station_data['no2_avg_24h'] = station_data['value'].rolling('24H', min_periods=1).mean()
-        station_data['no2_avg_7d'] = station_data['value'].rolling('7D', min_periods=1).mean()
+        # rolling('24h') usa ventana de tiempo real (no N observaciones)
+        station_data['no2_avg_24h'] = station_data['value'].rolling('24h', min_periods=1).mean()
+        station_data['no2_avg_7d'] = station_data['value'].rolling('7d', min_periods=1).mean()
 
         # Calcular tendencia (cambio porcentual en 24h)
-        # Usar shift con freq para desplazamiento temporal real (no por filas)
-        value_24h_ago = station_data['value'].shift(freq=pd.Timedelta(hours=24))
+        # Usar shift con períodos (más robusto que freq con timestamps irregulares)
         station_data['no2_trend_24h'] = (
-            (station_data['value'] - value_24h_ago) /
-            (value_24h_ago.abs() + 0.1)  # +0.1 para evitar división por 0
+            (station_data['value'] - station_data['value'].shift(24)) /
+            (station_data['value'].shift(24).abs() + 0.1)  # +0.1 para evitar división por 0
         ).fillna(0)
 
         # Convertir a diccionario: {timestamp_str: {features}}

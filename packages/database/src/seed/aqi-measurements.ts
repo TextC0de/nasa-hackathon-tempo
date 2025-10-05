@@ -136,12 +136,20 @@ export async function seedAqiMeasurements(db: PostgresJsDatabase<Record<string, 
 
   console.log(`   ✓ ${stations.length} estaciones cargadas`)
 
+  // Mapeo de parámetros EPA a parámetros de estaciones
+  const parameterMapping: Record<string, string> = {
+    'O3': 'ozone',
+    'NO2': 'no2',
+    'PM25': 'pm2.5',
+  }
+
   // Helper para encontrar station_id por coordenadas (con tolerancia de 0.01°)
   const findStationId = (lat: number, lng: number, param: string): number | null => {
+    const stationParam = parameterMapping[param] || param.toLowerCase()
     const station = stations.find(s => {
       const latMatch = Math.abs(s.latitude - lat) < 0.01
       const lngMatch = Math.abs(s.longitude - lng) < 0.01
-      const paramMatch = s.parameter.toLowerCase() === param.toLowerCase()
+      const paramMatch = s.parameter.toLowerCase() === stationParam
       return latMatch && lngMatch && paramMatch
     })
     return station?.id ?? null

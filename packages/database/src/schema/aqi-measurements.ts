@@ -39,7 +39,7 @@ export const aqiMeasurements = pgTable(
 
     // Valores de la medición
     value: real('value').notNull(), // Concentración raw
-    unit: varchar('unit', { length: 20 }).notNull(), // 'PPB', 'UG/M3', etc.
+    unit: varchar('unit', { length: 50 }).notNull(), // 'PPB', 'UG/M3', 'Micrograms/cubic meter (LC)', etc.
     aqi: integer('aqi').notNull(), // AQI calculado por EPA para este parámetro
     category: integer('category').notNull(), // 1=Good, 2=Moderate, etc.
 

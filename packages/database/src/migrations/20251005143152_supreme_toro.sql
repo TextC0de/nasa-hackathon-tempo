@@ -1,0 +1,1 @@
+ALTER TABLE "aqi_measurements" ALTER COLUMN "unit" SET DATA TYPE varchar(50);

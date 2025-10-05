@@ -14,7 +14,9 @@ export const env = createEnv({
    * Server-side only environment variables
    * Never exposed to the browser
    */
-  server: {},
+  server: {
+    OPENAI_API_KEY: z.string().min(1).describe('OpenAI API key for chat functionality'),
+  },
 
   /**
    * Runtime environment variables
@@ -22,6 +24,7 @@ export const env = createEnv({
    */
   runtimeEnv: {
     NEXT_PUBLIC_API_HOST: process.env.NEXT_PUBLIC_API_HOST,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   },
 
   /**
