@@ -4,6 +4,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { AlertsBell } from "./alerts-bell"
 import {
   Menubar,
   MenubarContent,
@@ -26,6 +27,23 @@ import {
   BarChart3
 } from "lucide-react"
 
+interface Alert {
+  id: string
+  type: 'air_quality' | 'fire' | 'weather'
+  severity: 'info' | 'warning' | 'danger' | 'critical'
+  title: string
+  message: string
+  location: {
+    name: string
+    lat: number
+    lng: number
+  }
+  timestamp: string
+  distanceKm?: number
+  aqi?: number
+  createdBy?: string
+}
+
 interface HeaderProps {
   currentLocation: { name: string; lat: number; lng: number }
   isLoading: boolean
@@ -37,6 +55,12 @@ interface HeaderProps {
   getAQIColor: (aqi: number) => string
   getAQILevel: (aqi: number) => string
   locations: readonly { name: string; lat: number; lng: number }[]
+  // Alertas
+  alerts?: Alert[]
+  unreadAlertsCount?: number
+  onMarkAlertAsRead?: (alertId: string) => void
+  onMarkAllAlertsAsRead?: () => void
+  isAlertRead?: (alertId: string) => boolean
 }
 
 export function Header({
@@ -49,7 +73,12 @@ export function Header({
   onRefetch,
   getAQIColor,
   getAQILevel,
-  locations
+  locations,
+  alerts = [],
+  unreadAlertsCount = 0,
+  onMarkAlertAsRead = () => {},
+  onMarkAllAlertsAsRead = () => {},
+  isAlertRead = () => false
 }: HeaderProps) {
   return (
     <TooltipProvider>
@@ -150,8 +179,17 @@ export function Header({
             )}
           </div>
 
-          {/* Menubar */}
-          <div className="ml-auto flex-shrink-0">
+          {/* Alertas Bell + Menubar */}
+          <div className="ml-auto flex items-center gap-1 flex-shrink-0">
+            {/* Campanita de alertas */}
+            <AlertsBell
+              alerts={alerts}
+              unreadCount={unreadAlertsCount}
+              onMarkAsRead={onMarkAlertAsRead}
+              onMarkAllAsRead={onMarkAllAlertsAsRead}
+              isRead={isAlertRead}
+            />
+
             <Menubar className="border-0 bg-transparent shadow-none">
               {/* Menú Ubicación */}
               <MenubarMenu>

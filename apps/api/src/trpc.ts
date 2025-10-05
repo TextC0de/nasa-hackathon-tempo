@@ -16,7 +16,7 @@ export function createContext(opts: FetchCreateContextFnOptions & { env?: any })
   const client = postgres(databaseUrl)
 
   // Create drizzle instance
-  const db = drizzle(client, { schema })
+  const db = drizzle(client, { schema, logger: true })
 
   return {
     req: opts.req,

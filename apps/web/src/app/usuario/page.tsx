@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { trpc } from "@/lib/trpc"
+import { useAlertPolling } from "@/hooks/use-alert-polling"
 import { Header } from "./_components/header"
 import { MapView } from "./_components/map-view"
 import { DebugDialog } from "./_components/debug-dialog"
@@ -47,6 +48,22 @@ export default function UsuarioPage() {
       refetchInterval: 5 * 60 * 1000 // Auto-refetch cada 5 minutos
     }
   )
+
+  // Hook para polling de alertas
+  const {
+    alerts,
+    unreadAlerts,
+    newAlertsCount,
+    markAsRead,
+    markAllAsRead,
+    isRead
+  } = useAlertPolling({
+    latitude: searchLat,
+    longitude: searchLng,
+    radiusKm: 100,
+    enabled: true,
+    pollingInterval: 30000 // 30 segundos
+  })
 
   // NOTA: Los datos TEMPO ahora vienen incluidos en prediction.O3.tempo y prediction.NO2.tempo
   const tempoData = null
@@ -113,6 +130,11 @@ export default function UsuarioPage() {
           getAQIColor={getAQIColor}
           getAQILevel={getAQILevel}
           locations={CALIFORNIA_LOCATIONS}
+          alerts={alerts}
+          unreadAlertsCount={newAlertsCount}
+          onMarkAlertAsRead={markAsRead}
+          onMarkAllAlertsAsRead={markAllAsRead}
+          isAlertRead={isRead}
         />
 
         {/* Main Layout: Desktop = Side by Side, Mobile = Stacked */}

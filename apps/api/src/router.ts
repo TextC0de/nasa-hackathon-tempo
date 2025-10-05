@@ -14,6 +14,7 @@ import { obtenerHistoricoAqiProcedure } from './procedures/obtener-historico-aqi
 import { crearAlertaProcedure } from './procedures/crear-alerta'
 import { listarAlertasProcedure } from './procedures/listar-alertas'
 import { actualizarAlertaProcedure } from './procedures/actualizar-alerta'
+import { obtenerAlertasActivasProcedure } from './procedures/obtener-alertas-activas'
 
 export const appRouter = router({
   hello: helloProcedure,
@@ -31,6 +32,7 @@ export const appRouter = router({
   crearAlerta: crearAlertaProcedure,
   listarAlertas: listarAlertasProcedure,
   actualizarAlerta: actualizarAlertaProcedure,
+  obtenerAlertasActivas: obtenerAlertasActivasProcedure,
 })
 
 export type AppRouter = typeof appRouter

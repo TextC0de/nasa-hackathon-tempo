@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import { publicProcedure } from '../trpc'
-import { aqiMeasurements } from '@atmos/database'
-import { and, gte, lte, between, sql } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
 
 /**
  * Procedure: obtener-historico-aqi
@@ -80,8 +79,8 @@ export const obtenerHistoricoAqiProcedure = publicProcedure
         WHERE
           lat BETWEEN ${latMin} AND ${latMax}
           AND lng BETWEEN ${lngMin} AND ${lngMax}
-          AND timestamp >= ${startDate}
-          AND timestamp <= ${endDate}
+          AND timestamp >= ${startDate.toISOString()}
+          AND timestamp <= ${endDate.toISOString()}
         GROUP BY DATE_TRUNC('hour', timestamp)
         ORDER BY DATE_TRUNC('hour', timestamp) ASC
         LIMIT 500
@@ -134,8 +133,8 @@ export const obtenerHistoricoAqiProcedure = publicProcedure
         WHERE
           lat BETWEEN ${latMin} AND ${latMax}
           AND lng BETWEEN ${lngMin} AND ${lngMax}
-          AND timestamp >= ${startDate}
-          AND timestamp <= ${endDate}
+          AND timestamp >= ${startDate.toISOString()}
+          AND timestamp <= ${endDate.toISOString()}
         GROUP BY DATE_TRUNC('day', timestamp)
         ORDER BY DATE_TRUNC('day', timestamp) ASC
         LIMIT 365

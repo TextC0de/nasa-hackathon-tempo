@@ -253,7 +253,7 @@ def convert_no2_to_surface(no2_column, pbl_height):
 # ============================================================================
 
 def extract_features(cells, epa_lat, epa_lon, wind_speed, wind_dir, pbl_height,
-                     temp, precip, hour, day_of_week, month):
+                     temp, precip, hour, day_of_week, month, meteo=None):
     """
     Extrae ~65 features espaciales de un grid TEMPO
 
@@ -387,6 +387,24 @@ def extract_features(cells, epa_lat, epa_lon, wind_speed, wind_dir, pbl_height,
         'temperature': temp,
         'precipitation': precip,
         'pbl_normalized': pbl_height / 800,
+
+        # Meteorología adicional (CRÍTICAS para dispersión)
+        'surface_pressure': meteo.get('surface_pressure', 1013.0) if meteo else 1013.0,
+        'relative_humidity': meteo.get('relative_humidity', 60.0) if meteo else 60.0,
+        'cloud_cover': meteo.get('cloud_cover', 50.0) if meteo else 50.0,
+
+        # Features derivadas meteorológicas
+        'is_high_pressure': 1 if (meteo.get('surface_pressure', 1013) if meteo else 1013) > 1015 else 0,  # Alta presión = poca dispersión
+        'is_humid': 1 if (meteo.get('relative_humidity', 60) if meteo else 60) > 70 else 0,  # Alta humedad = más química
+        'is_rainy': 1 if precip > 0.1 else 0,  # Lluvia limpia el aire
+
+        # Estabilidad atmosférica (combinación de factores que atrapan contaminantes)
+        # Valores altos = condiciones estables = mala dispersión = alto NO2
+        'atmospheric_stability': (
+            ((meteo.get('surface_pressure', 1013) if meteo else 1013) - 1013) / 10  # Alta presión
+            - (wind_speed - 5) / 5  # Poco viento
+            - (pbl_height - 800) / 400  # PBL bajo
+        ),
 
         # Temporal
         'hour': local_hour,
@@ -549,7 +567,8 @@ def main():
                     meteo['precipitation'],
                     timestamp.hour,
                     timestamp.weekday(),
-                    timestamp.month
+                    timestamp.month,
+                    meteo  # Pasar diccionario completo para nuevas features
                 )
 
                 if features is None:
