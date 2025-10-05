@@ -412,17 +412,14 @@ DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format
           <main className="overflow-y-auto bg-muted/5">
             <div className="p-4 space-y-4">
 
-              {/* Mapa con aspect ratio 4:3 */}
-              <div className="w-full" style={{ aspectRatio: '4/3' }}>
-                <HistoryLocationMap
-                  latitude={latitude}
-                  longitude={longitude}
-                  radiusKm={radiusKm}
-                  onLocationChange={handleLocationChange}
-                  onRadiusChange={handleRadiusChange}
-                  className="h-full"
-                />
-              </div>
+              {/* Mapa */}
+              <HistoryLocationMap
+                latitude={latitude}
+                longitude={longitude}
+                radiusKm={radiusKm}
+                onLocationChange={handleLocationChange}
+                onRadiusChange={handleRadiusChange}
+              />
 
               {/* Loading State */}
               {isLoading && (

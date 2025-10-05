@@ -288,7 +288,7 @@ export function HistoryLocationMap({
       <CardContent className="p-0">
         <div className={cn(
           "relative overflow-hidden transition-all duration-300",
-          isExpanded ? "h-80" : "h-48"
+          isExpanded ? "h-96" : "h-64"
         )}>
           <MapContainer
             center={position}
