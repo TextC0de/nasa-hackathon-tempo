@@ -26,7 +26,7 @@ export function ExportDataButtons() {
         ...geoJSON,
         features: geoJSON.features.map((feature: any) => {
           const nombre = feature.properties.nombre
-          const ciudad = ciudadesMap.get(nombre)
+          const ciudad = ciudadesMap.get(nombre) as any;
 
           return {
             ...feature,
