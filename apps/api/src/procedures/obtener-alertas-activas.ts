@@ -46,16 +46,6 @@ export const obtenerAlertasActivasProcedure = publicProcedure
         ) / 1000)::numeric, 1)`,
       })
       .from(alerts)
-      .where(
-        sql`
-          ${alerts.status} = 'active'
-          AND ST_DWithin(
-            ${alerts.location}::geography,
-            ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::geography,
-            ${radiusMeters}
-          )
-        `
-      )
       .orderBy(sql`${alerts.createdAt} DESC`)
       .limit(50)
 
