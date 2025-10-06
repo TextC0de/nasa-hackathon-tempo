@@ -13,33 +13,33 @@ import { AlertTriangle, MapPin, Calendar, FileText, ArrowLeft, Send, CheckCircle
 import Link from "next/link"
 import { toast } from "sonner"
 import dynamic from "next/dynamic"
-import { 
-  UserReport, 
-  ReportFormData, 
-  EventType, 
-  SeverityLevel, 
-  EVENT_TYPES, 
-  SEVERITY_LEVELS 
+import {
+  UserReport,
+  ReportFormData,
+  EventType,
+  SeverityLevel,
+  EVENT_TYPES,
+  SEVERITY_LEVELS
 } from "@/lib/report-types"
-import { 
-  isValidLocation, 
-  formatDate, 
-  formatCoordinates, 
-  getSeverityConfig, 
-  getTypeConfig 
+import {
+  isValidLocation,
+  formatDate,
+  formatCoordinates,
+  getSeverityConfig,
+  getTypeConfig
 } from "@/lib/report-utils"
 
 
 
 
-// Importar el mapa dinámicamente
+// Import map dynamically
 const ReportMap = dynamic(() => import("@/components/report-map").then(mod => ({ default: mod.ReportMap })), {
   ssr: false,
   loading: () => (
     <div className="h-64 bg-muted rounded-lg flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-        <p className="text-sm text-muted-foreground">Cargando mapa...</p>
+        <p className="text-sm text-muted-foreground">Loading map...</p>
       </div>
     </div>
   )
@@ -48,7 +48,7 @@ const ReportMap = dynamic(() => import("@/components/report-map").then(mod => ({
 export default function UserReportsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
-  // Ubicación por defecto: Los Ángeles, California (igual que /usuario)
+  // Default location: Los Angeles, California (same as /usuario)
   const [formData, setFormData] = useState<ReportFormData>({
     email: '',
     latitud: 34.0522,
@@ -58,67 +58,67 @@ export default function UserReportsPage() {
     tipo: ''
   })
 
-  // Query para obtener reportes del usuario
+  // Query to get user reports
   const { data: reportsData, isLoading, refetch } = trpc.obtenerReportesUsuario.useQuery()
-  
-  // Extraer el array de reportes de la respuesta
+
+  // Extract reports array from response
   const reports = reportsData?.reportes || []
 
-  // Mutación para crear reporte
+  // Mutation to create report
   const crearReporteMutation = trpc.crearReporteUsuario.useMutation({
     onSuccess: () => {
       setIsSubmitted(true)
-      toast.success("¡Reporte enviado exitosamente!")
-      refetch() // Refrescar la lista de reportes
+      toast.success("Report submitted successfully!")
+      refetch() // Refresh reports list
     },
     onError: (error) => {
-      toast.error(error.message || "Error al enviar el reporte")
+      toast.error(error.message || "Error submitting report")
     },
     onSettled: () => {
       setIsSubmitting(false)
     }
   })
 
-  // Manejar clic en el mapa
+  // Handle map click
   const handleMapClick = (e: L.LeafletMouseEvent) => {
     const lat = e.latlng.lat
     const lng = e.latlng.lng
-    
+
     if (isValidLocation(lat, lng)) {
-      setFormData(prev => ({ 
-        ...prev, 
-        latitud: lat, 
-        longitud: lng 
+      setFormData(prev => ({
+        ...prev,
+        latitud: lat,
+        longitud: lng
       }))
-      toast.success('Ubicación seleccionada en el mapa')
+      toast.success('Location selected on map')
     } else {
-      toast.error('Por favor selecciona una ubicación dentro de California')
+      toast.error('Please select a location within California')
     }
   }
 
-  // Manejar envío del formulario
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!formData.email.trim()) {
-      toast.error("Por favor ingresa tu email")
+      toast.error("Please enter your email")
       return
     }
     if (formData.latitud === 0 && formData.longitud === 0) {
-      toast.error("Por favor selecciona una ubicación en el mapa")
+      toast.error("Please select a location on the map")
       return
     }
     if (!formData.tipo) {
-      toast.error("Por favor selecciona el tipo de evento")
+      toast.error("Please select the event type")
       return
     }
     if (!formData.gravedad) {
-      toast.error("Por favor selecciona la gravedad del evento")
+      toast.error("Please select the event severity")
       return
     }
 
     setIsSubmitting(true)
-    
+
     try {
       await crearReporteMutation.mutateAsync({
         email: formData.email,
@@ -133,12 +133,12 @@ export default function UserReportsPage() {
     }
   }
 
-  // Manejar cambio de inputs
+  // Handle input changes
   const handleInputChange = (field: keyof ReportFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  // Resetear formulario
+  // Reset form
   const resetForm = () => {
     setIsSubmitted(false)
     setFormData({
@@ -151,9 +151,9 @@ export default function UserReportsPage() {
     })
   }
 
-  // Debug: Mostrar los valores que llegan del API
+  // Debug: Show values coming from API
   if (reports.length > 0) {
-    console.log('Valores del API:', {
+    console.log('API values:', {
       gravedades: reports.map(r => r.gravedad),
       tipos: reports.map(r => r.tipo)
     })
@@ -169,32 +169,32 @@ export default function UserReportsPage() {
             <Link href="/usuario">
               <Button variant="outline" size="sm" className="gap-2 bg-white/80 hover:bg-white border-blue-200 hover:border-blue-300">
                 <ArrowLeft className="h-4 w-4" />
-                Volver al Dashboard
+                Back to Dashboard
               </Button>
             </Link>
             <div className="flex-1">
               <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-                Mis Reportes
+                My Reports
               </h1>
               <p className="text-gray-600">
-                Gestiona y visualiza todos tus reportes de contaminación
+                Manage and view all your pollution reports
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Contenido principal */}
+      {/* Main content */}
       <div className="container mx-auto px-4 py-8">
-        {/* Formulario de reporte */}
+        {/* Report form */}
         <Card className="mb-8 border-0 shadow-lg bg-white/80 backdrop-blur-sm">
           <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 border-b border-orange-200">
             <CardTitle className="flex items-center gap-2 text-orange-700">
               <AlertTriangle className="h-5 w-5" />
-              Reportar Contaminación
+              Report Pollution
             </CardTitle>
             <CardDescription className="text-orange-600">
-              Ayúdanos a identificar y resolver problemas de contaminación en California
+              Help us identify and resolve pollution issues in California
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -204,79 +204,79 @@ export default function UserReportsPage() {
                   <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
                     <CheckCircle className="h-8 w-8 text-green-600" />
                   </div>
-                  <h3 className="text-lg font-semibold text-green-700 mb-2">¡Reporte Enviado!</h3>
+                  <h3 className="text-lg font-semibold text-green-700 mb-2">Report Submitted!</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Tu reporte ha sido enviado exitosamente y será revisado por nuestros administradores.
+                    Your report has been successfully submitted and will be reviewed by our administrators.
                   </p>
                 </div>
-                
+
                 <div className="flex gap-3 justify-center">
                   <Button onClick={resetForm} variant="outline">
-                    Cerrar
+                    Close
                   </Button>
                   <Button onClick={resetForm}>
-                    Hacer Otro Reporte
+                    Submit Another Report
                   </Button>
                 </div>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Mapa Interactivo */}
+                {/* Interactive Map */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
-                    <Label>Ubicación en California *</Label>
+                    <Label>Location in California *</Label>
                   </div>
-                  
+
                   <div className="h-64 w-full rounded-lg overflow-hidden border border-border">
                     <ReportMap
                       onMapClick={handleMapClick}
-                      selectedLocation={formData.latitud !== 0 && formData.longitud !== 0 ? 
+                      selectedLocation={formData.latitud !== 0 && formData.longitud !== 0 ?
                         { lat: formData.latitud, lng: formData.longitud } : undefined
                       }
                       className="h-full w-full"
                     />
                   </div>
-                  
+
                   {formData.latitud !== 0 && formData.longitud !== 0 && (
                     <div className="flex items-center gap-2 text-sm text-green-600 p-3 bg-green-50 rounded-lg border border-green-200">
                       <MapPin className="h-4 w-4" />
-                      <span>Ubicación seleccionada: {formData.latitud.toFixed(4)}, {formData.longitud.toFixed(4)}</span>
+                      <span>Selected location: {formData.latitud.toFixed(4)}, {formData.longitud.toFixed(4)}</span>
                     </div>
                   )}
                 </div>
 
                 {/* Email */}
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email de contacto *</Label>
+                  <Label htmlFor="email">Contact email *</Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="tu@email.com"
+                    placeholder="your@email.com"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     required
                   />
                   <p className="text-xs text-muted-foreground">
-                    Te contactaremos en esta dirección para seguimiento del reporte
+                    We'll contact you at this address for report follow-up
                   </p>
                 </div>
 
-                {/* Tipo de Evento */}
+                {/* Event Type */}
                 <div className="space-y-2">
-                  <Label>Tipo de Evento *</Label>
-                  <Select 
-                    value={formData.tipo} 
+                  <Label>Event Type *</Label>
+                  <Select
+                    value={formData.tipo}
                     onValueChange={(value) => {
-                      setFormData(prev => ({ 
-                        ...prev, 
+                      setFormData(prev => ({
+                        ...prev,
                         tipo: value,
                         gravedad: '' // Reset gravedad when tipo changes
                       }))
                     }}
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecciona el tipo de evento" />
+                      <SelectValue placeholder="Select event type" />
                     </SelectTrigger>
                     <SelectContent>
                       {EVENT_TYPES.map((type) => (
@@ -294,15 +294,15 @@ export default function UserReportsPage() {
                   </Select>
                 </div>
 
-                {/* Gravedad del Evento */}
+                {/* Event Severity */}
                 <div className="space-y-2">
-                  <Label>Gravedad del Evento *</Label>
-                  <Select 
-                    value={formData.gravedad} 
+                  <Label>Event Severity *</Label>
+                  <Select
+                    value={formData.gravedad}
                     onValueChange={(value) => handleInputChange('gravedad', value)}
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecciona la gravedad del evento" />
+                      <SelectValue placeholder="Select event severity" />
                     </SelectTrigger>
                     <SelectContent>
                       {SEVERITY_LEVELS.map((severity) => (
@@ -310,8 +310,8 @@ export default function UserReportsPage() {
                           <div className="flex flex-col items-start">
                             <div className="flex items-center gap-2">
                               <span className="font-medium text-sm">{severity.label}</span>
-                              <Badge 
-                                variant="outline" 
+                              <Badge
+                                variant="outline"
                                 className={`text-xs ${severity.color}`}
                               >
                                 {severity.value}
@@ -325,38 +325,38 @@ export default function UserReportsPage() {
                   </Select>
                 </div>
 
-                {/* Descripción */}
+                {/* Description */}
                 <div className="space-y-2">
-                  <Label htmlFor="descripcion">Descripción (Opcional)</Label>
+                  <Label htmlFor="descripcion">Description (Optional)</Label>
                   <Textarea
                     id="descripcion"
-                    placeholder="Proporciona detalles sobre el incidente: cuándo ocurrió, qué observaste, cómo te afecta..."
+                    placeholder="Provide details about the incident: when it occurred, what you observed, how it affects you..."
                     value={formData.descripcion}
                     onChange={(e) => handleInputChange('descripcion', e.target.value)}
                     rows={4}
                     maxLength={500}
                   />
                   <p className="text-xs text-muted-foreground">
-                    {formData.descripcion.length}/500 caracteres
+                    {formData.descripcion.length}/500 characters
                   </p>
                 </div>
 
-                {/* Botón de envío */}
+                {/* Submit button */}
                 <div className="flex justify-center pt-4">
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     disabled={isSubmitting}
                     className="gap-2 bg-orange-600 hover:bg-orange-700 min-w-[200px]"
                   >
                     {isSubmitting ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Enviando...
+                        Submitting...
                       </>
                     ) : (
                       <>
                         <Send className="h-4 w-4" />
-                        Enviar Reporte
+                        Submit Report
                       </>
                     )}
                   </Button>
@@ -366,12 +366,12 @@ export default function UserReportsPage() {
           </CardContent>
         </Card>
 
-        {/* Estadísticas rápidas */}
+        {/* Quick statistics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Reportes
+                Total Reports
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -380,26 +380,26 @@ export default function UserReportsPage() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Reportes Críticos
+                Critical Reports
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">
-                {isLoading ? "..." : reports.filter((r: UserReport) => 
+                {isLoading ? "..." : reports.filter((r: UserReport) =>
                   r.gravedad === 'critical' || r.gravedad === 'critico'
                 ).length || 0}
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Este Mes
+                This Month
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -407,7 +407,7 @@ export default function UserReportsPage() {
                 {isLoading ? "..." : reports.filter((r: UserReport) => {
                   const reportDate = new Date(r.fechaReporte)
                   const thisMonth = new Date()
-                  return reportDate.getMonth() === thisMonth.getMonth() && 
+                  return reportDate.getMonth() === thisMonth.getMonth() &&
                          reportDate.getFullYear() === thisMonth.getFullYear()
                 }).length || 0}
               </div>
@@ -415,15 +415,15 @@ export default function UserReportsPage() {
           </Card>
         </div>
 
-        {/* Lista de reportes */}
+        {/* Reports list */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              Historial de Reportes
+              Report History
             </CardTitle>
             <CardDescription>
-              Todos los reportes que has enviado, ordenados por fecha más reciente
+              All reports you've submitted, sorted by most recent date
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -431,7 +431,7 @@ export default function UserReportsPage() {
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                  <p className="text-sm text-muted-foreground">Cargando reportes...</p>
+                  <p className="text-sm text-muted-foreground">Loading reports...</p>
                 </div>
               </div>
             ) : reports.length > 0 ? (
@@ -441,7 +441,7 @@ export default function UserReportsPage() {
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between">
                         <div className="flex-1 space-y-3">
-                          {/* Header del reporte */}
+                          {/* Report header */}
                           <div className="flex items-center gap-3">
                             <Badge className={getSeverityConfig(report.gravedad).color}>
                               {getSeverityConfig(report.gravedad).label}
@@ -455,28 +455,28 @@ export default function UserReportsPage() {
                             </span>
                           </div>
 
-                          {/* Información del reporte */}
+                          {/* Report information */}
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                               <div className="flex items-center gap-2 text-sm">
                                 <MapPin className="h-4 w-4 text-muted-foreground" />
-                                <span className="font-medium">Ubicación:</span>
+                                <span className="font-medium">Location:</span>
                                 <span className="text-muted-foreground">
                                   {formatCoordinates(report.latitud, report.longitud)}
                                 </span>
                               </div>
                               <div className="flex items-center gap-2 text-sm">
                                 <Calendar className="h-4 w-4 text-muted-foreground" />
-                                <span className="font-medium">Fecha:</span>
+                                <span className="font-medium">Date:</span>
                                 <span className="text-muted-foreground">
                                   {formatDate(report.fechaReporte)}
                                 </span>
                               </div>
                             </div>
-                            
+
                             {report.descripcion && (
                               <div className="space-y-1">
-                                <span className="text-sm font-medium">Descripción:</span>
+                                <span className="text-sm font-medium">Description:</span>
                                 <p className="text-sm text-muted-foreground line-clamp-3">
                                   {report.descripcion}
                                 </p>
@@ -485,10 +485,10 @@ export default function UserReportsPage() {
                           </div>
                         </div>
 
-                        {/* Estado del reporte */}
+                        {/* Report status */}
                         <div className="ml-4 text-right">
                           <Badge variant="outline" className="text-xs">
-                            En revisión
+                            Under review
                           </Badge>
                         </div>
                       </div>
@@ -499,9 +499,9 @@ export default function UserReportsPage() {
             ) : (
               <div className="text-center py-12">
                 <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No tienes reportes aún</h3>
+                <h3 className="text-lg font-semibold mb-2">No reports yet</h3>
                 <p className="text-muted-foreground">
-                  Usa el formulario de arriba para crear tu primer reporte de contaminación
+                  Use the form above to create your first pollution report
                 </p>
               </div>
             )}
