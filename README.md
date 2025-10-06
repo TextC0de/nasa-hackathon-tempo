@@ -119,10 +119,16 @@ A **monorepo** is a single repository containing multiple applications and libra
 **Backend** (`apps/api`)
 - Cloudflare Workers, Hono, tRPC Server, Zod
 
-**Clients** (`packages/`)
+**AI & Machine Learning**
+- OpenAI GPT-4 - AI analysis assistant
+- XGBoost - NO2 surface prediction model
+- FastAPI - ML service endpoint
+
+**Data Sources** (`packages/`)
 - AirNow (EPA) - Ground-based air quality
 - NASA Earthdata - TEMPO and TROPOMI satellite data
 - NASA FIRMS - Active fires and thermal anomalies
+- Open-Meteo - Weather and meteorological data
 
 ## Machine Learning Model
 
@@ -181,6 +187,48 @@ The ML service provides:
 - `/predict` - POST endpoint for NO2 predictions
 - `/features` - GET endpoint listing required features
 - `/health` - Health check endpoint
+
+## AI Assistant (GPT-4)
+
+### Overview
+
+The application includes an **AI-powered analysis assistant** built with GPT-4, designed to help administrators interpret air quality data and make informed decisions.
+
+### Features
+
+- **Contextual Analysis**: The AI assistant has access to the filtered historical AQI data currently being viewed
+- **Interactive Chat**: Natural language interface for asking questions about trends, patterns, and health implications
+- **Suggested Questions**: Pre-configured prompts to guide users through data interpretation
+- **Real-time Insights**: Provides recommendations based on current and historical air quality conditions
+
+### Example Queries
+
+The AI assistant can answer questions such as:
+- "What is the general AQI trend in this period?"
+- "Which pollutant is the most problematic?"
+- "When was the worst day of the period?"
+- "Are there seasonal patterns in the data?"
+- "What health recommendations should I give based on these results?"
+
+### Integration
+
+The AI assistant is available in the **Historical Analysis** view (`/estado/history`) for administrators. It automatically receives context about:
+- Selected time range and grouping interval
+- AQI statistics (average, minimum, maximum)
+- Active pollutants and their concentrations
+- Environmental conditions (temperature, wind, precipitation)
+- Affected population data
+
+### Configuration
+
+To enable the AI assistant, configure your OpenAI API key:
+
+```bash
+# In apps/web/.dev.vars
+OPENAI_API_KEY=your_openai_api_key_here
+```
+
+The assistant uses **GPT-4** for advanced analysis and contextual understanding of environmental data patterns.
 
 ## Installation
 
@@ -251,6 +299,7 @@ pnpm format
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:8787/trpc  # Dev
 # NEXT_PUBLIC_API_URL=https://api.workers.dev/trpc  # Prod
+OPENAI_API_KEY=your_openai_api_key_here  # Required for GPT-4 AI assistant
 ```
 
 ### Backend (`apps/api/.dev.vars`)
