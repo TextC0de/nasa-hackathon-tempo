@@ -174,7 +174,7 @@ export function FloatingAIChat({ context }: FloatingAIChatProps) {
 
         {/* Tooltip */}
         <div className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-popover text-popover-foreground text-xs font-medium rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
-          Pregúntame sobre los datos
+          Ask me about the data
           <div className="absolute top-full right-4 -mt-1 border-4 border-transparent border-t-popover" />
         </div>
       </div>
@@ -196,9 +196,9 @@ export function FloatingAIChat({ context }: FloatingAIChatProps) {
             <Bot className="h-3.5 w-3.5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-xs font-semibold truncate">Análisis AI</h3>
+            <h3 className="text-xs font-semibold truncate">AI Analysis</h3>
             <p className="text-[10px] text-muted-foreground truncate">
-              {status === 'streaming' ? 'Escribiendo...' : 'Disponible'}
+              {status === 'streaming' ? 'Writing...' : 'Available'}
             </p>
           </div>
         </div>
@@ -248,21 +248,21 @@ export function FloatingAIChat({ context }: FloatingAIChatProps) {
                     <Bot className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium mb-0.5">Asistente de Análisis</p>
+                    <p className="text-sm font-medium mb-0.5">Analysis Assistant</p>
                     <p className="text-xs text-muted-foreground">
-                      Pregúntame sobre los datos actuales
+                      Ask me about the current data
                     </p>
                   </div>
 
-                  {/* Sugerencias iniciales */}
+                  {/* Initial suggestions */}
                   <div className="space-y-1.5 pt-2">
-                    <p className="text-xs text-muted-foreground font-medium">Preguntas sugeridas:</p>
+                    <p className="text-xs text-muted-foreground font-medium">Suggested questions:</p>
                     <div className="grid gap-1.5">
                       {[
-                        "¿Cuál es la tendencia del AQI en este período?",
-                        "¿En qué días hubo peor calidad del aire?",
-                        "¿Qué recomendaciones de salud me das según estos datos?",
-                        "Explícame los contaminantes principales detectados",
+                        "What is the AQI trend in this period?",
+                        "What days had the worst air quality?",
+                        "What health recommendations do you give based on this data?",
+                        "Explain the main pollutants detected",
                       ].map((text) => (
                         <button
                           key={text}
@@ -317,7 +317,7 @@ export function FloatingAIChat({ context }: FloatingAIChatProps) {
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Pregunta sobre los datos..."
+                placeholder="Ask about the data..."
                 disabled={status !== 'ready'}
                 className="flex-1 bg-background h-8 text-xs"
               />
@@ -335,7 +335,7 @@ export function FloatingAIChat({ context }: FloatingAIChatProps) {
               </Button>
             </form>
             <p className="text-[10px] text-muted-foreground text-center mt-1.5">
-              GPT-4o • {messages.length} mensajes
+              GPT-4o • {messages.length} messages
             </p>
           </div>
         </>

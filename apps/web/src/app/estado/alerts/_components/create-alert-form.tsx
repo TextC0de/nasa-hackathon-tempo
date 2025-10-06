@@ -17,7 +17,7 @@ import { ALERT_TEMPLATES, type AlertTemplate } from "./alert-templates"
 import { Loader2, MapPin } from "lucide-react"
 import dynamic from "next/dynamic"
 
-// Importar mapa dinámicamente
+// Import map dynamically
 const CaliforniaMap = dynamic(
   () => import("@/components/california-map").then(mod => ({ default: mod.CaliforniaMap })),
   { ssr: false }
@@ -48,10 +48,10 @@ export function CreateAlertForm({ onSubmit, isSubmitting }: CreateAlertFormProps
     longitude: -119.4179,
     locationName: 'California',
     alertType: undefined as 'wildfire' | 'ozone' | 'pm25' | 'custom' | undefined,
-    radiusKm: 50 // Radio de cobertura en km
+    radiusKm: 50 // Coverage radius in km
   })
 
-  // Handler para click en el mapa
+  // Handler for map click
   const handleMapClick = (e: any) => {
     const { lat, lng } = e.latlng
     setFormData({

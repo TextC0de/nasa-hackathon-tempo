@@ -69,9 +69,9 @@ export function AIChat({ context, className }: AIChatProps) {
                 <MessageSquare className="h-8 w-8 text-primary" />
               </div>
               <div>
-                <h3 className="font-semibold text-lg mb-1">¿Necesitas ayuda para interpretar los datos?</h3>
+                <h3 className="font-semibold text-lg mb-1">Need help interpreting the data?</h3>
                 <p className="text-sm text-muted-foreground">
-                  Haz clic para conversar con nuestro asistente AI y obtener análisis detallados
+                  Click to chat with our AI assistant and get detailed analysis
                 </p>
               </div>
             </div>
@@ -89,8 +89,8 @@ export function AIChat({ context, className }: AIChatProps) {
             <Bot className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <CardTitle className="text-base">Asistente de Análisis AI</CardTitle>
-            <p className="text-xs text-muted-foreground">Analiza y responde preguntas sobre los datos</p>
+            <CardTitle className="text-base">AI Analysis Assistant</CardTitle>
+            <p className="text-xs text-muted-foreground">Analyzes and answers questions about the data</p>
           </div>
         </div>
         <Button
@@ -110,10 +110,10 @@ export function AIChat({ context, className }: AIChatProps) {
               <div className="text-center py-8 text-muted-foreground">
                 <Bot className="h-12 w-12 mx-auto mb-3 opacity-20" />
                 <p className="text-sm">
-                  ¡Hola! Puedo ayudarte a analizar los datos de calidad del aire.
+                  Hello! I can help you analyze air quality data.
                 </p>
                 <p className="text-xs mt-2">
-                  Pregúntame sobre tendencias, contaminantes, o recomendaciones de salud.
+                  Ask me about trends, pollutants, or health recommendations.
                 </p>
               </div>
             )}
@@ -166,7 +166,7 @@ export function AIChat({ context, className }: AIChatProps) {
 
             {error && (
               <div className="rounded-lg px-4 py-2 bg-destructive/10 text-destructive text-sm">
-                Error: No se pudo procesar tu mensaje. Por favor intenta de nuevo.
+                Error: Could not process your message. Please try again.
               </div>
             )}
           </div>
@@ -177,7 +177,7 @@ export function AIChat({ context, className }: AIChatProps) {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Pregunta sobre los datos históricos..."
+            placeholder="Ask about the historical data..."
             disabled={status !== 'ready'}
             className="flex-1"
           />
@@ -199,14 +199,14 @@ export function AIChat({ context, className }: AIChatProps) {
           <div className="space-y-3 bg-muted/30 rounded-lg p-4">
             <p className="text-xs font-medium text-muted-foreground flex items-center gap-2">
               <Sparkles className="h-3 w-3" />
-              Preguntas sugeridas para comenzar
+              Suggested questions to get started
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {[
-                { icon: "📈", text: "¿Cuál es la tendencia general del AQI?" },
-                { icon: "🔍", text: "¿Qué contaminante es el más problemático?" },
-                { icon: "📅", text: "¿Cuándo fue el peor día del período?" },
-                { icon: "🌡️", text: "¿Hay patrones estacionales?" },
+                { icon: "📈", text: "What is the general AQI trend?" },
+                { icon: "🔍", text: "Which pollutant is the most problematic?" },
+                { icon: "📅", text: "When was the worst day of the period?" },
+                { icon: "🌡️", text: "Are there seasonal patterns?" },
               ].map((suggestion) => (
                 <Button
                   key={suggestion.text}

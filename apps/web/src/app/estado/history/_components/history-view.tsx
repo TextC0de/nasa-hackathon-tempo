@@ -24,7 +24,7 @@ interface HistoryViewProps {
 
 type Granularity = 'hourly' | 'daily' | 'weekly' | 'monthly'
 
-// Obtener color de AQI
+// Get AQI color
 function getAQIColor(aqi: number): string {
   if (aqi <= 50) return 'text-green-600 bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800'
   if (aqi <= 100) return 'text-yellow-600 bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800'
@@ -34,29 +34,29 @@ function getAQIColor(aqi: number): string {
   return 'text-brown-600 bg-brown-50 dark:bg-brown-950 border-brown-200 dark:border-brown-800'
 }
 
-// Obtener categoría de AQI
+// Get AQI category
 function getAQICategory(aqi: number): string {
-  if (aqi <= 50) return 'Bueno'
-  if (aqi <= 100) return 'Moderado'
-  if (aqi <= 150) return 'Insalubre (Sensibles)'
-  if (aqi <= 200) return 'Insalubre'
-  if (aqi <= 300) return 'Muy Insalubre'
-  return 'Peligroso'
+  if (aqi <= 50) return 'Good'
+  if (aqi <= 100) return 'Moderate'
+  if (aqi <= 150) return 'Unhealthy (Sensitive)'
+  if (aqi <= 200) return 'Unhealthy'
+  if (aqi <= 300) return 'Very Unhealthy'
+  return 'Hazardous'
 }
 
 export function HistoryView({
   latitude: initialLatitude = 36.7783,
   longitude: initialLongitude = -119.4179
 }: HistoryViewProps) {
-  // Estado de UI
+  // UI state
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
-  // Estado de ubicación
+  // Location state
   const [latitude, setLatitude] = useState(initialLatitude)
   const [longitude, setLongitude] = useState(initialLongitude)
   const [radiusKm, setRadiusKm] = useState(50)
 
-  // Estado de filtros
+  // Filter state
   const [startDate, setStartDate] = useState<Date | undefined>(undefined)
   const [endDate, setEndDate] = useState<Date | undefined>(undefined)
   const [granularity, setGranularity] = useState<Granularity>('weekly')
@@ -64,7 +64,7 @@ export function HistoryView({
   const [appliedEndDate, setAppliedEndDate] = useState<Date | undefined>(undefined)
   const [appliedGranularity, setAppliedGranularity] = useState<Granularity>('weekly')
 
-  // Inicializar fechas con 1 año por defecto
+  // Initialize dates with 1 year default
   useEffect(() => {
     const now = new Date()
     const oneYearAgo = subYears(now, 1)
@@ -76,7 +76,7 @@ export function HistoryView({
     setAppliedGranularity('weekly')
   }, [])
 
-  // Datos históricos
+  // Historical data
   const { data: historicalData, isLoading, error } = trpc.obtenerHistoricoAqi.useQuery({
     latitude,
     longitude,
@@ -88,36 +88,36 @@ export function HistoryView({
     enabled: !!appliedStartDate && !!appliedEndDate,
   })
 
-  // Contexto AI
+  // AI context
   const aiContext = useMemo(() => {
     if (!historicalData || !historicalData.data.length) return undefined
     const { data: dataPoints, stats, trend, granularity: gran } = historicalData
-    return `DATOS HISTÓRICOS DE CALIDAD DEL AIRE:
+    return `HISTORICAL AIR QUALITY DATA:
 
-Período: ${appliedStartDate ? format(appliedStartDate, 'PP', { locale: es }) : ''} - ${appliedEndDate ? format(appliedEndDate, 'PP', { locale: es }) : ''}
-Granularidad: ${gran}
-Ubicación: California (${latitude.toFixed(2)}, ${longitude.toFixed(2)})
+Period: ${appliedStartDate ? format(appliedStartDate, 'PP') : ''} - ${appliedEndDate ? format(appliedEndDate, 'PP') : ''}
+Granularity: ${gran}
+Location: California (${latitude.toFixed(2)}, ${longitude.toFixed(2)})
 
-ESTADÍSTICAS GENERALES:
-- AQI Promedio: ${stats?.avg.toFixed(1)}
-- AQI Mínimo: ${stats?.min}
-- AQI Máximo: ${stats?.max}
-- Total de registros: ${dataPoints.length}
+GENERAL STATISTICS:
+- Average AQI: ${stats?.avg.toFixed(1)}
+- Minimum AQI: ${stats?.min}
+- Maximum AQI: ${stats?.max}
+- Total records: ${dataPoints.length}
 
-TENDENCIA:
-- Dirección: ${trend?.direction === 'improving' ? 'Mejorando' : trend?.direction === 'worsening' ? 'Empeorando' : 'Estable'}
-- Cambio porcentual: ${trend?.percentageChange.toFixed(1)}%
-- Análisis: ${trend?.message}
+TREND:
+- Direction: ${trend?.direction === 'improving' ? 'Improving' : trend?.direction === 'worsening' ? 'Worsening' : 'Stable'}
+- Percentage change: ${trend?.percentageChange.toFixed(1)}%
+- Analysis: ${trend?.message}
 
-CONTAMINANTES:
+POLLUTANTS:
 ${dataPoints.map((d, i) => {
   if (i % Math.ceil(dataPoints.length / 5) === 0) {
-    return `- ${format(new Date(d.timestamp), 'PP', { locale: es })}: AQI=${d.aqi_avg.toFixed(0)}, O₃=${d.o3_avg?.toFixed(1) ?? 'N/A'} ppb, NO₂=${d.no2_avg?.toFixed(1) ?? 'N/A'} ppb, PM2.5=${d.pm25_avg?.toFixed(1) ?? 'N/A'} μg/m³`
+    return `- ${format(new Date(d.timestamp), 'PP')}: AQI=${d.aqi_avg.toFixed(0)}, O₃=${d.o3_avg?.toFixed(1) ?? 'N/A'} ppb, NO₂=${d.no2_avg?.toFixed(1) ?? 'N/A'} ppb, PM2.5=${d.pm25_avg?.toFixed(1) ?? 'N/A'} μg/m³`
   }
   return null
 }).filter(Boolean).join('\n')}
 
-DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format(new Date(dataPoints[0].timestamp), 'PP', { locale: es })} hasta ${format(new Date(dataPoints[dataPoints.length - 1].timestamp), 'PP', { locale: es })}`
+COMPLETE DATA AVAILABLE: ${dataPoints.length} data points from ${format(new Date(dataPoints[0].timestamp), 'PP')} to ${format(new Date(dataPoints[dataPoints.length - 1].timestamp), 'PP')}`
   }, [historicalData, appliedStartDate, appliedEndDate, latitude, longitude])
 
   const daysDiff = useMemo(() => {
@@ -214,11 +214,11 @@ DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format
                 {isSidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
               </Button>
               <BarChart3 className="h-5 w-5 text-primary" />
-              <h1 className="text-lg font-bold">Análisis Histórico</h1>
+              <h1 className="text-lg font-bold">Historical Analysis</h1>
             </div>
             <Button variant="outline" size="sm" className="gap-2">
               <Download className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline text-xs">Exportar</span>
+              <span className="hidden sm:inline text-xs">Export</span>
             </Button>
           </div>
         </div>
@@ -238,7 +238,7 @@ DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format
               <div>
                 <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
                   <CalendarIcon className="h-4 w-4 text-primary" />
-                  Período de Análisis
+                  Analysis Period
                 </h2>
 
                 {/* Preset: Solo 1 año */}
@@ -250,15 +250,15 @@ DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format
                   >
                     <CalendarRange className="h-4 w-4 mr-3 shrink-0" />
                     <div className="text-left flex-1">
-                      <div className="font-semibold text-sm">Último año</div>
-                      <div className="text-[10px] opacity-70">365 días</div>
+                      <div className="font-semibold text-sm">Last year</div>
+                      <div className="text-[10px] opacity-70">365 days</div>
                     </div>
                   </Button>
                 </div>
 
-                {/* O personalizado */}
+                {/* Or custom */}
                 <div className="mt-3 pt-3 border-t space-y-2">
-                  <Label className="text-xs font-medium">Personalizado</Label>
+                  <Label className="text-xs font-medium">Custom</Label>
                   <div className="grid grid-cols-2 gap-2">
                     <Popover>
                       <PopoverTrigger asChild>
@@ -271,7 +271,7 @@ DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format
                           )}
                         >
                           <CalendarIcon className="mr-1.5 h-3 w-3" />
-                          {startDate ? format(startDate, "dd/MM/yy") : "Inicio"}
+                          {startDate ? format(startDate, "dd/MM/yy") : "Start"}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
@@ -295,7 +295,7 @@ DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format
                           )}
                         >
                           <CalendarIcon className="mr-1.5 h-3 w-3" />
-                          {endDate ? format(endDate, "dd/MM/yy") : "Fin"}
+                          {endDate ? format(endDate, "dd/MM/yy") : "End"}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
@@ -311,11 +311,11 @@ DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format
                 </div>
               </div>
 
-              {/* Agrupar Datos */}
+              {/* Group Data */}
               <div>
                 <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
                   <BarChart3 className="h-4 w-4 text-primary" />
-                  Agrupar Datos
+                  Group Data
                 </h2>
                 <ToggleGroup
                   type="single"
@@ -327,52 +327,52 @@ DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format
                     <div className="flex flex-col items-start text-left w-full">
                       <div className="flex items-center gap-2">
                         <Clock className="h-3 w-3" />
-                        <span className="text-xs font-medium">Por hora</span>
+                        <span className="text-xs font-medium">Hourly</span>
                       </div>
-                      <span className="text-[9px] text-muted-foreground">Detalle máx</span>
+                      <span className="text-[9px] text-muted-foreground">Max detail</span>
                     </div>
                   </ToggleGroupItem>
                   <ToggleGroupItem value="daily" className="h-auto py-2 px-3">
                     <div className="flex flex-col items-start text-left w-full">
                       <div className="flex items-center gap-2">
                         <CalendarIcon className="h-3 w-3" />
-                        <span className="text-xs font-medium">Por día</span>
+                        <span className="text-xs font-medium">Daily</span>
                       </div>
-                      <span className="text-[9px] text-muted-foreground">Recomendado</span>
+                      <span className="text-[9px] text-muted-foreground">Recommended</span>
                     </div>
                   </ToggleGroupItem>
                   <ToggleGroupItem value="weekly" className="h-auto py-2 px-3">
                     <div className="flex flex-col items-start text-left w-full">
                       <div className="flex items-center gap-2">
                         <CalendarDays className="h-3 w-3" />
-                        <span className="text-xs font-medium">Por semana</span>
+                        <span className="text-xs font-medium">Weekly</span>
                       </div>
-                      <span className="text-[9px] text-muted-foreground">Tendencias</span>
+                      <span className="text-[9px] text-muted-foreground">Trends</span>
                     </div>
                   </ToggleGroupItem>
                   <ToggleGroupItem value="monthly" className="h-auto py-2 px-3">
                     <div className="flex flex-col items-start text-left w-full">
                       <div className="flex items-center gap-2">
                         <CalendarRange className="h-3 w-3" />
-                        <span className="text-xs font-medium">Por mes</span>
+                        <span className="text-xs font-medium">Monthly</span>
                       </div>
-                      <span className="text-[9px] text-muted-foreground">Vista general</span>
+                      <span className="text-[9px] text-muted-foreground">Overview</span>
                     </div>
                   </ToggleGroupItem>
                 </ToggleGroup>
               </div>
 
-              {/* Radio de Búsqueda */}
+              {/* Search Radius */}
               <div>
                 <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
                   <Circle className="h-4 w-4 text-primary" />
-                  Radio de Búsqueda
+                  Search Radius
                 </h2>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { label: 'Urbano', value: 25, desc: '25 km' },
+                    { label: 'Urban', value: 25, desc: '25 km' },
                     { label: 'Regional', value: 50, desc: '50 km' },
-                    { label: 'Amplio', value: 100, desc: '100 km' },
+                    { label: 'Wide', value: 100, desc: '100 km' },
                   ].map((preset) => (
                     <Button
                       key={preset.value}
@@ -397,7 +397,7 @@ DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format
                 className="w-full"
                 size="lg"
               >
-                {hasUnappliedChanges ? 'Aplicar Cambios' : 'Filtros Aplicados ✓'}
+                {hasUnappliedChanges ? 'Apply Changes' : 'Filters Applied ✓'}
               </Button>
             </div>
           </aside>
@@ -439,9 +439,9 @@ DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format
                     <div className="flex items-start gap-3">
                       <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
                       <div className="space-y-1">
-                        <h3 className="text-sm font-semibold text-destructive">Error al cargar datos</h3>
+                        <h3 className="text-sm font-semibold text-destructive">Error loading data</h3>
                         <p className="text-xs text-muted-foreground">
-                          No se pudieron obtener los datos históricos. Por favor, intenta nuevamente.
+                          Could not retrieve historical data. Please try again.
                         </p>
                       </div>
                     </div>
@@ -455,10 +455,10 @@ DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format
                   <CardContent className="p-6">
                     <div className="flex flex-col items-center justify-center text-center space-y-2">
                       <BarChart3 className="h-10 w-10 text-muted-foreground/50" />
-                      <h3 className="text-sm font-semibold">Sin datos disponibles</h3>
+                      <h3 className="text-sm font-semibold">No data available</h3>
                       <p className="text-xs text-muted-foreground max-w-sm">
-                        No hay datos históricos para esta ubicación y período.
-                        Intenta ajustar las fechas o el radio de búsqueda.
+                        No historical data available for this location and period.
+                        Try adjusting the dates or search radius.
                       </p>
                     </div>
                   </CardContent>
@@ -468,11 +468,11 @@ DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format
               {/* Stats Cards */}
               {!isLoading && !error && historicalData && historicalData.data.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {/* AQI Promedio */}
+              {/* Average AQI */}
               <Card className={cn("border", getAQIColor(historicalData.stats?.avg ?? 0))}>
                 <CardContent className="p-3">
                   <div className="space-y-1">
-                    <p className="text-[10px] font-medium text-muted-foreground">AQI Promedio</p>
+                    <p className="text-[10px] font-medium text-muted-foreground">Average AQI</p>
                     <p className="text-2xl font-bold tabular-nums">
                       {Math.round(historicalData.stats?.avg ?? 0)}
                     </p>
@@ -489,11 +489,11 @@ DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format
                 </CardContent>
               </Card>
 
-              {/* AQI Mínimo */}
+              {/* Minimum AQI */}
               <Card className="border">
                 <CardContent className="p-3">
                   <div className="space-y-1">
-                    <p className="text-[10px] font-medium text-muted-foreground">Mejor Día</p>
+                    <p className="text-[10px] font-medium text-muted-foreground">Best Day</p>
                     <p className="text-2xl font-bold tabular-nums text-green-600">
                       {Math.round(historicalData.stats?.min ?? 0)}
                     </p>
@@ -504,11 +504,11 @@ DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format
                 </CardContent>
               </Card>
 
-              {/* AQI Máximo */}
+              {/* Maximum AQI */}
               <Card className="border">
                 <CardContent className="p-3">
                   <div className="space-y-1">
-                    <p className="text-[10px] font-medium text-muted-foreground">Peor Día</p>
+                    <p className="text-[10px] font-medium text-muted-foreground">Worst Day</p>
                     <p className="text-2xl font-bold tabular-nums text-red-600">
                       {Math.round(historicalData.stats?.max ?? 0)}
                     </p>
@@ -535,59 +535,59 @@ DATOS COMPLETOS DISPONIBLES: ${dataPoints.length} puntos de datos desde ${format
           {/* Insights Grid */}
           {!isLoading && !error && historicalData && historicalData.data.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-              {/* Tendencia */}
+              {/* Trend */}
               {historicalData?.trend && (
                 <Card>
                   <CardContent className="p-3">
                     <div className="flex items-center gap-1.5 mb-2">
                       <TrendIcon className={cn("h-3.5 w-3.5", trendColor)} />
-                      <h3 className="text-xs font-semibold">Tendencia</h3>
+                      <h3 className="text-xs font-semibold">Trend</h3>
                     </div>
                     <p className="text-[10px] text-muted-foreground mb-2">{historicalData.trend.message}</p>
                     <div className="space-y-1.5">
                       <div className="flex justify-between items-center text-xs">
-                        <span className="text-muted-foreground">Cambio</span>
+                        <span className="text-muted-foreground">Change</span>
                         <span className={cn("font-bold", trendColor)}>
                           {historicalData.trend.percentageChange > 0 ? '+' : ''}
                           {historicalData.trend.percentageChange.toFixed(1)}%
                         </span>
                       </div>
                       <div className="flex justify-between items-center text-xs">
-                        <span className="text-muted-foreground">Datos</span>
+                        <span className="text-muted-foreground">Data</span>
                         <span className="font-semibold">{historicalData.data.length}</span>
                       </div>
                       <div className="flex justify-between items-center text-xs">
-                        <span className="text-muted-foreground">Período</span>
-                        <span className="font-semibold">{daysDiff} días</span>
+                        <span className="text-muted-foreground">Period</span>
+                        <span className="font-semibold">{daysDiff} days</span>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               )}
 
-              {/* Fuentes */}
+              {/* Sources */}
               <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950 border-blue-200 dark:border-blue-800">
                 <CardContent className="p-3">
                   <div className="flex items-center gap-1.5 mb-2">
                     <FileText className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                    <h3 className="text-xs font-semibold text-blue-900 dark:text-blue-100">Info de Datos</h3>
+                    <h3 className="text-xs font-semibold text-blue-900 dark:text-blue-100">Data Info</h3>
                   </div>
                   <div className="space-y-1 text-xs text-blue-800 dark:text-blue-200">
                     <div className="flex justify-between">
-                      <span className="text-[10px]">Fuente:</span>
+                      <span className="text-[10px]">Source:</span>
                       <span className="text-[10px] font-medium">EPA Stations</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[10px]">Cobertura:</span>
+                      <span className="text-[10px]">Coverage:</span>
                       <span className="text-[10px] font-medium">California</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[10px]">Radio:</span>
+                      <span className="text-[10px]">Radius:</span>
                       <span className="text-[10px] font-medium">{radiusKm} km</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[10px]">Actualización:</span>
-                      <span className="text-[10px] font-medium">Diaria</span>
+                      <span className="text-[10px]">Update:</span>
+                      <span className="text-[10px] font-medium">Daily</span>
                     </div>
                   </div>
                 </CardContent>

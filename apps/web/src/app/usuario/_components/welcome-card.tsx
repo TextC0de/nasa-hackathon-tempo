@@ -163,35 +163,38 @@ export function WelcomeCard({
                   <span className="text-sm">Updating data...</span>
                 </div>
               )}
-            </div>
 
-            {/* Quick actions */}
-            <div className="flex flex-col gap-3 lg:min-w-[200px]">
-              <Button
-                onClick={() => onDialogOpen("metrics")}
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-              >
-                <Activity className="h-4 w-4 mr-2" />
-                View Metrics
-              </Button>
+              {/* Quick action buttons - simplified */}
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={() => onDialogOpen("metrics")}
+                  size="sm"
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all duration-200"
+                >
+                  <Activity className="h-4 w-4 mr-2" />
+                  Details
+                </Button>
 
-              <Button
-                onClick={() => onDialogOpen("weather")}
-                variant="outline"
-                className="w-full bg-white/80 hover:bg-white border-blue-200 hover:border-blue-300 text-blue-700 hover:text-blue-800 shadow-sm hover:shadow-md transition-all duration-200"
-              >
-                <Cloud className="h-4 w-4 mr-2" />
-                Forecast
-              </Button>
+                <Button
+                  onClick={() => onDialogOpen("pollutants")}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/80 hover:bg-white border-green-200 hover:border-green-300 text-green-700 hover:text-green-800 shadow-sm hover:shadow-md transition-all duration-200"
+                >
+                  <Droplets className="h-4 w-4 mr-2" />
+                  Pollutants
+                </Button>
 
-              <Button
-                onClick={() => onDialogOpen("pollutants")}
-                variant="outline"
-                className="w-full bg-white/80 hover:bg-white border-green-200 hover:border-green-300 text-green-700 hover:text-green-800 shadow-sm hover:shadow-md transition-all duration-200"
-              >
-                <Droplets className="h-4 w-4 mr-2" />
-                Pollutants
-              </Button>
+                <Button
+                  onClick={() => onDialogOpen("weather")}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/80 hover:bg-white border-blue-200 hover:border-blue-300 text-blue-700 hover:text-blue-800 shadow-sm hover:shadow-md transition-all duration-200"
+                >
+                  <Cloud className="h-4 w-4 mr-2" />
+                  Weather
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>

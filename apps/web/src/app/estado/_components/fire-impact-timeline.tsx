@@ -24,42 +24,42 @@ export function FireImpactTimeline({ data, pollutant, trend }: FireImpactTimelin
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Timeline de Contaminación</CardTitle>
-          <CardDescription>No hay datos disponibles</CardDescription>
+          <CardTitle>Pollution Timeline</CardTitle>
+          <CardDescription>No data available</CardDescription>
         </CardHeader>
       </Card>
     )
   }
 
-  // Encontrar valores min/max para escalar
+  // Find min/max values for scaling
   const values = data.map(p => p.value).filter((v): v is number => v !== null)
   const minValue = Math.min(...values)
   const maxValue = Math.max(...values)
   const range = maxValue - minValue
 
-  // Normalizar valores a 0-100 para visualización
+  // Normalize values to 0-100 for visualization
   const normalizeValue = (value: number | null) => {
     if (value === null || range === 0) return 0
     return ((value - minValue) / range) * 100
   }
 
-  // Encontrar puntos especiales
+  // Find special points
   const t0Point = data.find(p => p.event === 'fire_detected')
   const peakPoint = data.find(p => p.event === 'peak')
 
-  // Iconos de trend
+  // Trend icons
   const TrendIcon = trend === 'improving' ? TrendingDown : trend === 'worsening' ? TrendingUp : Minus
   const trendColor = trend === 'improving' ? 'text-green-600' : trend === 'worsening' ? 'text-red-600' : 'text-gray-600'
-  const trendText = trend === 'improving' ? 'Mejorando' : trend === 'worsening' ? 'Empeorando' : 'Estable'
+  const trendText = trend === 'improving' ? 'Improving' : trend === 'worsening' ? 'Worsening' : 'Stable'
 
   return (
     <Card className="overflow-visible">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>Timeline de {pollutant}</CardTitle>
+            <CardTitle>{pollutant} Timeline</CardTitle>
             <CardDescription>
-              Evolución desde detección del incendio
+              Evolution since fire detection
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -69,9 +69,9 @@ export function FireImpactTimeline({ data, pollutant, trend }: FireImpactTimelin
         </div>
       </CardHeader>
       <CardContent>
-        {/* Gráfica Simple */}
+        {/* Simple Chart */}
         <div className="relative h-48 bg-muted/20 rounded-lg p-4 overflow-x-auto overflow-y-visible" style={{ paddingTop: '3rem' }}>
-          {/* Grid de fondo */}
+          {/* Background grid */}
           <div className="absolute inset-0 p-4">
             {[0, 25, 50, 75, 100].map((pct) => (
               <div
@@ -82,7 +82,7 @@ export function FireImpactTimeline({ data, pollutant, trend }: FireImpactTimelin
             ))}
           </div>
 
-          {/* Línea de tiempo */}
+          {/* Timeline */}
           <div className="relative h-full flex items-end justify-between gap-1">
             {data.map((point, i) => {
               const height = normalizeValue(point.value)
@@ -91,27 +91,27 @@ export function FireImpactTimeline({ data, pollutant, trend }: FireImpactTimelin
               const isCurrent = point.event === 'current'
               const changeNum = parseFloat(point.changePercent)
 
-              // Color basado en estado
+              // Color based on status
               let barColor = 'bg-gray-300'
               let barPattern = ''
 
               if (point.value !== null) {
-                // Tiene valor - color por cambio
+                // Has value - color by change
                 barColor =
                   changeNum > 100 ? 'bg-red-600' :
                   changeNum > 50 ? 'bg-orange-500' :
                   changeNum > 20 ? 'bg-yellow-500' :
                   'bg-green-500'
               } else if (point.reason === 'no_data') {
-                // Sin datos TEMPO (normal - noche o gaps)
+                // No TEMPO data (normal - night or gaps)
                 barColor = 'bg-gray-300'
                 barPattern = 'opacity-40'
               } else if (point.reason === 'outside_coverage') {
-                // Fuera de cobertura
+                // Outside coverage
                 barColor = 'bg-amber-200'
                 barPattern = 'opacity-60'
               } else if (point.reason === 'error') {
-                // Error real
+                // Real error
                 barColor = 'bg-red-300'
                 barPattern = 'opacity-30'
               }
@@ -121,12 +121,12 @@ export function FireImpactTimeline({ data, pollutant, trend }: FireImpactTimelin
                   key={i}
                   className="relative flex-1 flex flex-col items-center justify-end h-full group"
                 >
-                  {/* Barra */}
+                  {/* Bar */}
                   <div
                     className={`w-full ${barColor} ${barPattern} rounded-t transition-all hover:opacity-80 cursor-pointer`}
                     style={{ height: point.value !== null ? `${height}%` : '8px', minHeight: '4px' }}
                   >
-                    {/* Marcador de eventos */}
+                    {/* Event markers */}
                     {isT0 && (
                       <div className="absolute -top-6 left-1/2 transform -translate-x-1/2">
                         <Flame className="h-4 w-4 text-orange-600" />
@@ -134,12 +134,12 @@ export function FireImpactTimeline({ data, pollutant, trend }: FireImpactTimelin
                     )}
                     {isPeak && (
                       <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
-                        <Badge variant="destructive" className="text-xs px-1">Pico</Badge>
+                        <Badge variant="destructive" className="text-xs px-1">Peak</Badge>
                       </div>
                     )}
                   </div>
 
-                  {/* Tooltip en hover */}
+                  {/* Hover tooltip */}
                   <div className="absolute bottom-full mb-2 hidden group-hover:block z-50 pointer-events-none">
                     <div className="bg-popover text-popover-foreground shadow-xl rounded-md p-3 text-xs whitespace-nowrap border-2">
                       <div className="font-semibold">{point.relativeTime}</div>
@@ -154,18 +154,18 @@ export function FireImpactTimeline({ data, pollutant, trend }: FireImpactTimelin
                           </>
                         ) : (
                           <div className="text-muted-foreground italic">
-                            {point.reason === 'no_data' && '⚪ Sin datos TEMPO'}
-                            {point.reason === 'outside_coverage' && '⚠️ Fuera de cobertura'}
-                            {point.reason === 'error' && '❌ Error al obtener datos'}
-                            {!point.reason && 'Sin datos'}
+                            {point.reason === 'no_data' && '⚪ No TEMPO data'}
+                            {point.reason === 'outside_coverage' && '⚠️ Outside coverage'}
+                            {point.reason === 'error' && '❌ Error retrieving data'}
+                            {!point.reason && 'No data'}
                           </div>
                         )}
                       </div>
-                      {isT0 && <div className="text-orange-600 font-semibold mt-1">🔥 Incendio detectado</div>}
+                      {isT0 && <div className="text-orange-600 font-semibold mt-1">🔥 Fire detected</div>}
                     </div>
                   </div>
 
-                  {/* Etiqueta eje X (cada N puntos) */}
+                  {/* X-axis label (every N points) */}
                   {(i === 0 || i === Math.floor(data.length / 2) || i === data.length - 1) && (
                     <div className="absolute -bottom-6 text-xs text-muted-foreground whitespace-nowrap">
                       {point.relativeTime}
@@ -177,9 +177,9 @@ export function FireImpactTimeline({ data, pollutant, trend }: FireImpactTimelin
           </div>
         </div>
 
-        {/* Leyenda */}
+        {/* Legend */}
         <div className="mt-8 space-y-2">
-          <div className="text-xs font-semibold text-muted-foreground">Niveles de contaminación:</div>
+          <div className="text-xs font-semibold text-muted-foreground">Pollution levels:</div>
           <div className="flex flex-wrap gap-4 text-xs">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-green-500 rounded" />
@@ -187,30 +187,30 @@ export function FireImpactTimeline({ data, pollutant, trend }: FireImpactTimelin
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-yellow-500 rounded" />
-              <span>Elevado (+20-50%)</span>
+              <span>Elevated (+20-50%)</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-orange-500 rounded" />
-              <span>Alto (+50-100%)</span>
+              <span>High (+50-100%)</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-red-600 rounded" />
-              <span>Crítico (+100%)</span>
+              <span>Critical (+100%)</span>
             </div>
           </div>
-          <div className="text-xs font-semibold text-muted-foreground mt-4">Estados sin datos:</div>
+          <div className="text-xs font-semibold text-muted-foreground mt-4">No data states:</div>
           <div className="flex flex-wrap gap-4 text-xs">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-gray-300 opacity-40 rounded" />
-              <span>Sin datos TEMPO (esperado)</span>
+              <span>No TEMPO data (expected)</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-amber-200 opacity-60 rounded" />
-              <span>Fuera de cobertura</span>
+              <span>Outside coverage</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-red-300 opacity-30 rounded" />
-              <span>Error al obtener</span>
+              <span>Error retrieving</span>
             </div>
           </div>
         </div>
@@ -218,7 +218,7 @@ export function FireImpactTimeline({ data, pollutant, trend }: FireImpactTimelin
           {t0Point && (
             <div className="flex items-center gap-2">
               <Flame className="h-3 w-3 text-orange-600" />
-              <span>Detección de incendio</span>
+              <span>Fire detection</span>
             </div>
           )}
         </div>

@@ -17,11 +17,11 @@ export function MenubarNavigation({ setOpenDialog }: MenubarNavigationProps) {
             className="flex items-center gap-2 px-3 py-2 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors"
           >
             <Layers className="h-4 w-4" />
-            <span className="text-sm font-medium">Capas del Mapa</span>
+            <span className="text-sm font-medium">Map Layers</span>
           </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom">
-          <p>Controla las capas visibles en el mapa</p>
+          <p>Control visible map layers</p>
         </TooltipContent>
       </Tooltip>
     </div>

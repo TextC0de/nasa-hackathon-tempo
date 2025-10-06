@@ -34,7 +34,7 @@ export function DesktopMetrics({ isLoading, error, stats, getAQIColor, getAQILev
           <Wifi className="h-4 w-4 text-green-500" />
         )}
         <span className="text-xs text-muted-foreground">
-          {isLoading ? "Conectando..." : error ? "Sin conexión" : "Conectado"}
+          {isLoading ? "Connecting..." : error ? "No connection" : "Connected"}
         </span>
       </div>
 
@@ -45,7 +45,7 @@ export function DesktopMetrics({ isLoading, error, stats, getAQIColor, getAQILev
             <div className="flex items-center space-x-2 cursor-help">
               <Map className="h-4 w-4 text-blue-500" />
               <span className="text-xs text-muted-foreground">
-                {stats.active}/{stats.total} estaciones
+                {stats.active}/{stats.total} stations
               </span>
             </div>
           </TooltipTrigger>
@@ -55,29 +55,29 @@ export function DesktopMetrics({ isLoading, error, stats, getAQIColor, getAQILev
                 <Map className="h-4 w-4 text-blue-500" />
                 <div>
                   <div className="font-semibold text-sm">
-                    Estado de Estaciones
+                    Station Status
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    Monitoreo en tiempo real
+                    Real-time monitoring
                   </div>
                 </div>
               </div>
               <div className="space-y-1 text-xs">
                 <div className="flex justify-between">
-                  <span>Estaciones activas:</span>
+                  <span>Active stations:</span>
                   <span className="font-medium text-green-600">{stats.active}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Total detectadas:</span>
+                  <span>Total detected:</span>
                   <span className="font-medium">{stats.total}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Inactivas:</span>
+                  <span>Inactive:</span>
                   <span className="font-medium text-orange-600">{stats.total - stats.active}</span>
                 </div>
                 <div className="pt-1 border-t border-border">
                   <div className="text-xs text-muted-foreground">
-                    Las estaciones activas proporcionan datos actualizados de calidad del aire
+                    Active stations provide updated air quality data
                   </div>
                 </div>
               </div>
@@ -106,19 +106,19 @@ export function DesktopMetrics({ isLoading, error, stats, getAQIColor, getAQILev
                 <span className="text-lg">{getAQIDetails(Math.round(stats.avgAQI)).emoji}</span>
                 <div>
                   <div className="font-semibold text-sm">
-                    AQI Promedio: {Math.round(stats.avgAQI)}
+                    Average AQI: {Math.round(stats.avgAQI)}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    Basado en {stats.active} estaciones activas
+                    Based on {stats.active} active stations
                   </div>
                 </div>
               </div>
               <div className="space-y-1 text-xs">
-                <div><strong>Categoría:</strong> {getAQIDetails(Math.round(stats.avgAQI)).category}</div>
-                <div><strong>Descripción:</strong> {getAQIDetails(Math.round(stats.avgAQI)).description}</div>
-                <div><strong>Población afectada:</strong> {getAQIDetails(Math.round(stats.avgAQI)).population}</div>
+                <div><strong>Category:</strong> {getAQIDetails(Math.round(stats.avgAQI)).category}</div>
+                <div><strong>Description:</strong> {getAQIDetails(Math.round(stats.avgAQI)).description}</div>
+                <div><strong>Affected population:</strong> {getAQIDetails(Math.round(stats.avgAQI)).population}</div>
                 <div className="pt-1 border-t border-border">
-                  <strong>Recomendación:</strong> {getAQIDetails(Math.round(stats.avgAQI)).recommendation}
+                  <strong>Recommendation:</strong> {getAQIDetails(Math.round(stats.avgAQI)).recommendation}
                 </div>
               </div>
             </div>

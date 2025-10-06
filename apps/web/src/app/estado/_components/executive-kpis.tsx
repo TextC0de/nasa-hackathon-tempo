@@ -65,12 +65,12 @@ export function ExecutiveKPIs({ stats, fires, isLoading }: ExecutiveKPIsProps) {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-6 py-4">
-      {/* KPI 1: AQI Promedio Estatal */}
+      {/* KPI 1: State Average AQI */}
       <Card className="border-border/40 hover:border-border transition-colors">
         <CardContent className="p-6">
           <div className="flex flex-col gap-1">
             <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              AQI Promedio
+              Average AQI
             </span>
             <div className="flex items-baseline gap-2">
               <span className="text-4xl font-bold tabular-nums" style={{
@@ -92,18 +92,18 @@ export function ExecutiveKPIs({ stats, fires, isLoading }: ExecutiveKPIsProps) {
               )}
             </div>
             <span className="text-xs text-muted-foreground">
-              vs mes anterior
+              vs previous month
             </span>
           </div>
         </CardContent>
       </Card>
 
-      {/* KPI 2: Zonas Críticas */}
+      {/* KPI 2: Critical Zones */}
       <Card className="border-border/40 hover:border-border transition-colors">
         <CardContent className="p-6">
           <div className="flex flex-col gap-1">
             <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Zonas Críticas
+              Critical Zones
             </span>
             <div className="flex items-baseline gap-2">
               <span className={`text-4xl font-bold tabular-nums ${
@@ -127,7 +127,7 @@ export function ExecutiveKPIs({ stats, fires, isLoading }: ExecutiveKPIsProps) {
         <CardContent className="p-6">
           <div className="flex flex-col gap-1">
             <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Población Afectada
+              Affected Population
             </span>
             <div className="flex items-baseline gap-2">
               <span className={`text-4xl font-bold tabular-nums ${
@@ -140,18 +140,18 @@ export function ExecutiveKPIs({ stats, fires, isLoading }: ExecutiveKPIsProps) {
               )}
             </div>
             <span className="text-xs text-muted-foreground">
-              en zonas insalubres
+              in unhealthy zones
             </span>
           </div>
         </CardContent>
       </Card>
 
-      {/* KPI 4: Estaciones Activas */}
+      {/* KPI 4: Active Stations */}
       <Card className="border-border/40 hover:border-border transition-colors">
         <CardContent className="p-6">
           <div className="flex flex-col gap-1">
             <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Estaciones Activas
+              Active Stations
             </span>
             <div className="flex items-baseline gap-2">
               <span className="text-4xl font-bold tabular-nums">
@@ -163,7 +163,7 @@ export function ExecutiveKPIs({ stats, fires, isLoading }: ExecutiveKPIsProps) {
               <Radio className="h-5 w-5 text-green-600" />
             </div>
             <span className="text-xs text-muted-foreground">
-              operacionales
+              operational
             </span>
           </div>
         </CardContent>

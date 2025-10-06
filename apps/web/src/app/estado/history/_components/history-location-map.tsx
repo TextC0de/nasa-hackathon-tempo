@@ -260,7 +260,7 @@ export function HistoryLocationMap({
               <MapPin className="h-4 w-4 text-primary shrink-0" />
               <div className="flex-1 min-w-0">
                 <CardTitle className="text-xs font-semibold truncate">
-                  {isLoadingLocation ? "Cargando ubicación..." : locationName}
+                  {isLoadingLocation ? "Loading location..." : locationName}
                 </CardTitle>
                 <p className="text-[10px] text-muted-foreground truncate">
                   {latitude.toFixed(4)}, {longitude.toFixed(4)}
@@ -374,7 +374,7 @@ export function HistoryLocationMap({
                     Lng: {longitude.toFixed(4)}
                   </p>
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    Arrastra el marcador para mover la ubicación
+                    Drag the marker to move the location
                   </p>
                 </div>
               </Popup>
@@ -395,7 +395,7 @@ export function HistoryLocationMap({
           {/* Instrucciones */}
           {!isExpanded && (
             <div className="absolute bottom-3 left-3 bg-background/90 backdrop-blur-sm border rounded-lg px-2 py-1 text-[10px] text-muted-foreground z-[1000]">
-              Click para cambiar ubicación
+              Click to change location
             </div>
           )}
         </div>

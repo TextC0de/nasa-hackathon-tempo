@@ -8,10 +8,8 @@ import { Header } from "./_components/header"
 import { MapView } from "./_components/map-view"
 import { DebugDialog } from "./_components/debug-dialog"
 import { MetricsDialog, TEMPODialog, WeatherDialog, PollutantsDialog } from "./_components/dialogs"
-import { RecommendationsPanel, RecommendationsPanelCompact } from "./_components/recommendations-panel"
+import { RecommendationsPanel } from "./_components/recommendations-panel"
 import { WelcomeCard } from "./_components/welcome-card"
-import { MetricsCards } from "./_components/metrics-cards"
-import { QuickActions } from "./_components/quick-actions"
 import { getAQIColor, getAQIBadge, getAQILevel } from "./_components/utils"
 
 import "leaflet/dist/leaflet.css"
@@ -151,9 +149,9 @@ export default function UsuarioPage() {
 
         {/* Main Content */}
         <div className="min-h-[calc(100vh-60px)] bg-gradient-to-br from-blue-50/30 via-white to-green-50/30">
-          <div className="container mx-auto px-4 py-6 space-y-8">
-            
-            {/* Welcome Card */}
+          <div className="container mx-auto px-4 py-6 space-y-6">
+
+            {/* Welcome Card - Simplified */}
             <WelcomeCard
               currentLocation={currentLocation}
               prediction={prediction}
@@ -161,22 +159,6 @@ export default function UsuarioPage() {
               onDialogOpen={setOpenDialog}
               getAQIColor={getAQIColor}
               getAQILevel={getAQILevel}
-            />
-
-            {/* Metrics Cards */}
-            <MetricsCards
-              prediction={prediction}
-              isLoading={isLoading}
-              onDialogOpen={setOpenDialog}
-              getAQIColor={getAQIColor}
-            />
-
-            {/* Quick Actions */}
-            <QuickActions
-              onDialogOpen={setOpenDialog}
-              onRefetch={refetch}
-              isLoading={isLoading}
-              unreadAlertsCount={newAlertsCount}
             />
 
             {/* Map and Recommendations */}

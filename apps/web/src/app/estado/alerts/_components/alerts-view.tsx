@@ -17,11 +17,11 @@ interface AlertsViewProps {
 }
 
 /**
- * Alerts View - Sistema de gestión de alertas para funcionarios
+ * Alerts View - Alert management system for officials
  *
- * Características:
- * - Templates pre-escritos (Wildfire, Ozone, PM2.5)
- * - Historial de alertas enviadas
+ * Features:
+ * - Pre-written templates (Wildfire, Ozone, PM2.5)
+ * - Alert history
  * - Multi-language support (EN/ES/ZH/VI)
  */
 export function AlertsView({
@@ -33,7 +33,7 @@ export function AlertsView({
 }: AlertsViewProps) {
   const [view, setView] = useState<'send' | 'history' | 'templates'>('send')
 
-  // Filtrar alertas activas
+  // Filter active alerts
   const activeAlerts = alerts.filter(a => a.status === 'active')
   const resolvedAlerts = alerts.filter(a => a.status === 'resolved')
 
@@ -44,7 +44,7 @@ export function AlertsView({
         <div>
           <h1 className="text-2xl font-bold">Alert Management</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Crear y gestionar alertas públicas de calidad del aire
+            Create and manage public air quality alerts
           </p>
         </div>
 
@@ -89,7 +89,7 @@ export function AlertsView({
               <CardHeader>
                 <CardTitle className="text-base">Quick Start Templates</CardTitle>
                 <CardDescription>
-                  Usa una plantilla pre-escrita para enviar alerta rápidamente
+                  Use a pre-written template to send alert quickly
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -103,7 +103,7 @@ export function AlertsView({
                     <span className="font-semibold">Wildfire Smoke</span>
                   </div>
                   <span className="text-xs text-muted-foreground text-left">
-                    Alerta por humo de incendios forestales
+                    Alert for wildfire smoke
                   </span>
                 </Button>
 
@@ -117,7 +117,7 @@ export function AlertsView({
                     <span className="font-semibold">High Ozone</span>
                   </div>
                   <span className="text-xs text-muted-foreground text-left">
-                    Advertencia por niveles altos de ozono
+                    Warning for high ozone levels
                   </span>
                 </Button>
 
@@ -131,24 +131,24 @@ export function AlertsView({
                     <span className="font-semibold">PM2.5 Alert</span>
                   </div>
                   <span className="text-xs text-muted-foreground text-left">
-                    Alerta por partículas finas en el aire
+                    Alert for fine particles in the air
                   </span>
                 </Button>
               </CardContent>
             </Card>
 
-            {/* Placeholder para form */}
+            {/* Placeholder for form */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Create Custom Alert</CardTitle>
                 <CardDescription>
-                  Formulario completo disponible próximamente
+                  Complete form available soon
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  El formulario de creación de alertas personalizadas estará disponible en la próxima fase.
-                  Por ahora, use las plantillas rápidas arriba o el diálogo de alertas del menú.
+                  The custom alert creation form will be available in the next phase.
+                  For now, use the quick templates above or the alerts dialog from the menu.
                 </p>
               </CardContent>
             </Card>
@@ -244,7 +244,7 @@ export function AlertsView({
               <Card>
                 <CardContent className="pt-6 text-center">
                   <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">No hay alertas en el historial</p>
+                  <p className="text-muted-foreground">No alerts in history</p>
                 </CardContent>
               </Card>
             )}
@@ -256,12 +256,12 @@ export function AlertsView({
             <CardHeader>
               <CardTitle className="text-base">Alert Templates</CardTitle>
               <CardDescription>
-                Gestión de plantillas disponible próximamente
+                Template management available soon
               </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                La gestión completa de plantillas estará disponible en la próxima fase.
+                Complete template management will be available in the next phase.
               </p>
             </CardContent>
           </Card>

@@ -36,8 +36,8 @@ export function FireImpactCard({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Análisis de Impacto en Calidad del Aire</CardTitle>
-          <CardDescription>Cargando datos...</CardDescription>
+          <CardTitle>Air Quality Impact Analysis</CardTitle>
+          <CardDescription>Loading data...</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -53,16 +53,16 @@ export function FireImpactCard({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Análisis de Impacto en Calidad del Aire</CardTitle>
-          <CardDescription>No hay datos disponibles</CardDescription>
+          <CardTitle>Air Quality Impact Analysis</CardTitle>
+          <CardDescription>No data available</CardDescription>
         </CardHeader>
         <CardContent>
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription>
-              No se pudieron obtener datos de contaminación para este incendio.
-              Esto puede deberse a que el incendio está fuera del rango de cobertura TEMPO
-              o no hay mediciones recientes disponibles.
+              Could not obtain pollution data for this fire.
+              This may be because the fire is outside TEMPO coverage range
+              or there are no recent measurements available.
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -70,7 +70,7 @@ export function FireImpactCard({
     )
   }
 
-  // Determinar colores y estilos basados en alert level
+  // Determine colors and styles based on alert level
   const alertLevelConfig = {
     low: {
       color: 'text-green-700 dark:text-green-400',
@@ -110,9 +110,9 @@ export function FireImpactCard({
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>Impacto en Calidad del Aire</CardTitle>
+            <CardTitle>Air Quality Impact</CardTitle>
             <CardDescription>
-              {interpretation.pollutant} desde detección del incendio
+              {interpretation.pollutant} since fire detection
             </CardDescription>
           </div>
           <Badge variant={config.badgeVariant} className="text-xs">
@@ -121,7 +121,7 @@ export function FireImpactCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Estado Actual - Grande y Prominente */}
+        {/* Current Status - Large and Prominent */}
         <div className={`${config.bgColor} rounded-lg p-4 border-2 ${config.color.replace('text-', 'border-')}`}>
           <div className="flex items-start gap-3">
             <Icon className={`h-6 w-6 ${config.color} flex-shrink-0 mt-1`} />
@@ -135,29 +135,29 @@ export function FireImpactCard({
               </p>
               {fireInfo && (
                 <p className="text-sm text-muted-foreground mt-1">
-                  Incendio detectado: {fireInfo.detectionTimeLocal}
+                  Fire detected: {fireInfo.detectionTimeLocal}
                 </p>
               )}
             </div>
           </div>
         </div>
 
-        {/* Métricas Detalladas */}
+        {/* Detailed Metrics */}
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div className="p-3 bg-muted/30 rounded-lg">
-            <div className="text-muted-foreground mb-1">Pico de contaminación</div>
+            <div className="text-muted-foreground mb-1">Pollution peak</div>
             <div className="font-semibold text-lg">+{impact.peakIncrease}%</div>
           </div>
           <div className="p-3 bg-muted/30 rounded-lg">
-            <div className="text-muted-foreground mb-1">Tendencia</div>
+            <div className="text-muted-foreground mb-1">Trend</div>
             <div className={`font-semibold text-lg ${trendColor} flex items-center gap-1`}>
               <TrendIcon className="h-4 w-4" />
-              {impact.trend === 'improving' ? 'Mejorando' : impact.trend === 'worsening' ? 'Empeorando' : 'Estable'}
+              {impact.trend === 'improving' ? 'Improving' : impact.trend === 'worsening' ? 'Worsening' : 'Stable'}
             </div>
           </div>
           {impact.baselineAvg !== null && (
             <div className="p-3 bg-muted/30 rounded-lg">
-              <div className="text-muted-foreground mb-1">Baseline (antes)</div>
+              <div className="text-muted-foreground mb-1">Baseline (before)</div>
               <div className="font-semibold text-sm truncate">
                 {(impact.baselineAvg / 1e15).toFixed(2)} × 10¹⁵
               </div>
@@ -165,7 +165,7 @@ export function FireImpactCard({
           )}
           {impact.currentValue !== null && (
             <div className="p-3 bg-muted/30 rounded-lg">
-              <div className="text-muted-foreground mb-1">Ahora</div>
+              <div className="text-muted-foreground mb-1">Now</div>
               <div className="font-semibold text-sm truncate">
                 {(impact.currentValue / 1e15).toFixed(2)} × 10¹⁵
               </div>
@@ -173,24 +173,24 @@ export function FireImpactCard({
           )}
         </div>
 
-        {/* Recomendación */}
+        {/* Recommendation */}
         <Alert className={`border-2 ${config.color.replace('text-', 'border-')}`}>
           <Icon className={`h-4 w-4 ${config.color}`} />
           <AlertDescription className={config.color}>
-            <strong>Recomendación:</strong> {interpretation.recommendation}
+            <strong>Recommendation:</strong> {interpretation.recommendation}
           </AlertDescription>
         </Alert>
 
-        {/* Info adicional del incendio */}
+        {/* Additional fire info */}
         {fireInfo && fireInfo.frp > 0 && (
           <div className="text-xs text-muted-foreground border-t pt-3">
             <div className="flex justify-between">
-              <span>Potencia radiativa (FRP):</span>
+              <span>Radiative power (FRP):</span>
               <span className="font-medium">{fireInfo.frp.toFixed(1)} MW</span>
             </div>
             {fireInfo.frp > 100 && (
               <p className="mt-1 text-orange-600 dark:text-orange-400">
-                ⚠️ Incendio de alta intensidad
+                ⚠️ High intensity fire
               </p>
             )}
           </div>

@@ -29,27 +29,27 @@ import { toast } from "sonner"
 import { UserReport } from "@/lib/report-types"
 import { formatDate, formatCoordinates, getSeverityConfig, getTypeConfig } from "@/lib/report-utils"
 
-// Importar el componente del mapa dinámicamente para evitar problemas de SSR
+// Import map component dynamically to avoid SSR issues
 const ReportsMap = dynamic(() => import("@/components/reports-map").then(mod => ({ default: mod.ReportsMap })), {
   ssr: false,
   loading: () => (
     <div className="h-full w-full flex items-center justify-center bg-muted">
       <div className="text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-        <p className="text-sm text-muted-foreground">Cargando mapa...</p>
+        <p className="text-sm text-muted-foreground">Loading map...</p>
       </div>
     </div>
   )
 })
 
-// Alias para compatibilidad con el código existente
+// Alias for compatibility with existing code
 type AdminReport = UserReport
 
-// Configuración de estados
+// Status configuration
 const STATUS_CONFIG = {
-  pending: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-800 border-yellow-200', icon: Clock },
-  in_review: { label: 'En Revisión', color: 'bg-blue-100 text-blue-800 border-blue-200', icon: Eye },
-  resolved: { label: 'Resuelto', color: 'bg-green-100 text-green-800 border-green-200', icon: CheckCircle }
+  pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800 border-yellow-200', icon: Clock },
+  in_review: { label: 'In Review', color: 'bg-blue-100 text-blue-800 border-blue-200', icon: Eye },
+  resolved: { label: 'Resolved', color: 'bg-green-100 text-green-800 border-green-200', icon: CheckCircle }
 } as const
 
 
@@ -62,42 +62,42 @@ export default function AdminReportsPage() {
   const [activeTab, setActiveTab] = useState("overview")
   const [selectedReportId, setSelectedReportId] = useState<string | undefined>()
 
-  // Query para obtener todos los reportes (esto necesitaría implementarse en el backend)
-  // Por ahora usaremos los reportes del usuario como ejemplo
+  // Query to get all reports (this would need to be implemented in the backend)
+  // For now we'll use user reports as an example
   const { data: allReportsData, isLoading } = trpc.obtenerReportesUsuario.useQuery()
-  
-  // Extraer el array de reportes de la respuesta
+
+  // Extract reports array from response
   const allReports = allReportsData?.reportes || []
 
-  // Filtrar y procesar reportes
+  // Filter and process reports
   const filteredReports = useMemo(() => {
     if (!allReports) return []
-    
+
     return allReports.filter((report: AdminReport) => {
-      const matchesSearch = 
+      const matchesSearch =
         report.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         report.descripcion?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         report.id.toLowerCase().includes(searchTerm.toLowerCase())
-      
+
       const matchesSeverity = severityFilter === "all" || report.gravedad === severityFilter
       const matchesType = typeFilter === "all" || report.tipo === typeFilter
-      
+
       return matchesSearch && matchesSeverity && matchesType
     })
   }, [allReports, searchTerm, severityFilter, typeFilter])
 
-  // Estadísticas
+  // Statistics
   const stats = useMemo(() => {
     if (!allReports) return { total: 0, critical: 0, thisWeek: 0, resolved: 0 }
-    
+
     const thisWeek = new Date()
     thisWeek.setDate(thisWeek.getDate() - 7)
-    
+
     return {
       total: allReports.length,
       critical: allReports.filter((r: AdminReport) => r.gravedad === 'critical').length,
       thisWeek: allReports.filter((r: AdminReport) => new Date(r.fechaReporte) > thisWeek).length,
-      resolved: Math.floor(allReports.length * 0.3) // Simulado: 30% resueltos
+      resolved: Math.floor(allReports.length * 0.3) // Simulated: 30% resolved
     }
   }, [allReports])
 
@@ -122,15 +122,15 @@ export default function AdminReportsPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Gestión de Reportes</h1>
+              <h1 className="text-2xl font-bold text-foreground">Reports Management</h1>
               <p className="text-muted-foreground text-sm">
-                Administra y revisa todos los reportes de contaminación
+                Manage and review all pollution reports
               </p>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" className="gap-2">
                 <Download className="h-4 w-4" />
-                Exportar
+                Export
               </Button>
             </div>
           </div>
@@ -158,26 +158,26 @@ export default function AdminReportsPage() {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
           {/* Pestañas */}
           <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:grid-cols-4">
-            <TabsTrigger value="overview">Resumen</TabsTrigger>
-            <TabsTrigger value="reports">Reportes</TabsTrigger>
-            <TabsTrigger value="analytics">Analíticas</TabsTrigger>
-            <TabsTrigger value="settings">Configuración</TabsTrigger>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
-          {/* Resumen */}
+          {/* Overview */}
           <TabsContent value="overview" className="space-y-6">
-            {/* Estadísticas principales */}
+            {/* Main statistics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                     <FileText className="h-4 w-4" />
-                    Total Reportes
+                    Total Reports
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.total}</div>
-                  <p className="text-xs text-muted-foreground">Todos los tiempos</p>
+                  <p className="text-xs text-muted-foreground">All time</p>
                 </CardContent>
               </Card>
               
@@ -185,12 +185,12 @@ export default function AdminReportsPage() {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                     <AlertTriangle className="h-4 w-4" />
-                    Críticos
+                    Critical
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-red-600">{stats.critical}</div>
-                  <p className="text-xs text-muted-foreground">Requieren atención</p>
+                  <p className="text-xs text-muted-foreground">Require attention</p>
                 </CardContent>
               </Card>
               
@@ -198,12 +198,12 @@ export default function AdminReportsPage() {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                     <TrendingUp className="h-4 w-4" />
-                    Esta Semana
+                    This Week
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-blue-600">{stats.thisWeek}</div>
-                  <p className="text-xs text-muted-foreground">Últimos 7 días</p>
+                  <p className="text-xs text-muted-foreground">Last 7 days</p>
                 </CardContent>
               </Card>
               
@@ -211,29 +211,29 @@ export default function AdminReportsPage() {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                     <CheckCircle className="h-4 w-4" />
-                    Resueltos
+                    Resolved
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-green-600">{stats.resolved}</div>
-                  <p className="text-xs text-muted-foreground">Procesados</p>
+                  <p className="text-xs text-muted-foreground">Processed</p>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Reportes recientes */}
+            {/* Recent reports */}
             <Card>
               <CardHeader>
-                <CardTitle>Reportes Recientes</CardTitle>
+                <CardTitle>Recent Reports</CardTitle>
                 <CardDescription>
-                  Los últimos reportes recibidos
+                  Latest received reports
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                    <p className="text-sm text-muted-foreground">Cargando reportes...</p>
+                    <p className="text-sm text-muted-foreground">Loading reports...</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -270,7 +270,7 @@ export default function AdminReportsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Filter className="h-5 w-5" />
-                  Filtros y Búsqueda
+                  Filters and Search
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -278,7 +278,7 @@ export default function AdminReportsPage() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Buscar por email, descripción o ID..."
+                      placeholder="Search by email, description or ID..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10"
@@ -287,51 +287,51 @@ export default function AdminReportsPage() {
                   
                   <Select value={severityFilter} onValueChange={setSeverityFilter}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Gravedad" />
+                      <SelectValue placeholder="Severity" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todas las gravedades</SelectItem>
-                      <SelectItem value="low">Bajo</SelectItem>
-                      <SelectItem value="intermediate">Intermedio</SelectItem>
-                      <SelectItem value="critical">Crítico</SelectItem>
+                      <SelectItem value="all">All severities</SelectItem>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="intermediate">Intermediate</SelectItem>
+                      <SelectItem value="critical">Critical</SelectItem>
                     </SelectContent>
                   </Select>
                   
                   <Select value={typeFilter} onValueChange={setTypeFilter}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Tipo" />
+                      <SelectValue placeholder="Type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todos los tipos</SelectItem>
-                      <SelectItem value="fire">🔥 Fuego</SelectItem>
-                      <SelectItem value="smoke">💨 Humo</SelectItem>
-                      <SelectItem value="dust">🌪️ Polvo</SelectItem>
+                      <SelectItem value="all">All types</SelectItem>
+                      <SelectItem value="fire">🔥 Fire</SelectItem>
+                      <SelectItem value="smoke">💨 Smoke</SelectItem>
+                      <SelectItem value="dust">🌪️ Dust</SelectItem>
                     </SelectContent>
                   </Select>
                   
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Estado" />
+                      <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todos los estados</SelectItem>
-                      <SelectItem value="pending">Pendiente</SelectItem>
-                      <SelectItem value="in_review">En Revisión</SelectItem>
-                      <SelectItem value="resolved">Resuelto</SelectItem>
+                      <SelectItem value="all">All statuses</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="in_review">In Review</SelectItem>
+                      <SelectItem value="resolved">Resolved</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Lista de reportes */}
+            {/* Reports list */}
             <Card>
               <CardHeader>
                 <CardTitle>
-                  Reportes ({filteredReports.length})
+                  Reports ({filteredReports.length})
                 </CardTitle>
                 <CardDescription>
-                  Reportes filtrados según los criterios seleccionados
+                  Reports filtered by selected criteria
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -356,7 +356,7 @@ export default function AdminReportsPage() {
                                 </span>
                               </div>
 
-                              {/* Información */}
+                              {/* Information */}
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                   <div className="flex items-center gap-2 text-sm">
@@ -366,23 +366,23 @@ export default function AdminReportsPage() {
                                   </div>
                                   <div className="flex items-center gap-2 text-sm">
                                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                                    <span className="font-medium">Ubicación:</span>
+                                    <span className="font-medium">Location:</span>
                                     <span className="text-muted-foreground">
                                       {formatCoordinates(report.latitud, report.longitud)}
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-2 text-sm">
                                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                                    <span className="font-medium">Fecha:</span>
+                                    <span className="font-medium">Date:</span>
                                     <span className="text-muted-foreground">
                                       {formatDate(report.fechaReporte)}
                                     </span>
                                   </div>
                                 </div>
-                                
+
                                 {report.descripcion && (
                                   <div className="space-y-1">
-                                    <span className="text-sm font-medium">Descripción:</span>
+                                    <span className="text-sm font-medium">Description:</span>
                                     <p className="text-sm text-muted-foreground line-clamp-3">
                                       {report.descripcion}
                                     </p>
@@ -391,25 +391,25 @@ export default function AdminReportsPage() {
                               </div>
                             </div>
 
-                            {/* Acciones */}
+                            {/* Actions */}
                             <div className="ml-4 flex flex-col gap-2">
-                              <Select 
-                                defaultValue="pending" 
+                              <Select
+                                defaultValue="pending"
                                 onValueChange={(value) => handleStatusChange(report.id, value)}
                               >
                                 <SelectTrigger className="w-32">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="pending">Pendiente</SelectItem>
-                                  <SelectItem value="in_review">En Revisión</SelectItem>
-                                  <SelectItem value="resolved">Resuelto</SelectItem>
+                                  <SelectItem value="pending">Pending</SelectItem>
+                                  <SelectItem value="in_review">In Review</SelectItem>
+                                  <SelectItem value="resolved">Resolved</SelectItem>
                                 </SelectContent>
                               </Select>
-                              
+
                               <Button variant="outline" size="sm" className="gap-2">
                                 <Eye className="h-4 w-4" />
-                                Ver Detalles
+                                View Details
                               </Button>
                             </div>
                           </div>
@@ -420,9 +420,9 @@ export default function AdminReportsPage() {
                 ) : (
                   <div className="text-center py-12">
                     <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No hay reportes</h3>
+                    <h3 className="text-lg font-semibold mb-2">No reports</h3>
                     <p className="text-muted-foreground">
-                      No se encontraron reportes que coincidan con los filtros seleccionados
+                      No reports found matching the selected filters
                     </p>
                   </div>
                 )}
@@ -430,42 +430,42 @@ export default function AdminReportsPage() {
             </Card>
           </TabsContent>
 
-          {/* Analíticas */}
+          {/* Analytics */}
           <TabsContent value="analytics" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Analíticas de Reportes</CardTitle>
+                <CardTitle>Reports Analytics</CardTitle>
                 <CardDescription>
-                  Estadísticas y tendencias de los reportes
+                  Reports statistics and trends
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-12">
                   <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Analíticas en Desarrollo</h3>
+                  <h3 className="text-lg font-semibold mb-2">Analytics in Development</h3>
                   <p className="text-muted-foreground">
-                    Próximamente: gráficos, tendencias y análisis detallados
+                    Coming soon: charts, trends and detailed analysis
                   </p>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* Configuración */}
+          {/* Settings */}
           <TabsContent value="settings" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Configuración del Sistema</CardTitle>
+                <CardTitle>System Settings</CardTitle>
                 <CardDescription>
-                  Configuración general del sistema de reportes
+                  General report system configuration
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-12">
                   <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Configuración en Desarrollo</h3>
+                  <h3 className="text-lg font-semibold mb-2">Settings in Development</h3>
                   <p className="text-muted-foreground">
-                    Próximamente: configuración de notificaciones, flujos de trabajo y más
+                    Coming soon: notification settings, workflows and more
                   </p>
                 </div>
               </CardContent>

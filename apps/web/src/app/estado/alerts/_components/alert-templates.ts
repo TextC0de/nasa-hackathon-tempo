@@ -1,8 +1,8 @@
 /**
- * Alert Templates - Plantillas pre-escritas para alertas comunes
+ * Alert Templates - Pre-written templates for common alerts
  *
- * Templates optimizados para California con multi-idioma (EN/ES/ZH/VI)
- * basados en protocolos reales de CARB y EPA.
+ * Templates optimized for California with multi-language support (EN/ES/ZH/VI)
+ * based on real protocols from CARB and EPA.
  */
 
 export interface AlertTemplate {

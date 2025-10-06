@@ -33,42 +33,42 @@ const getRecommendations = (aqi: number | null) => {
 
   if (aqi <= 50) {
     return [
-      '✅ Excelente momento para actividades al aire libre',
-      '✅ Calidad del aire óptima',
-      '✅ Todas las actividades recomendadas'
+      '✅ Excellent time for outdoor activities',
+      '✅ Optimal air quality',
+      '✅ All activities recommended'
     ]
   } else if (aqi <= 100) {
     return [
-      '⚠️ Grupos sensibles deben considerar reducir exposición prolongada',
-      '✅ La mayoría puede realizar actividades normales',
-      '👥 Niños y adultos mayores: precaución moderada'
+      '⚠️ Sensitive groups should consider reducing prolonged exposure',
+      '✅ Most people can perform normal activities',
+      '👥 Children and elderly: moderate caution'
     ]
   } else if (aqi <= 150) {
     return [
-      '🚫 Grupos sensibles: evitar ejercicio intenso al aire libre',
-      '⚠️ Población general: reducir actividades prolongadas',
-      '😷 Considerar uso de mascarilla si es sensible'
+      '🚫 Sensitive groups: avoid intense outdoor exercise',
+      '⚠️ General population: reduce prolonged activities',
+      '😷 Consider wearing mask if sensitive'
     ]
   } else if (aqi <= 200) {
     return [
-      '🚫 Evitar ejercicio intenso al aire libre',
-      '🏠 Considerar permanecer en interiores',
-      '😷 Grupos sensibles deben usar protección',
-      '⚠️ Toda la población puede experimentar efectos'
+      '🚫 Avoid intense outdoor exercise',
+      '🏠 Consider staying indoors',
+      '😷 Sensitive groups should use protection',
+      '⚠️ Entire population may experience effects'
     ]
   } else if (aqi <= 300) {
     return [
-      '🚨 Alerta de salud - evitar exposición al aire libre',
-      '🏠 Permanecer en interiores con ventanas cerradas',
-      '😷 Usar mascarilla si debe salir',
-      '⚠️ Efectos graves en grupos sensibles'
+      '🚨 Health alert - avoid outdoor exposure',
+      '🏠 Stay indoors with windows closed',
+      '😷 Wear mask if you must go out',
+      '⚠️ Serious effects on sensitive groups'
     ]
   } else {
     return [
-      '🚨 Emergencia de salud - NO salir al exterior',
-      '🏠 Permanecer en interiores con purificadores de aire',
-      '😷 Mascarilla N95 si debe salir (solo emergencias)',
-      '⚠️ Toda la población en riesgo grave'
+      '🚨 Health emergency - DO NOT go outside',
+      '🏠 Stay indoors with air purifiers',
+      '😷 N95 mask if you must go out (emergencies only)',
+      '⚠️ Entire population at serious risk'
     ]
   }
 }
@@ -76,7 +76,7 @@ const getRecommendations = (aqi: number | null) => {
 export function CityDetailPanel() {
   const { hoveredCity, selectedCity } = useSelectedCity()
 
-  // Priorizar ciudad seleccionada sobre ciudad hover
+  // Prioritize selected city over hovered city
   const activeCity = selectedCity || hoveredCity
 
   return (
@@ -101,13 +101,13 @@ export function CityDetailPanel() {
                     </CardTitle>
                     {selectedCity && (
                       <Badge variant="outline" className="text-xs">
-                        Fijada
+                        Pinned
                       </Badge>
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                     <Users className="h-3.5 w-3.5" />
-                    <span>{activeCity.poblacion.toLocaleString()} habitantes</span>
+                    <span>{activeCity.poblacion.toLocaleString()} inhabitants</span>
                   </div>
                 </div>
                 {activeCity.aqi && (
@@ -121,7 +121,7 @@ export function CityDetailPanel() {
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              {/* Categoría */}
+              {/* Category */}
               {activeCity.categoria && (
                 <div className="flex items-center gap-2">
                   <Wind className="h-4 w-4 text-muted-foreground" />
@@ -131,7 +131,7 @@ export function CityDetailPanel() {
                 </div>
               )}
 
-              {/* Barra visual de AQI */}
+              {/* AQI visual bar */}
               {activeCity.aqi && (
                 <div className="space-y-1.5">
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -153,11 +153,11 @@ export function CityDetailPanel() {
                 </div>
               )}
 
-              {/* Recomendaciones */}
+              {/* Recommendations */}
               {activeCity.aqi && (
                 <div className="pt-2 border-t">
                   <p className="text-xs font-semibold text-muted-foreground mb-2">
-                    Recomendaciones:
+                    Recommendations:
                   </p>
                   <div className="space-y-1.5">
                     {getRecommendations(activeCity.aqi).map((rec, idx) => (
@@ -169,10 +169,10 @@ export function CityDetailPanel() {
                 </div>
               )}
 
-              {/* Mensaje si no hay datos de AQI */}
+              {/* Message if no AQI data */}
               {!activeCity.aqi && (
                 <div className="text-sm text-muted-foreground italic">
-                  No hay datos de calidad del aire disponibles para esta ciudad.
+                  No air quality data available for this city.
                 </div>
               )}
             </CardContent>

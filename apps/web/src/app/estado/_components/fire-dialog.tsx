@@ -12,7 +12,7 @@ import { FireImpactTimeline } from "./fire-impact-timeline"
 import { Flame, Satellite, Clock, MapPin, ThermometerSun, Zap, AlertTriangle, Wind } from "lucide-react"
 
 /**
- * Obtiene la temperatura de brillo correcta según el sensor
+ * Gets the correct brightness temperature according to the sensor
  */
 const getBrightness = (fire: FireDataPoint): number => {
   if (fire.bright_ti4 !== undefined) {
@@ -26,7 +26,7 @@ const getBrightness = (fire: FireDataPoint): number => {
 }
 
 /**
- * Normaliza el nivel de confianza
+ * Normalizes the confidence level
  */
 const normalizeConfidence = (confidence: number | string): {
   level: 'high' | 'nominal' | 'low'
@@ -47,16 +47,16 @@ const normalizeConfidence = (confidence: number | string): {
   }
 
   const labels = {
-    high: { label: 'Alta Confianza', color: 'bg-green-500' },
-    nominal: { label: 'Confianza Media', color: 'bg-yellow-500' },
-    low: { label: 'Baja Confianza', color: 'bg-orange-500' }
+    high: { label: 'High Confidence', color: 'bg-green-500' },
+    nominal: { label: 'Medium Confidence', color: 'bg-yellow-500' },
+    low: { label: 'Low Confidence', color: 'bg-orange-500' }
   }
 
   return { level, ...labels[level] }
 }
 
 /**
- * Obtiene la categoría de intensidad basada en FRP
+ * Gets the intensity category based on FRP
  */
 const getFireIntensity = (frp: number): {
   level: string
@@ -65,39 +65,39 @@ const getFireIntensity = (frp: number): {
   description: string
 } => {
   if (frp < 10) return {
-    level: 'Baja',
+    level: 'Low',
     emoji: '🟡',
     color: 'bg-yellow-500',
-    description: 'Fuego pequeño o punto de calor'
+    description: 'Small fire or heat point'
   }
   if (frp < 50) return {
-    level: 'Moderada',
+    level: 'Moderate',
     emoji: '🟠',
     color: 'bg-orange-500',
-    description: 'Incendio activo de tamaño medio'
+    description: 'Active medium-sized fire'
   }
   if (frp < 100) return {
-    level: 'Alta',
+    level: 'High',
     emoji: '🔴',
     color: 'bg-red-500',
-    description: 'Incendio grande y activo'
+    description: 'Large active fire'
   }
   if (frp < 300) return {
-    level: 'Muy Alta',
+    level: 'Very High',
     emoji: '🔴🔥',
     color: 'bg-red-600',
-    description: 'Incendio mayor muy intenso'
+    description: 'Very intense major fire'
   }
   return {
-    level: 'Extrema',
+    level: 'Extreme',
     emoji: '🔥⚠️',
     color: 'bg-red-800',
-    description: 'Megaincendio o conflagración'
+    description: 'Megafire or conflagration'
   }
 }
 
 /**
- * Formatea la fecha y hora
+ * Formats the date and time
  */
 const formatFireDateTime = (date: string, time: string): string => {
   try {
@@ -110,10 +110,10 @@ const formatFireDateTime = (date: string, time: string): string => {
     const dateObj = new Date(`${year}-${month}-${day}T${hour}:${minute}:00Z`)
 
     if (isNaN(dateObj.getTime())) {
-      return 'Fecha no disponible'
+      return 'Date not available'
     }
 
-    return dateObj.toLocaleString('es-ES', {
+    return dateObj.toLocaleString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -123,12 +123,12 @@ const formatFireDateTime = (date: string, time: string): string => {
       timeZoneName: 'short'
     })
   } catch {
-    return 'Fecha no disponible'
+    return 'Date not available'
   }
 }
 
 /**
- * Calcula hace cuánto tiempo fue detectado
+ * Calculates how long ago it was detected
  */
 const getTimeAgo = (date: string, time: string): string => {
   try {
@@ -145,11 +145,11 @@ const getTimeAgo = (date: string, time: string): string => {
     const diffHours = Math.floor(diffMinutes / 60)
     const diffDays = Math.floor(diffHours / 24)
 
-    if (diffMinutes < 60) return `Hace ${diffMinutes} minutos`
-    if (diffHours < 24) return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`
-    return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`
+    if (diffMinutes < 60) return `${diffMinutes} minutes ago`
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
+    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`
   } catch {
-    return 'Tiempo desconocido'
+    return 'Unknown time'
   }
 }
 
@@ -162,10 +162,10 @@ interface FireDialogProps {
 export function FireDialog({ fire, open, onOpenChange }: FireDialogProps) {
   const [activeTab, setActiveTab] = useState<string>("general")
 
-  // Hook para análisis de impacto en calidad del aire
+  // Hook for air quality impact analysis
   const impactAnalysis = useFireImpactAnalysis({
     fire,
-    pollutant: 'HCHO', // HCHO es mejor indicador de incendios
+    pollutant: 'HCHO', // HCHO is a better indicator of fires
     enabled: open && activeTab === 'impacto'
   })
 
@@ -184,16 +184,16 @@ export function FireDialog({ fire, open, onOpenChange }: FireDialogProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Flame className="w-5 h-5 text-orange-500" />
-            Punto de Calor Detectado
+            Heat Point Detected
           </DialogTitle>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="general">Información General</TabsTrigger>
+            <TabsTrigger value="general">General Information</TabsTrigger>
             <TabsTrigger value="impacto">
               <Wind className="w-4 h-4 mr-2" />
-              Impacto en Aire
+              Air Impact
             </TabsTrigger>
           </TabsList>
 
@@ -205,7 +205,7 @@ export function FireDialog({ fire, open, onOpenChange }: FireDialogProps) {
                 <div className="flex items-center gap-3">
                   <div className="text-4xl">{intensity.emoji}</div>
                   <div>
-                    <CardTitle className="text-base">Intensidad: {intensity.level}</CardTitle>
+                    <CardTitle className="text-base">Intensity: {intensity.level}</CardTitle>
                     <CardDescription className="text-sm">{intensity.description}</CardDescription>
                   </div>
                 </div>
@@ -217,29 +217,29 @@ export function FireDialog({ fire, open, onOpenChange }: FireDialogProps) {
             </CardHeader>
           </Card>
 
-          {/* ¿Qué significa esto? */}
+          {/* What does this mean? */}
           <Card className="bg-blue-50 border-blue-200">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
                 <span className="text-lg">💡</span>
-                ¿Qué significa esto?
+                What does this mean?
               </CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-blue-900">
               <p>
-                Un satélite de la NASA detectó un <strong>punto de calor intenso</strong> en esta ubicación.
-                Esto generalmente indica un incendio activo, pero también podría ser una fuente industrial
-                de calor o una quema controlada.
+                A NASA satellite detected an <strong>intense heat point</strong> at this location.
+                This generally indicates an active fire, but it could also be an industrial
+                heat source or a controlled burn.
               </p>
             </CardContent>
           </Card>
 
-          {/* Datos del Sensor */}
+          {/* Sensor Data */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
                 <Satellite className="w-4 h-4" />
-                Datos del Sensor
+                Sensor Data
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -248,20 +248,20 @@ export function FireDialog({ fire, open, onOpenChange }: FireDialogProps) {
                 <div className="flex items-start gap-2">
                   <Zap className="w-4 h-4 mt-0.5 text-orange-500" />
                   <div>
-                    <div className="font-medium text-sm">FRP (Potencia Radiativa)</div>
-                    <div className="text-xs text-muted-foreground">Energía del fuego en Megavatios</div>
+                    <div className="font-medium text-sm">FRP (Radiative Power)</div>
+                    <div className="text-xs text-muted-foreground">Fire energy in Megawatts</div>
                   </div>
                 </div>
                 <div className="font-bold text-orange-600">{fire.frp.toFixed(2)} MW</div>
               </div>
 
-              {/* Temperatura */}
+              {/* Temperature */}
               <div className="flex justify-between items-start">
                 <div className="flex items-start gap-2">
                   <ThermometerSun className="w-4 h-4 mt-0.5 text-red-500" />
                   <div>
-                    <div className="font-medium text-sm">Temperatura de Brillo</div>
-                    <div className="text-xs text-muted-foreground">Calor detectado por el satélite</div>
+                    <div className="font-medium text-sm">Brightness Temperature</div>
+                    <div className="text-xs text-muted-foreground">Heat detected by satellite</div>
                   </div>
                 </div>
                 <div className="font-bold">
@@ -269,84 +269,84 @@ export function FireDialog({ fire, open, onOpenChange }: FireDialogProps) {
                 </div>
               </div>
 
-              {/* Confianza */}
+              {/* Confidence */}
               <div className="flex justify-between items-center">
                 <div>
-                  <div className="font-medium text-sm">Nivel de Confianza</div>
-                  <div className="text-xs text-muted-foreground">Certeza de la detección</div>
+                  <div className="font-medium text-sm">Confidence Level</div>
+                  <div className="text-xs text-muted-foreground">Detection certainty</div>
                 </div>
                 <Badge className={confidence.color}>{confidence.label}</Badge>
               </div>
 
-              {/* Satélite */}
+              {/* Satellite */}
               <div className="flex justify-between items-center">
-                <div className="font-medium text-sm">Satélite</div>
+                <div className="font-medium text-sm">Satellite</div>
                 <Badge variant="outline">{fire.satellite}</Badge>
               </div>
 
-              {/* Detección */}
+              {/* Detection */}
               <div className="flex justify-between items-center">
-                <div className="font-medium text-sm">Tipo de Detección</div>
+                <div className="font-medium text-sm">Detection Type</div>
                 <Badge variant={isDayDetection ? "default" : "secondary"}>
-                  {isDayDetection ? '☀️ Diurna' : '🌙 Nocturna'}
+                  {isDayDetection ? '☀️ Daytime' : '🌙 Nighttime'}
                 </Badge>
               </div>
             </CardContent>
           </Card>
 
-          {/* Ubicación y Tiempo */}
+          {/* Location and Time */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
-                Ubicación y Tiempo
+                Location and Time
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Detectado:</span>
+                <span className="text-muted-foreground">Detected:</span>
                 <div className="text-right">
                   <div className="font-medium">{timeAgo}</div>
                   <div className="text-xs text-muted-foreground">{formattedDate}</div>
                 </div>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Coordenadas:</span>
+                <span className="text-muted-foreground">Coordinates:</span>
                 <span className="font-mono">{fire.latitude.toFixed(4)}°, {fire.longitude.toFixed(4)}°</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Versión del Algoritmo:</span>
+                <span className="text-muted-foreground">Algorithm Version:</span>
                 <span className="font-mono text-xs">{fire.version}</span>
               </div>
             </CardContent>
           </Card>
 
-          {/* Nota de Seguridad */}
+          {/* Safety Note */}
           <Card className="bg-red-50 border-red-200">
             <CardContent className="pt-4">
               <div className="flex gap-3">
                 <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <div className="font-semibold text-red-900 mb-1">Nota de Seguridad</div>
+                  <div className="font-semibold text-red-900 mb-1">Safety Note</div>
                   <p className="text-sm text-red-800">
-                    Si observa humo o fuego en esta área, mantenga distancia y reporte
-                    inmediatamente a las autoridades locales de emergencia (911).
+                    If you observe smoke or fire in this area, keep your distance and report
+                    immediately to local emergency authorities (911).
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Fuente */}
+          {/* Source */}
           <div className="text-center text-xs text-muted-foreground pt-2 border-t">
-            Datos de <strong>NASA FIRMS</strong> (Fire Information for Resource Management System)
+            Data from <strong>NASA FIRMS</strong> (Fire Information for Resource Management System)
             <br />
-            Actualización en tiempo real desde satélites en órbita
+            Real-time updates from satellites in orbit
           </div>
           </TabsContent>
 
           <TabsContent value="impacto" className="space-y-4 mt-4">
-            {/* Tarjeta de Impacto */}
+            {/* Impact Card */}
             <FireImpactCard
               impact={impactAnalysis.impact}
               interpretation={impactAnalysis.interpretation}
@@ -354,7 +354,7 @@ export function FireDialog({ fire, open, onOpenChange }: FireDialogProps) {
               isLoading={impactAnalysis.isLoading}
             />
 
-            {/* Timeline de Contaminación */}
+            {/* Pollution Timeline */}
             {impactAnalysis.hasData && (
               <FireImpactTimeline
                 data={impactAnalysis.timeline}
@@ -363,31 +363,31 @@ export function FireDialog({ fire, open, onOpenChange }: FireDialogProps) {
               />
             )}
 
-            {/* Nota informativa */}
+            {/* Informative note */}
             <Card className="bg-blue-50 border-blue-200">
               <CardContent className="pt-4">
                 <div className="flex gap-3">
                   <Wind className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <div className="font-semibold text-blue-900 mb-1">
-                      ¿Cómo funciona este análisis?
+                      How does this analysis work?
                     </div>
                     <p className="text-sm text-blue-800">
-                      Comparamos los niveles de <strong>Formaldehído (HCHO)</strong> medidos por el
-                      satélite TEMPO antes y después de la detección del incendio.
-                      El HCHO es un gas tóxico producido por la quema de biomasa y sirve como
-                      indicador clave de contaminación por incendios forestales.
+                      We compare the levels of <strong>Formaldehyde (HCHO)</strong> measured by the
+                      TEMPO satellite before and after the fire detection.
+                      HCHO is a toxic gas produced by biomass burning and serves as a
+                      key indicator of pollution from wildfires.
                     </p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Fuente */}
+            {/* Source */}
             <div className="text-center text-xs text-muted-foreground pt-2 border-t">
-              Datos de <strong>NASA TEMPO</strong> (Tropospheric Emissions: Monitoring of Pollution)
+              Data from <strong>NASA TEMPO</strong> (Tropospheric Emissions: Monitoring of Pollution)
               <br />
-              Correlacionados con <strong>NASA FIRMS</strong> (Fire Information for Resource Management)
+              Correlated with <strong>NASA FIRMS</strong> (Fire Information for Resource Management)
             </div>
           </TabsContent>
         </Tabs>

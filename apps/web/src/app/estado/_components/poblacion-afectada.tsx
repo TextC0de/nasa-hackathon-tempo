@@ -45,7 +45,7 @@ export function PoblacionAfectada() {
         <AccordionTrigger className="hover:no-underline">
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            <span className="font-semibold">Población Afectada</span>
+            <span className="font-semibold">Affected Population</span>
           </div>
         </AccordionTrigger>
         <AccordionContent className="space-y-2 pt-2 pb-4">
@@ -62,14 +62,14 @@ export function PoblacionAfectada() {
         <AccordionTrigger className="hover:no-underline">
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            <span className="font-semibold">Población Afectada</span>
+            <span className="font-semibold">Affected Population</span>
           </div>
         </AccordionTrigger>
         <AccordionContent className="pt-2 pb-4">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription className="text-xs">
-              Error al cargar datos de población
+              Error loading population data
             </AlertDescription>
           </Alert>
         </AccordionContent>
@@ -83,12 +83,12 @@ export function PoblacionAfectada() {
         <AccordionTrigger className="hover:no-underline">
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            <span className="font-semibold">Población Afectada</span>
+            <span className="font-semibold">Affected Population</span>
           </div>
         </AccordionTrigger>
         <AccordionContent className="pt-2 pb-4">
           <p className="text-xs text-muted-foreground">
-            No hay datos disponibles
+            No data available
           </p>
         </AccordionContent>
       </AccordionItem>
@@ -97,7 +97,7 @@ export function PoblacionAfectada() {
 
   const { ciudades, estadisticas } = data
 
-  // Calcular porcentajes
+  // Calculate percentages
   const porcentajes = {
     buena: (estadisticas.buena / estadisticas.poblacionTotal) * 100,
     moderada: (estadisticas.moderada / estadisticas.poblacionTotal) * 100,
@@ -107,40 +107,40 @@ export function PoblacionAfectada() {
     peligrosa: (estadisticas.peligrosa / estadisticas.poblacionTotal) * 100,
   }
 
-  // Filtrar categorías con población > 0
+  // Filter categories with population > 0
   const categorias = [
     {
-      label: 'Buena',
+      label: 'Good',
       color: 'green',
       poblacion: estadisticas.buena,
       porcentaje: porcentajes.buena,
     },
     {
-      label: 'Moderada',
+      label: 'Moderate',
       color: 'yellow',
       poblacion: estadisticas.moderada,
       porcentaje: porcentajes.moderada,
     },
     {
-      label: 'Insalubre (Sensibles)',
+      label: 'Unhealthy (Sensitive)',
       color: 'orange',
       poblacion: estadisticas.insalubre_sensibles,
       porcentaje: porcentajes.insalubre_sensibles,
     },
     {
-      label: 'Insalubre',
+      label: 'Unhealthy',
       color: 'red',
       poblacion: estadisticas.insalubre,
       porcentaje: porcentajes.insalubre,
     },
     {
-      label: 'Muy Insalubre',
+      label: 'Very Unhealthy',
       color: 'purple',
       poblacion: estadisticas.muy_insalubre,
       porcentaje: porcentajes.muy_insalubre,
     },
     {
-      label: 'Peligrosa',
+      label: 'Hazardous',
       color: 'maroon',
       poblacion: estadisticas.peligrosa,
       porcentaje: porcentajes.peligrosa,
@@ -153,18 +153,18 @@ export function PoblacionAfectada() {
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4" />
           <div className="flex flex-col items-start">
-            <span className="font-semibold">Población Afectada</span>
+            <span className="font-semibold">Affected Population</span>
             <span className="text-xs text-muted-foreground font-normal">
-              {estadisticas.poblacionTotal.toLocaleString()} personas
+              {estadisticas.poblacionTotal.toLocaleString()} people
             </span>
           </div>
         </div>
       </AccordionTrigger>
       <AccordionContent className="space-y-4 pt-2 pb-4">
-        {/* Resumen por categoría */}
+        {/* Category summary */}
         <div className="space-y-2">
           <p className="text-xs font-medium text-muted-foreground">
-            Distribución de la calidad del aire:
+            Air quality distribution:
           </p>
           {categorias.map((cat) => (
             <div
@@ -187,10 +187,10 @@ export function PoblacionAfectada() {
           ))}
         </div>
 
-        {/* Ciudades más afectadas */}
+        {/* Most affected cities */}
         <div className="space-y-2">
           <p className="text-xs font-medium text-muted-foreground">
-            Ciudades principales ({ciudades.length}):
+            Main cities ({ciudades.length}):
           </p>
           <ScrollArea className="h-48">
             <div className="space-y-1.5 pr-3">
@@ -208,7 +208,7 @@ export function PoblacionAfectada() {
                         </span>
                       </div>
                       <p className="text-[10px] text-muted-foreground mt-0.5">
-                        Población: {ciudad.poblacion.toLocaleString()}
+                        Population: {ciudad.poblacion.toLocaleString()}
                       </p>
                     </div>
                     <div className="flex flex-col items-end shrink-0">
@@ -229,10 +229,10 @@ export function PoblacionAfectada() {
           </ScrollArea>
         </div>
 
-        {/* Información adicional */}
+        {/* Additional information */}
         <div className="pt-2 border-t">
           <p className="text-[10px] text-muted-foreground">
-            💡 <span className="font-medium">Análisis crítico:</span> Las áreas con mayor población y peor calidad del aire requieren atención prioritaria para medidas de salud pública.
+            💡 <span className="font-medium">Critical analysis:</span> Areas with higher population and worse air quality require priority attention for public health measures.
           </p>
         </div>
       </AccordionContent>
