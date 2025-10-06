@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, AlertCircle } from "lucide-react"
 
-// Importar el mapa dinámicamente
+// Import map dynamically
 const MapContainer = dynamic(
   () => import("react-leaflet").then((mod) => mod.MapContainer),
   {
@@ -46,20 +46,20 @@ const Circle = dynamic(
   { ssr: false }
 )
 
-// Importar Leaflet para divIcon
+// Import Leaflet for divIcon
 const L = typeof window !== "undefined" ? require("leaflet") : null
 
-// Función para obtener color de fondo basado en AQI (para el marker)
+// Function to get background color based on AQI (for marker)
 function getAQIBackgroundColor(aqi: number): string {
-  if (aqi <= 50) return '#10b981'        // Verde - Bueno
-  if (aqi <= 100) return '#f59e0b'       // Amarillo - Moderado
-  if (aqi <= 150) return '#f97316'       // Naranja - Insalubre para sensibles
-  if (aqi <= 200) return '#ef4444'       // Rojo - Insalubre
-  if (aqi <= 300) return '#8b5cf6'       // Púrpura - Muy insalubre
-  return '#7c2d12'                        // Marrón - Peligroso
+  if (aqi <= 50) return '#10b981'        // Green - Good
+  if (aqi <= 100) return '#f59e0b'       // Yellow - Moderate
+  if (aqi <= 150) return '#f97316'       // Orange - Unhealthy for Sensitive
+  if (aqi <= 200) return '#ef4444'       // Red - Unhealthy
+  if (aqi <= 300) return '#8b5cf6'       // Purple - Very Unhealthy
+  return '#7c2d12'                        // Brown - Hazardous
 }
 
-// Función para crear icono personalizado del usuario
+// Function to create custom user icon
 function createUserIcon(aqi: number | null): any {
   if (!L) return null
 
@@ -94,13 +94,13 @@ function createUserIcon(aqi: number | null): any {
         cursor: pointer;
         transition: transform 0.2s ease;
       ">
-        <!-- Círculo exterior con pulso -->
+        <!-- Outer circle with pulse -->
         <div style="
           position: relative;
           width: 50px;
           height: 50px;
         ">
-          <!-- Onda de pulso -->
+          <!-- Pulse wave -->
           <div style="
             position: absolute;
             top: 50%;
@@ -114,7 +114,7 @@ function createUserIcon(aqi: number | null): any {
             animation: pulse-wave 2s ease-out infinite;
           "></div>
 
-          <!-- Marker principal -->
+          <!-- Main marker -->
           <div style="
             position: absolute;
             top: 50%;
@@ -130,14 +130,14 @@ function createUserIcon(aqi: number | null): any {
             align-items: center;
             justify-content: center;
           ">
-            <!-- Icono de persona SVG -->
+            <!-- Person icon SVG -->
             <svg width="24" height="24" viewBox="0 0 24 24" fill="white" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));">
               <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
             </svg>
           </div>
         </div>
 
-        <!-- Badge con valor AQI -->
+        <!-- Badge with AQI value -->
         <div style="
           margin-top: 4px;
           padding: 3px 10px;
@@ -177,13 +177,13 @@ function createUserIcon(aqi: number | null): any {
   })
 }
 
-// Función para crear icono personalizado de estación de monitoreo
+// Function to create custom monitoring station marker icon
 function createStationMarkerIcon(aqi: number | null, distanceKm: number, provider: string): any {
   if (!L) return null
 
   const displayAqi = aqi !== null ? aqi.toString() : '?'
   const displayDistance = Number(distanceKm).toFixed(1)
-  const stationColor = '#f97316' // Naranja fijo para estaciones
+  const stationColor = '#f97316' // Fixed orange for stations
 
   return L.divIcon({
     html: `
@@ -193,13 +193,13 @@ function createStationMarkerIcon(aqi: number | null, distanceKm: number, provide
         align-items: center;
         cursor: pointer;
       ">
-        <!-- Marker principal de estación -->
+        <!-- Main station marker -->
         <div style="
           position: relative;
           width: 50px;
           height: 50px;
         ">
-          <!-- Círculo de fondo -->
+          <!-- Background circle -->
           <div style="
             position: absolute;
             top: 50%;
@@ -215,21 +215,21 @@ function createStationMarkerIcon(aqi: number | null, distanceKm: number, provide
             align-items: center;
             justify-content: center;
           ">
-            <!-- Icono de antena/estación SVG -->
+            <!-- Antenna/station icon SVG -->
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));">
-              <!-- Torre de transmisión -->
+              <!-- Transmission tower -->
               <path d="M12 2 L12 22"/>
               <path d="M6 8 L12 6 L18 8"/>
               <path d="M6 14 L12 12 L18 14"/>
               <path d="M6 20 L12 18 L18 20"/>
-              <!-- Ondas de señal -->
+              <!-- Signal waves -->
               <circle cx="12" cy="6" r="1" fill="white"/>
               <path d="M8 4 Q6 6 8 8" opacity="0.7"/>
               <path d="M16 4 Q18 6 16 8" opacity="0.7"/>
             </svg>
           </div>
 
-          <!-- Indicador de señal animado -->
+          <!-- Animated signal indicator -->
           <div style="
             position: absolute;
             top: -2px;
@@ -243,7 +243,7 @@ function createStationMarkerIcon(aqi: number | null, distanceKm: number, provide
           "></div>
         </div>
 
-        <!-- Badge con AQI y distancia -->
+        <!-- Badge with AQI and distance -->
         <div style="
           margin-top: 4px;
           padding: 3px 10px;
@@ -299,7 +299,7 @@ const CALIFORNIA_BBOX = {
   lat_max: 42.0,
 }
 
-// Función para restringir coordenadas al bbox de California
+// Function to constrain coordinates to California bbox
 function constrainToCalifornia(lat: number, lng: number): { lat: number; lng: number } {
   return {
     lat: Math.max(CALIFORNIA_BBOX.lat_min, Math.min(CALIFORNIA_BBOX.lat_max, lat)),
@@ -319,7 +319,7 @@ export function MapView({
   getAQIBadge,
   onLocationUpdate
 }: MapViewProps) {
-  // Calcular el centro del mapa para mostrar tanto el usuario como la estación
+  // Calculate map center to show both user and station
   const stationLat = prediction?.station?.latitude
   const stationLng = prediction?.station?.longitude
 
@@ -327,17 +327,17 @@ export function MapView({
     ? [(searchLat + stationLat) / 2, (searchLng + stationLng) / 2] as [number, number]
     : [searchLat, searchLng] as [number, number]
 
-  // Verificar si los datos están completamente cargados
+  // Check if data is fully loaded
   const isDataComplete = prediction?.general && prediction?.stations
 
-  // Handler para cuando se mueve el marker
+  // Handler for when marker is moved
   const handleMarkerDragEnd = (event: any) => {
     if (!onLocationUpdate) return
 
     const { lat, lng } = event.target.getLatLng()
     const constrained = constrainToCalifornia(lat, lng)
 
-    // Si las coordenadas fueron restringidas, actualizar la posición del marker
+    // If coordinates were constrained, update marker position
     if (constrained.lat !== lat || constrained.lng !== lng) {
       event.target.setLatLng([constrained.lat, constrained.lng])
     }
@@ -347,7 +347,7 @@ export function MapView({
 
   return (
     <div className="h-full w-full relative">
-      {/* Mapa */}
+      {/* Map */}
       <div className="h-full w-full">
         <MapContainer
           center={mapCenter}
@@ -362,7 +362,7 @@ export function MapView({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
-          {/* Línea conectora entre usuario y estación */}
+          {/* Connecting line between user and station */}
           {prediction?.station && (
             <Polyline
               positions={[
@@ -378,7 +378,7 @@ export function MapView({
             />
           )}
 
-          {/* Marcador de UBICACIÓN DEL USUARIO con SVG personalizado */}
+          {/* USER LOCATION marker with custom SVG */}
           <Marker
             position={[searchLat, searchLng]}
             icon={createUserIcon(prediction?.general?.aqi ?? null)}

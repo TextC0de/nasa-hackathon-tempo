@@ -18,7 +18,7 @@ import {
   CloudRain
 } from 'lucide-react'
 
-// Optimización: Configuración de clustering para mejorar rendimiento
+// Optimization: Clustering configuration to improve performance
 const CLUSTERING_CONFIG = {
   maxClusterRadius: 50,
   disableClusteringAtZoom: 15,
@@ -29,29 +29,29 @@ const CLUSTERING_CONFIG = {
 }
 
 /**
- * Configuración de colores AQI oficiales basados en estándares EPA
- * AQI	Categoría	Color	Significado	Población afectada
- * 0-50	Bueno	🟢 Verde	Aire de calidad satisfactoria	Ninguna
- * 51-100	Moderado	🟡 Amarillo	Calidad aceptable	Pocos inusualmente sensibles
- * 101-150	Insalubre para grupos sensibles	🟠 Naranja	Efectos en grupos sensibles	Niños, ancianos, asmáticos
- * 151-200	Insalubre	🔴 Rojo	Efectos en población general	Todos pueden experimentar efectos
- * 201-300	Muy insalubre	🟣 Púrpura	Alerta de salud	Efectos serios más probables
- * 301-500	Peligroso	🟤 Marrón	Emergencia de salud	Toda la población afectada
+ * Official AQI color configuration based on EPA standards
+ * AQI	Category	Color	Meaning	Affected Population
+ * 0-50	Good	🟢 Green	Satisfactory air quality	None
+ * 51-100	Moderate	🟡 Yellow	Acceptable quality	Few unusually sensitive
+ * 101-150	Unhealthy for Sensitive Groups	🟠 Orange	Effects on sensitive groups	Children, elderly, asthmatics
+ * 151-200	Unhealthy	🔴 Red	Effects on general population	Everyone may experience effects
+ * 201-300	Very Unhealthy	🟣 Purple	Health alert	Serious effects more likely
+ * 301-500	Hazardous	🟤 Brown	Health emergency	Entire population affected
  */
 const AQI_COLORS = {
-  GOOD: '#10b981',        // Verde - 0-50
-  MODERATE: '#f59e0b',    // Amarillo - 51-100
-  UNHEALTHY_SENSITIVE: '#f97316', // Naranja - 101-150
-  UNHEALTHY: '#ef4444',   // Rojo - 151-200
-  VERY_UNHEALTHY: '#8b5cf6', // Púrpura - 201-300
-  HAZARDOUS: '#7c2d12',   // Marrón - 301-500
-  DEFAULT: '#6b7280'      // Gris - Valor desconocido
+  GOOD: '#10b981',        // Green - 0-50
+  MODERATE: '#f59e0b',    // Yellow - 51-100
+  UNHEALTHY_SENSITIVE: '#f97316', // Orange - 101-150
+  UNHEALTHY: '#ef4444',   // Red - 151-200
+  VERY_UNHEALTHY: '#8b5cf6', // Purple - 201-300
+  HAZARDOUS: '#7c2d12',   // Brown - 301-500
+  DEFAULT: '#6b7280'      // Gray - Unknown value
 } as const
 
-// Nota: PARAMETER_COLORS ya no se usa, mantenemos solo AQI_COLORS para consistencia
+// Note: PARAMETER_COLORS is no longer used, we only keep AQI_COLORS for consistency
 
 /**
- * Configuración de marcadores para estaciones de monitoreo
+ * Marker configuration for monitoring stations
  */
 const MARKER_CONFIG = {
   size: 24,

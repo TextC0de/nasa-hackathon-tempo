@@ -8,8 +8,10 @@ Platform for visualizing and analyzing air quality and atmospheric pollution dat
 
 - [Prerequisites](#prerequisites)
 - [Project Structure](#project-structure)
+- [User Roles and Features](#user-roles-and-features)
 - [Technology Stack](#technology-stack)
 - [Machine Learning Model](#machine-learning-model)
+- [AI Assistant (GPT-4)](#ai-assistant-gpt-4)
 - [Installation](#installation)
 - [Development](#development)
 - [Environment Variables](#environment-variables)
@@ -59,6 +61,29 @@ atmos/
 │       └── model_metadata.json      # Model performance metrics
 └── turbo.json
 ```
+
+## User Roles and Features
+
+### Citizens (General Users)
+
+The application provides citizens with:
+- **Real-time Air Quality Information**: AQI at their current location with health recommendations
+- **Health Alerts**: Personalized recommendations for people with asthma or respiratory conditions
+- **Interactive Map**: Visualization of the nearest monitoring stations with customizable layers (topographic, hybrid, physical)
+- **Pollution Reporting**: Generate and submit pollution reports that alert health administrators
+- **Station Data**: View detailed information from the closest ground-based monitoring station
+
+### Administrators (Public Health Agents)
+
+Health administrators have access to:
+- **Advanced Dashboard**: Comprehensive view of all ground stations and active fires
+- **HCHO Hotspots**: Detection of formaldehyde hotspots from TEMPO satellite data
+- **Environmental Parameters**: Real-time monitoring of temperature, humidity, wind, and atmospheric pressure
+- **Alert System**: Issue public health alerts based on air quality conditions
+- **Population Analysis**: Assess affected population in areas with poor air quality
+- **Data Export**: Export historical and real-time data for further analysis
+- **Historical Analysis**: View AQI evolution over defined time intervals with customizable filters
+- **AI Assistant**: GPT-4-powered chat that analyzes filtered historical data and provides insights and recommendations
 
 ## Technology Stack
 
