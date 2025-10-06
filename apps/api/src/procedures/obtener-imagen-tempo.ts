@@ -3,25 +3,25 @@ import { publicProcedure } from '../trpc'
 import { TEMPOService } from '@atmos/earthdata-imageserver-client'
 
 /**
- * Procedimiento para obtener imagen TEMPO de una región (overlay para mapa)
+ * Procedure to get TEMPO image from a region (map overlay)
  *
- * Retorna URL de imagen + metadata interpretada para usuario promedio
+ * Returns image URL + interpreted metadata for average user
  */
 export const obtenerImagenTEMPOProcedure = publicProcedure
   .input(
     z.object({
-      // Bounding box de California (o región custom)
+      // Bounding box of California (or custom region)
       bbox: z.object({
         north: z.number().min(-90).max(90),
         south: z.number().min(-90).max(90),
         east: z.number().min(-180).max(180),
         west: z.number().min(-180).max(180),
       }),
-      // Contaminante a visualizar
+      // Pollutant to visualize
       pollutant: z.enum(['NO2', 'O3', 'HCHO']).default('NO2'),
-      // Timestamp (opcional, usa último disponible si no se especifica)
+      // Timestamp (optional, uses latest available if not specified)
       timestamp: z.string().datetime().optional(),
-      // Resolución de imagen
+      // Image resolution
       width: z.number().min(256).max(2048).default(1024),
       height: z.number().min(256).max(2048).default(768),
     })
@@ -31,38 +31,38 @@ export const obtenerImagenTEMPOProcedure = publicProcedure
       const { bbox, pollutant, timestamp, width, height } = input
       const tempoService = new TEMPOService()
 
-      // Determinar timestamp a usar
-      let fechaConsulta: Date
+      // Determine timestamp to use
+      let queryDate: Date
       if (timestamp) {
-        fechaConsulta = new Date(timestamp)
+        queryDate = new Date(timestamp)
       } else {
-        // Usar último timestamp disponible
-        fechaConsulta = await tempoService.getLatestAvailableTime(pollutant)
+        // Use latest available timestamp
+        queryDate = await tempoService.getLatestAvailableTime(pollutant)
       }
 
-      // Obtener imagen de región según contaminante
+      // Get region image based on pollutant
       let regionData
       if (pollutant === 'NO2') {
         regionData = await tempoService.getNO2InRegion({
           bbox,
-          timestamp: fechaConsulta,
+          timestamp: queryDate,
           resolution: { width, height },
         })
       } else if (pollutant === 'O3') {
         regionData = await tempoService.getO3InRegion({
           bbox,
-          timestamp: fechaConsulta,
+          timestamp: queryDate,
           resolution: { width, height },
         })
       } else {
         regionData = await tempoService.getHCHOInRegion({
           bbox,
-          timestamp: fechaConsulta,
+          timestamp: queryDate,
           resolution: { width, height },
         })
       }
 
-      // Obtener datos de punto central para interpretación
+      // Get center point data for interpretation
       const centerLat = (bbox.north + bbox.south) / 2
       const centerLon = (bbox.east + bbox.west) / 2
 
@@ -70,84 +70,84 @@ export const obtenerImagenTEMPOProcedure = publicProcedure
       if (pollutant === 'NO2') {
         centerData = await tempoService.getNO2AtPoint({
           location: { latitude: centerLat, longitude: centerLon },
-          timestamp: fechaConsulta,
+          timestamp: queryDate,
         })
       } else if (pollutant === 'O3') {
         centerData = await tempoService.getO3AtPoint({
           location: { latitude: centerLat, longitude: centerLon },
-          timestamp: fechaConsulta,
+          timestamp: queryDate,
         })
       } else {
         centerData = await tempoService.getHCHOAtPoint({
           location: { latitude: centerLat, longitude: centerLon },
-          timestamp: fechaConsulta,
+          timestamp: queryDate,
         })
       }
 
-      // Interpretar nivel para usuario promedio
-      const interpretarNivel = (value: number | null, tipo: string): {
-        nivel: string
+      // Interpret level for average user
+      const interpretLevel = (value: number | null, type: string): {
+        level: string
         color: string
-        descripcion: string
+        description: string
       } => {
         if (value === null) {
           return {
-            nivel: 'Sin datos',
+            level: 'No data',
             color: 'gray',
-            descripcion: 'No hay datos disponibles para esta ubicación',
+            description: 'No data available for this location',
           }
         }
 
-        if (tipo === 'NO2') {
+        if (type === 'NO2') {
           if (value < 1e15) {
             return {
-              nivel: 'Bajo',
+              level: 'Low',
               color: 'green',
-              descripcion: 'Aire limpio. Excelente calidad.',
+              description: 'Clean air. Excellent quality.',
             }
           } else if (value < 3e15) {
             return {
-              nivel: 'Moderado',
+              level: 'Moderate',
               color: 'yellow',
-              descripcion: 'Calidad aceptable. Algunos grupos sensibles pueden experimentar molestias.',
+              description: 'Acceptable quality. Some sensitive groups may experience discomfort.',
             }
           } else if (value < 8e15) {
             return {
-              nivel: 'Medio',
+              level: 'Medium',
               color: 'orange',
-              descripcion: 'Grupos sensibles deben limitar exposición prolongada al exterior.',
+              description: 'Sensitive groups should limit prolonged outdoor exposure.',
             }
           } else if (value < 15e15) {
             return {
-              nivel: 'Alto',
+              level: 'High',
               color: 'red',
-              descripcion: 'Todos pueden experimentar efectos. Grupos sensibles deben evitar actividades al aire libre.',
+              description: 'Everyone may experience effects. Sensitive groups should avoid outdoor activities.',
             }
           } else {
             return {
-              nivel: 'Muy alto',
+              level: 'Very high',
               color: 'purple',
-              descripcion: 'Alerta de salud. Todos deben evitar esfuerzos al aire libre.',
+              description: 'Health alert. Everyone should avoid outdoor exertion.',
             }
           }
-        } else if (tipo === 'O3') {
+        } else if (type === 'O3') {
           if (value < 220) {
             return {
-              nivel: 'Bajo',
+              level: 'Low',
               color: 'green',
-              descripcion: 'Niveles normales de ozono estratosférico.',
+              description: 'Normal stratospheric ozone levels.',
             }
           } else if (value <= 350) {
             return {
-              nivel: 'Normal',
+              level: 'Normal',
               color: 'blue',
-              descripcion: 'Niveles saludables de ozono estratosférico.',
+              description: 'Healthy stratospheric ozone levels.',
             }
           } else {
             return {
-              nivel: 'Alto',
+              level: 'High',
               color: 'yellow',
-              descripcion: 'Niveles elevados de ozono.',
+              description: 'Elevated ozone levels.',
             }
           }
         } else {
@@ -155,30 +155,30 @@ export const obtenerImagenTEMPOProcedure = publicProcedure
           const valueInDU = value / 2.69e16
           if (valueInDU < 20) {
             return {
-              nivel: 'Bajo',
+              level: 'Low',
               color: 'green',
-              descripcion: 'Bajos niveles de formaldehído.',
+              description: 'Low formaldehyde levels.',
             }
           } else if (valueInDU < 50) {
             return {
-              nivel: 'Normal',
+              level: 'Normal',
               color: 'blue',
-              descripcion: 'Niveles normales de formaldehído.',
+              description: 'Normal formaldehyde levels.',
             }
           } else {
             return {
-              nivel: 'Alto',
+              level: 'High',
               color: 'orange',
-              descripcion: 'Niveles elevados de formaldehído. Posible actividad industrial o incendios.',
+              description: 'Elevated formaldehyde levels. Possible industrial activity or fires.',
             }
           }
         }
       }
 
-      const interpretacion = interpretarNivel(centerData.value, pollutant)
+      const interpretation = interpretLevel(centerData.value, pollutant)
 
       return {
-        // Imagen overlay
+        // Overlay image
         overlay: {
           imageUrl: regionData.imageUrl,
           bounds: {
@@ -191,11 +191,11 @@ export const obtenerImagenTEMPOProcedure = publicProcedure
           height: regionData.height,
         },
 
-        // Metadata para sidebar
+        // Metadata for sidebar
         metadata: {
           pollutant,
-          timestamp: fechaConsulta.toISOString(),
-          timestampLocal: fechaConsulta.toLocaleString('es-MX', {
+          timestamp: queryDate.toISOString(),
+          timestampLocal: queryDate.toLocaleString('en-US', {
             timeZone: 'America/Los_Angeles',
             dateStyle: 'medium',
             timeStyle: 'short',
@@ -211,10 +211,10 @@ export const obtenerImagenTEMPOProcedure = publicProcedure
                   : `${(centerData.value / 1e15).toFixed(2)} × 10¹⁵ ${centerData.unit}`
                 : null,
           },
-          interpretation: interpretacion,
+          interpretation: interpretation,
         },
 
-        // Info satelital
+        // Satellite info
         satellite: {
           name: 'TEMPO',
           fullName: 'Tropospheric Emissions: Monitoring of Pollution',
@@ -224,9 +224,9 @@ export const obtenerImagenTEMPOProcedure = publicProcedure
         },
       }
     } catch (error) {
-      console.error('Error al obtener imagen TEMPO:', error)
+      console.error('Error getting TEMPO image:', error)
       throw new Error(
-        `No se pudo obtener la imagen TEMPO: ${error instanceof Error ? error.message : 'Error desconocido'}`
+        `Could not get TEMPO image: ${error instanceof Error ? error.message : 'Unknown error'}`
       )
     }
   })

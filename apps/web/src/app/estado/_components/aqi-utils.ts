@@ -8,55 +8,55 @@ export const getAQIColor = (aqi: number) => {
 }
 
 export const getAQILevel = (aqi: number) => {
-  if (aqi <= 50) return "Bueno"
-  if (aqi <= 100) return "Moderado"
-  if (aqi <= 150) return "Insalubre para grupos sensibles"
-  if (aqi <= 200) return "Insalubre"
-  if (aqi <= 300) return "Muy insalubre"
-  return "Peligroso"
+  if (aqi <= 50) return "Good"
+  if (aqi <= 100) return "Moderate"
+  if (aqi <= 150) return "Unhealthy for Sensitive Groups"
+  if (aqi <= 200) return "Unhealthy"
+  if (aqi <= 300) return "Very Unhealthy"
+  return "Hazardous"
 }
 
 export const getAQIDetails = (aqi: number) => {
   if (aqi <= 50) return {
     emoji: "🟢",
-    category: "Bueno",
-    description: "Aire de calidad satisfactoria",
-    population: "Ninguna población afectada",
-    recommendation: "Disfruta de actividades al aire libre"
+    category: "Good",
+    description: "Satisfactory air quality",
+    population: "No population affected",
+    recommendation: "Enjoy outdoor activities"
   }
   if (aqi <= 100) return {
     emoji: "🟡",
-    category: "Moderado",
-    description: "Calidad aceptable",
-    population: "Pocos inusualmente sensibles",
-    recommendation: "Personas sensibles pueden experimentar síntomas leves"
+    category: "Moderate",
+    description: "Acceptable quality",
+    population: "Few unusually sensitive individuals",
+    recommendation: "Sensitive individuals may experience mild symptoms"
   }
   if (aqi <= 150) return {
     emoji: "🟠",
-    category: "Insalubre para grupos sensibles",
-    description: "Efectos en grupos sensibles",
-    population: "Niños, ancianos, asmáticos",
-    recommendation: "Grupos sensibles deben evitar actividades prolongadas al aire libre"
+    category: "Unhealthy for Sensitive Groups",
+    description: "Effects on sensitive groups",
+    population: "Children, elderly, asthmatics",
+    recommendation: "Sensitive groups should avoid prolonged outdoor activities"
   }
   if (aqi <= 200) return {
     emoji: "🔴",
-    category: "Insalubre",
-    description: "Efectos en población general",
-    population: "Todos pueden experimentar efectos",
-    recommendation: "Evita actividades al aire libre prolongadas"
+    category: "Unhealthy",
+    description: "Effects on general population",
+    population: "Everyone may experience effects",
+    recommendation: "Avoid prolonged outdoor activities"
   }
   if (aqi <= 300) return {
     emoji: "🟣",
-    category: "Muy insalubre",
-    description: "Alerta de salud",
-    population: "Efectos serios más probables",
-    recommendation: "Evita todas las actividades al aire libre"
+    category: "Very Unhealthy",
+    description: "Health alert",
+    population: "Serious effects more likely",
+    recommendation: "Avoid all outdoor activities"
   }
   return {
     emoji: "🟤",
-    category: "Peligroso",
-    description: "Emergencia de salud",
-    population: "Toda la población afectada",
-    recommendation: "Permanece en interiores con aire filtrado"
+    category: "Hazardous",
+    description: "Health emergency",
+    population: "Entire population affected",
+    recommendation: "Stay indoors with filtered air"
   }
 }

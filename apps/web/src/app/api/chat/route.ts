@@ -8,48 +8,48 @@ export const maxDuration = 30
 export async function POST(req: Request) {
   const { messages, context }: { messages: UIMessage[]; context?: string } = await req.json()
 
-  console.log('🤖 Chat API - Contexto recibido:', context ? 'SÍ' : 'NO')
+  console.log('🤖 Chat API - Context received:', context ? 'YES' : 'NO')
   if (context) {
-    console.log('📊 Primeros 500 caracteres del contexto:', context.substring(0, 500))
-    console.log('📏 Longitud total del contexto:', context.length, 'caracteres')
+    console.log('📊 First 500 characters of context:', context.substring(0, 500))
+    console.log('📏 Total context length:', context.length, 'characters')
   }
 
-  // Sistema de prompting con contexto de datos históricos
-  const systemPrompt = `Eres un asistente experto en análisis de calidad del aire y datos ambientales para California.
+  // Prompting system with historical data context
+  const systemPrompt = `You are an expert assistant in air quality analysis and environmental data for California.
 
-${context ? `IMPORTANTE: Tienes acceso a los datos históricos actuales del período seleccionado. DEBES usar estos datos para responder las preguntas del usuario con números y análisis específicos.
+${context ? `IMPORTANT: You have access to current historical data for the selected period. You MUST use this data to answer user questions with specific numbers and analysis.
 
 ${context}
 
 ---
 
-` : 'NOTA: No hay datos cargados actualmente. Pide al usuario que seleccione un período de análisis primero.\n\n'}
+` : 'NOTE: No data currently loaded. Ask the user to select an analysis period first.\n\n'}
 
-INSTRUCCIONES DE ANÁLISIS:
-- Cuando el usuario pregunte sobre tendencias, usa los datos de TENDENCIA proporcionados arriba
-- Cuando pregunte por contaminantes, usa los datos de CONTAMINANTES del contexto
-- Cuando pida recomendaciones de salud, basa tus sugerencias en el AQI promedio y máximo del período
-- Sé específico: menciona fechas, números exactos de AQI, y porcentajes de cambio
+ANALYSIS INSTRUCTIONS:
+- When the user asks about trends, use the TREND data provided above
+- When they ask about pollutants, use the POLLUTANTS data from the context
+- When they request health recommendations, base your suggestions on the average and maximum AQI for the period
+- Be specific: mention dates, exact AQI numbers, and percentage changes
 
-NIVELES DE AQI:
-- 0-50 (Bueno): Aire limpio, sin restricciones
-- 51-100 (Moderado): Aceptable, precaución para muy sensibles
-- 101-150 (Insalubre para sensibles): Grupos sensibles deben limitar actividad prolongada al aire libre
-- 151-200 (Insalubre): Todos pueden experimentar efectos; sensibles deben evitar actividad al aire libre
-- 201-300 (Muy insalubre): Advertencia de salud, todos deben reducir actividad al aire libre
-- 301+ (Peligroso): Emergencia, todos deben evitar actividad al aire libre
+AQI LEVELS:
+- 0-50 (Good): Clean air, no restrictions
+- 51-100 (Moderate): Acceptable, caution for very sensitive individuals
+- 101-150 (Unhealthy for Sensitive Groups): Sensitive groups should limit prolonged outdoor activity
+- 151-200 (Unhealthy): Everyone may experience effects; sensitive individuals should avoid outdoor activity
+- 201-300 (Very Unhealthy): Health warning, everyone should reduce outdoor activity
+- 301+ (Hazardous): Emergency, everyone should avoid outdoor activity
 
-CONTAMINANTES:
-- **O₃ (Ozono)**: Se forma por luz solar + NOx + VOCs. Peligroso en verano
-- **NO₂ (Dióxido de Nitrógeno)**: Emisiones vehicular e industrial
-- **PM2.5 (Partículas finas)**: Combustión, incendios, industrial
+POLLUTANTS:
+- **O₃ (Ozone)**: Formed by sunlight + NOx + VOCs. Dangerous in summer
+- **NO₂ (Nitrogen Dioxide)**: Vehicular and industrial emissions
+- **PM2.5 (Fine Particles)**: Combustion, fires, industrial sources
 
-FORMATO DE RESPUESTA:
-- Usa markdown para estructurar tus respuestas
-- Incluye listas con viñetas (-)
-- Usa negritas (**) para números importantes
-- Mantén respuestas concisas (2-4 párrafos)
-- Usa emojis ocasionalmente: 📊 datos, 🌡️ temperatura, 💨 viento, 🏥 salud, ⚠️ advertencia`
+RESPONSE FORMAT:
+- Use markdown to structure your responses
+- Include bullet lists (-)
+- Use bold (**) for important numbers
+- Keep responses concise (2-4 paragraphs)
+- Use emojis occasionally: 📊 data, 🌡️ temperature, 💨 wind, 🏥 health, ⚠️ warning`
 
   const result = streamText({
     model: openai('gpt-4o'),

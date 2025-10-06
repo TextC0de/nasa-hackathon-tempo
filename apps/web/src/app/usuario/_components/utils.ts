@@ -1,4 +1,4 @@
-// Función para obtener el color del AQI
+// Function to get AQI color
 export const getAQIColor = (aqi: number) => {
   if (aqi <= 50) return "text-green-600"
   if (aqi <= 100) return "text-yellow-600"
@@ -8,22 +8,22 @@ export const getAQIColor = (aqi: number) => {
   return "text-red-800"
 }
 
-// Función para obtener el badge del AQI
+// Function to get AQI badge
 export const getAQIBadge = (aqi: number) => {
-  if (aqi <= 50) return { color: "bg-green-500", label: "Bueno" }
-  if (aqi <= 100) return { color: "bg-yellow-500", label: "Moderado" }
-  if (aqi <= 150) return { color: "bg-orange-500", label: "Insalubre para grupos sensibles" }
-  if (aqi <= 200) return { color: "bg-red-500", label: "Insalubre" }
-  if (aqi <= 300) return { color: "bg-purple-500", label: "Muy insalubre" }
-  return { color: "bg-red-800", label: "Peligroso" }
+  if (aqi <= 50) return { color: "bg-green-500", label: "Good" }
+  if (aqi <= 100) return { color: "bg-yellow-500", label: "Moderate" }
+  if (aqi <= 150) return { color: "bg-orange-500", label: "Unhealthy for Sensitive Groups" }
+  if (aqi <= 200) return { color: "bg-red-500", label: "Unhealthy" }
+  if (aqi <= 300) return { color: "bg-purple-500", label: "Very Unhealthy" }
+  return { color: "bg-red-800", label: "Hazardous" }
 }
 
-// Función para obtener nivel de AQI
+// Function to get AQI level
 export const getAQILevel = (aqi: number) => {
-  if (aqi <= 50) return "Bueno"
-  if (aqi <= 100) return "Moderado"
-  if (aqi <= 150) return "Insalubre para grupos sensibles"
-  if (aqi <= 200) return "Insalubre"
-  if (aqi <= 300) return "Muy insalubre"
-  return "Peligroso"
+  if (aqi <= 50) return "Good"
+  if (aqi <= 100) return "Moderate"
+  if (aqi <= 150) return "Unhealthy for Sensitive Groups"
+  if (aqi <= 200) return "Unhealthy"
+  if (aqi <= 300) return "Very Unhealthy"
+  return "Hazardous"
 }
