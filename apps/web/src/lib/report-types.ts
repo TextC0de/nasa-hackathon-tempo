@@ -1,4 +1,4 @@
-// Tipos para reportes de usuario
+// User report types
 export interface UserReport {
   id: string
   email: string
@@ -12,7 +12,7 @@ export interface UserReport {
   updatedAt: string
 }
 
-// Tipos para el formulario
+// Form types
 export interface ReportFormData {
   email: string
   latitud: number
@@ -25,73 +25,73 @@ export interface ReportFormData {
 export type EventType = 'fire' | 'smoke' | 'dust'
 export type SeverityLevel = 'low' | 'intermediate' | 'critical'
 
-// Opciones de tipo de evento
+// Event type options
 export const EVENT_TYPES = [
-  { 
-    value: 'fire' as EventType, 
-    label: 'Fuego', 
-    description: 'Incendios forestales, industriales o urbanos', 
-    icon: '🔥' 
+  {
+    value: 'fire' as EventType,
+    label: 'Fire',
+    description: 'Wildfires, industrial or urban fires',
+    icon: '🔥'
   },
-  { 
-    value: 'smoke' as EventType, 
-    label: 'Humo', 
-    description: 'Emisiones de humo industrial o vehicular', 
-    icon: '💨' 
+  {
+    value: 'smoke' as EventType,
+    label: 'Smoke',
+    description: 'Industrial or vehicular smoke emissions',
+    icon: '💨'
   },
-  { 
-    value: 'dust' as EventType, 
-    label: 'Polvo', 
-    description: 'Polvo en suspensión, construcción, o tormentas de arena', 
-    icon: '🌪️' 
+  {
+    value: 'dust' as EventType,
+    label: 'Dust',
+    description: 'Suspended dust, construction, or sandstorms',
+    icon: '🌪️'
   }
 ] as const
 
-// Opciones de gravedad
+// Severity level options
 export const SEVERITY_LEVELS = [
-  { 
-    value: 'low' as SeverityLevel, 
-    label: 'Bajo', 
-    description: 'Impacto mínimo en la calidad del aire', 
-    color: 'bg-green-100 text-green-800 border-green-200' 
+  {
+    value: 'low' as SeverityLevel,
+    label: 'Low',
+    description: 'Minimal impact on air quality',
+    color: 'bg-green-100 text-green-800 border-green-200'
   },
-  { 
-    value: 'intermediate' as SeverityLevel, 
-    label: 'Intermedio', 
-    description: 'Impacto moderado, precaución para grupos sensibles', 
-    color: 'bg-yellow-100 text-yellow-800 border-yellow-200' 
+  {
+    value: 'intermediate' as SeverityLevel,
+    label: 'Intermediate',
+    description: 'Moderate impact, caution for sensitive groups',
+    color: 'bg-yellow-100 text-yellow-800 border-yellow-200'
   },
-  { 
-    value: 'critical' as SeverityLevel, 
-    label: 'Crítico', 
-    description: 'Impacto severo, peligroso para toda la población', 
-    color: 'bg-red-100 text-red-800 border-red-200' 
+  {
+    value: 'critical' as SeverityLevel,
+    label: 'Critical',
+    description: 'Severe impact, dangerous for entire population',
+    color: 'bg-red-100 text-red-800 border-red-200'
   }
 ] as const
 
-// Configuración de gravedad para badges - Mapeo completo de valores del API
+// Severity configuration for badges - Complete mapping of API values
 export const SEVERITY_CONFIG = {
-  low: { label: 'Bajo', color: 'bg-green-100 text-green-800 border-green-200' },
-  intermediate: { label: 'Intermedio', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  critical: { label: 'Crítico', color: 'bg-red-100 text-red-800 border-red-200' },
-  // Valores alternativos que podrían venir del API
-  'bajo': { label: 'Bajo', color: 'bg-green-100 text-green-800 border-green-200' },
-  'intermedio': { label: 'Intermedio', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  'critico': { label: 'Crítico', color: 'bg-red-100 text-red-800 border-red-200' }
+  low: { label: 'Low', color: 'bg-green-100 text-green-800 border-green-200' },
+  intermediate: { label: 'Intermediate', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+  critical: { label: 'Critical', color: 'bg-red-100 text-red-800 border-red-200' },
+  // Alternative values that might come from API
+  'bajo': { label: 'Low', color: 'bg-green-100 text-green-800 border-green-200' },
+  'intermedio': { label: 'Intermediate', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+  'critico': { label: 'Critical', color: 'bg-red-100 text-red-800 border-red-200' }
 } as const
 
-// Configuración de tipos para badges - Mapeo completo de valores del API
+// Type configuration for badges - Complete mapping of API values
 export const TYPE_CONFIG = {
-  fire: { label: 'Fuego', icon: '🔥', color: 'bg-orange-100 text-orange-800 border-orange-200' },
-  smoke: { label: 'Humo', icon: '💨', color: 'bg-gray-100 text-gray-800 border-gray-200' },
-  dust: { label: 'Polvo', icon: '🌪️', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  // Valores alternativos que podrían venir del API
-  'fuego': { label: 'Fuego', icon: '🔥', color: 'bg-orange-100 text-orange-800 border-orange-200' },
-  'humo': { label: 'Humo', icon: '💨', color: 'bg-gray-100 text-gray-800 border-gray-200' },
-  'polvo': { label: 'Polvo', icon: '🌪️', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' }
+  fire: { label: 'Fire', icon: '🔥', color: 'bg-orange-100 text-orange-800 border-orange-200' },
+  smoke: { label: 'Smoke', icon: '💨', color: 'bg-gray-100 text-gray-800 border-gray-200' },
+  dust: { label: 'Dust', icon: '🌪️', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+  // Alternative values that might come from API
+  'fuego': { label: 'Fire', icon: '🔥', color: 'bg-orange-100 text-orange-800 border-orange-200' },
+  'humo': { label: 'Smoke', icon: '💨', color: 'bg-gray-100 text-gray-800 border-gray-200' },
+  'polvo': { label: 'Dust', icon: '🌪️', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' }
 } as const
 
-// Límites geográficos de California para validación
+// California geographic bounds for validation
 export const CALIFORNIA_BOUNDS = {
   north: 42.0,
   south: 32.5,

@@ -1,7 +1,7 @@
 /**
- * Sistema de Recomendaciones de Calidad del Aire
+ * Air Quality Recommendations System
  *
- * Genera recomendaciones personalizadas basadas en el AQI actual
+ * Generates personalized recommendations based on current AQI
  */
 
 export interface Recommendation {
@@ -23,80 +23,80 @@ export interface AQIExplanation {
 }
 
 /**
- * Obtiene explicación detallada del nivel de AQI
+ * Get detailed explanation of AQI level
  */
 export function getAQIExplanation(aqi: number): AQIExplanation {
   if (aqi <= 50) {
     return {
-      level: 'Bueno',
+      level: 'Good',
       color: 'green',
       emoji: '😊',
-      shortDescription: 'La calidad del aire es excelente',
-      detailedDescription: 'El aire está limpio y es ideal para cualquier actividad al aire libre. Disfruta el día!',
+      shortDescription: 'Air quality is excellent',
+      detailedDescription: 'Air is clean and ideal for any outdoor activity. Enjoy your day!',
     }
   } else if (aqi <= 100) {
     return {
-      level: 'Moderado',
+      level: 'Moderate',
       color: 'yellow',
       emoji: '😐',
-      shortDescription: 'La calidad del aire es aceptable',
-      detailedDescription: 'La mayoría de las personas puede realizar actividades al aire libre normalmente. Grupos sensibles deben considerar reducir esfuerzos prolongados.',
-      affectedGroups: ['Personas con asma', 'Niños pequeños', 'Adultos mayores']
+      shortDescription: 'Air quality is acceptable',
+      detailedDescription: 'Most people can perform outdoor activities normally. Sensitive groups should consider reducing prolonged exertion.',
+      affectedGroups: ['People with asthma', 'Young children', 'Older adults']
     }
   } else if (aqi <= 150) {
     return {
-      level: 'No saludable para grupos sensibles',
+      level: 'Unhealthy for Sensitive Groups',
       color: 'orange',
       emoji: '😷',
-      shortDescription: 'Grupos sensibles pueden experimentar efectos',
-      detailedDescription: 'Niños, adultos mayores y personas con problemas respiratorios o cardíacos deben limitar esfuerzos prolongados al aire libre.',
-      affectedGroups: ['Niños', 'Adultos mayores', 'Personas con asma', 'Personas con enfermedades cardíacas']
+      shortDescription: 'Sensitive groups may experience effects',
+      detailedDescription: 'Children, older adults, and people with respiratory or heart problems should limit prolonged outdoor exertion.',
+      affectedGroups: ['Children', 'Older adults', 'People with asthma', 'People with heart disease']
     }
   } else if (aqi <= 200) {
     return {
-      level: 'No saludable',
+      level: 'Unhealthy',
       color: 'red',
       emoji: '😨',
-      shortDescription: 'Todos pueden experimentar efectos en la salud',
-      detailedDescription: 'Grupos sensibles pueden experimentar efectos serios. El público en general puede experimentar irritación.',
-      affectedGroups: ['Toda la población']
+      shortDescription: 'Everyone may experience health effects',
+      detailedDescription: 'Sensitive groups may experience serious effects. General public may experience irritation.',
+      affectedGroups: ['Everyone']
     }
   } else if (aqi <= 300) {
     return {
-      level: 'Muy no saludable',
+      level: 'Very Unhealthy',
       color: 'purple',
       emoji: '🚨',
-      shortDescription: 'Alerta de salud: efectos serios para todos',
-      detailedDescription: 'Todos deben evitar esfuerzos al aire libre. Grupos sensibles deben permanecer en interiores.',
-      affectedGroups: ['Toda la población']
+      shortDescription: 'Health alert: serious effects for everyone',
+      detailedDescription: 'Everyone should avoid outdoor exertion. Sensitive groups should stay indoors.',
+      affectedGroups: ['Everyone']
     }
   } else {
     return {
-      level: 'Peligroso',
+      level: 'Hazardous',
       color: 'maroon',
       emoji: '☠️',
-      shortDescription: 'Emergencia de salud pública',
-      detailedDescription: 'Todos deben permanecer en interiores con ventanas cerradas. Evite cualquier actividad al aire libre.',
-      affectedGroups: ['Toda la población - EMERGENCIA']
+      shortDescription: 'Public health emergency',
+      detailedDescription: 'Everyone should remain indoors with windows closed. Avoid any outdoor activity.',
+      affectedGroups: ['Everyone - EMERGENCY']
     }
   }
 }
 
 /**
- * Genera recomendaciones basadas en el AQI
+ * Generate recommendations based on AQI
  */
 export function getRecommendations(aqi: number, dominantPollutant?: string): Recommendation[] {
   const recommendations: Recommendation[] = []
 
   // ==========================================
-  // AQI 0-50: BUENO
+  // AQI 0-50: GOOD
   // ==========================================
   if (aqi <= 50) {
     recommendations.push({
       id: 'good-outdoor',
       icon: '🌟',
-      title: 'Perfecto para actividades al aire libre',
-      description: 'La calidad del aire es excelente. Es un gran día para hacer ejercicio, caminar, correr o cualquier actividad outdoor.',
+      title: 'Perfect for outdoor activities',
+      description: 'Air quality is excellent. It\'s a great day to exercise, walk, run, or do any outdoor activity.',
       severity: 'success',
       category: 'activity'
     })
@@ -104,8 +104,8 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
     recommendations.push({
       id: 'good-health',
       icon: '💚',
-      title: 'No hay riesgos para la salud',
-      description: 'Todas las personas, incluyendo grupos sensibles, pueden realizar actividades normalmente sin preocupaciones.',
+      title: 'No health risks',
+      description: 'Everyone, including sensitive groups, can perform activities normally without concerns.',
       severity: 'success',
       category: 'health'
     })
@@ -113,22 +113,22 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
     recommendations.push({
       id: 'good-windows',
       icon: '🪟',
-      title: 'Abre las ventanas',
-      description: 'Aprovecha para ventilar tu casa u oficina. El aire fresco mejorará la calidad del aire interior.',
+      title: 'Open your windows',
+      description: 'Take advantage to ventilate your home or office. Fresh air will improve indoor air quality.',
       severity: 'info',
       category: 'general'
     })
   }
 
   // ==========================================
-  // AQI 51-100: MODERADO
+  // AQI 51-100: MODERATE
   // ==========================================
   else if (aqi <= 100) {
     recommendations.push({
       id: 'moderate-activity',
       icon: '🚶',
-      title: 'Actividades moderadas son seguras',
-      description: 'La mayoría de las personas puede hacer ejercicio al aire libre sin problemas. Grupos muy sensibles deben estar atentos.',
+      title: 'Moderate activities are safe',
+      description: 'Most people can exercise outdoors without problems. Very sensitive groups should be alert.',
       severity: 'info',
       category: 'activity'
     })
@@ -136,8 +136,8 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
     recommendations.push({
       id: 'moderate-sensitive',
       icon: '⚠️',
-      title: 'Precaución para grupos sensibles',
-      description: 'Si tienes asma, problemas cardíacos o eres adulto mayor, considera reducir esfuerzos muy intensos y prolongados.',
+      title: 'Caution for sensitive groups',
+      description: 'If you have asthma, heart problems, or are an older adult, consider reducing very intense and prolonged efforts.',
       severity: 'warning',
       category: 'health'
     })
@@ -145,22 +145,22 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
     recommendations.push({
       id: 'moderate-children',
       icon: '👶',
-      title: 'Los niños pueden jugar afuera',
-      description: 'Los niños pueden jugar normalmente, pero toma descansos frecuentes si van a estar activos por más de 1 hora.',
+      title: 'Children can play outside',
+      description: 'Children can play normally, but take frequent breaks if they\'re going to be active for more than 1 hour.',
       severity: 'info',
       category: 'activity'
     })
   }
 
   // ==========================================
-  // AQI 101-150: NO SALUDABLE PARA SENSIBLES
+  // AQI 101-150: UNHEALTHY FOR SENSITIVE GROUPS
   // ==========================================
   else if (aqi <= 150) {
     recommendations.push({
       id: 'usg-limit-sensitive',
       icon: '🚫',
-      title: 'Grupos sensibles: evita esfuerzos prolongados',
-      description: 'Si tienes asma, enfermedad cardíaca o pulmonar, eres niño o adulto mayor: reduce ejercicio intenso al aire libre.',
+      title: 'Sensitive groups: avoid prolonged exertion',
+      description: 'If you have asthma, heart or lung disease, are a child or older adult: reduce intense outdoor exercise.',
       severity: 'warning',
       category: 'health'
     })
@@ -168,8 +168,8 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
     recommendations.push({
       id: 'usg-general-ok',
       icon: '👥',
-      title: 'Público general puede estar afuera',
-      description: 'Si no eres parte de grupos sensibles, puedes realizar actividades normales, pero presta atención a síntomas inusuales.',
+      title: 'General public can be outside',
+      description: 'If you\'re not part of sensitive groups, you can perform normal activities, but pay attention to unusual symptoms.',
       severity: 'info',
       category: 'activity'
     })
@@ -177,8 +177,8 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
     recommendations.push({
       id: 'usg-inhaler',
       icon: '💊',
-      title: 'Ten medicamentos a mano',
-      description: 'Si tienes asma o problemas respiratorios, lleva tu inhalador. El aire puede desencadenar síntomas.',
+      title: 'Have medications on hand',
+      description: 'If you have asthma or breathing problems, carry your inhaler. Air can trigger symptoms.',
       severity: 'warning',
       category: 'health'
     })
@@ -186,8 +186,8 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
     recommendations.push({
       id: 'usg-indoors',
       icon: '🏠',
-      title: 'Considera actividades en interiores',
-      description: 'Si planeas hacer ejercicio, mejor hazlo en un gimnasio o espacio interior con aire filtrado.',
+      title: 'Consider indoor activities',
+      description: 'If you plan to exercise, better do it in a gym or indoor space with filtered air.',
       severity: 'info',
       category: 'activity'
     })
@@ -195,22 +195,22 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
     recommendations.push({
       id: 'usg-windows',
       icon: '🪟',
-      title: 'Mantén ventanas cerradas',
-      description: 'Evita que el aire contaminado entre a tu casa. Usa filtros de aire si los tienes disponibles.',
+      title: 'Keep windows closed',
+      description: 'Prevent polluted air from entering your home. Use air filters if you have them available.',
       severity: 'warning',
       category: 'general'
     })
   }
 
   // ==========================================
-  // AQI 151-200: NO SALUDABLE
+  // AQI 151-200: UNHEALTHY
   // ==========================================
   else if (aqi <= 200) {
     recommendations.push({
       id: 'unhealthy-everyone',
       icon: '🚨',
-      title: 'Todos pueden sentir efectos',
-      description: 'Todas las personas pueden experimentar irritación en ojos, nariz y garganta. Grupos sensibles tendrán efectos más serios.',
+      title: 'Everyone may feel effects',
+      description: 'All people may experience eye, nose, and throat irritation. Sensitive groups will have more serious effects.',
       severity: 'danger',
       category: 'health'
     })
@@ -218,8 +218,8 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
     recommendations.push({
       id: 'unhealthy-reduce',
       icon: '🚫',
-      title: 'Reduce esfuerzos al aire libre',
-      description: 'Evita ejercicio intenso o prolongado afuera. Si debes estar fuera, toma descansos frecuentes en interiores.',
+      title: 'Reduce outdoor exertion',
+      description: 'Avoid intense or prolonged exercise outside. If you must be outside, take frequent indoor breaks.',
       severity: 'danger',
       category: 'activity'
     })
@@ -227,8 +227,8 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
     recommendations.push({
       id: 'unhealthy-sensitive-inside',
       icon: '🏠',
-      title: 'Grupos sensibles: permanece adentro',
-      description: 'Si eres niño, adulto mayor, o tienes problemas respiratorios/cardíacos: quédate en interiores.',
+      title: 'Sensitive groups: stay inside',
+      description: 'If you\'re a child, older adult, or have respiratory/heart problems: stay indoors.',
       severity: 'danger',
       category: 'safety'
     })
@@ -236,8 +236,8 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
     recommendations.push({
       id: 'unhealthy-mask',
       icon: '😷',
-      title: 'Considera usar cubrebocas',
-      description: 'Si debes estar afuera, un cubrebocas N95 puede ayudar a reducir la exposición a partículas.',
+      title: 'Consider wearing a face mask',
+      description: 'If you must be outside, an N95 mask can help reduce particle exposure.',
       severity: 'warning',
       category: 'safety'
     })
@@ -245,8 +245,8 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
     recommendations.push({
       id: 'unhealthy-windows-closed',
       icon: '🪟',
-      title: 'Mantén ventanas y puertas cerradas',
-      description: 'Sella tu casa lo mejor posible. Usa purificadores de aire si están disponibles.',
+      title: 'Keep windows and doors closed',
+      description: 'Seal your home as best as possible. Use air purifiers if available.',
       severity: 'danger',
       category: 'general'
     })
@@ -254,22 +254,22 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
     recommendations.push({
       id: 'unhealthy-school',
       icon: '🏫',
-      title: 'Deportes escolares deben cancelarse',
-      description: 'No se recomiendan actividades deportivas al aire libre en escuelas. Educación física debe ser en interior.',
+      title: 'School sports should be canceled',
+      description: 'Outdoor sports activities in schools are not recommended. Physical education should be indoors.',
       severity: 'danger',
       category: 'activity'
     })
   }
 
   // ==========================================
-  // AQI 201-300: MUY NO SALUDABLE
+  // AQI 201-300: VERY UNHEALTHY
   // ==========================================
   else if (aqi <= 300) {
     recommendations.push({
       id: 'very-unhealthy-alert',
       icon: '🚨',
-      title: 'ALERTA DE SALUD',
-      description: 'Toda la población está en riesgo de experimentar efectos serios en la salud.',
+      title: 'HEALTH ALERT',
+      description: 'Entire population is at risk of experiencing serious health effects.',
       severity: 'critical',
       category: 'health'
     })
@@ -277,8 +277,8 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
     recommendations.push({
       id: 'very-unhealthy-stay-inside',
       icon: '🏠',
-      title: 'Permanece en interiores',
-      description: 'TODOS deben evitar actividades al aire libre. Mantente en casa con ventanas cerradas.',
+      title: 'Stay indoors',
+      description: 'EVERYONE should avoid outdoor activities. Stay home with windows closed.',
       severity: 'critical',
       category: 'safety'
     })
@@ -286,8 +286,8 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
     recommendations.push({
       id: 'very-unhealthy-sensitive-restrict',
       icon: '⛔',
-      title: 'Grupos sensibles: restricción total',
-      description: 'Si eres vulnerable, NO salgas. Sigue las recomendaciones de tu médico y ten medicamentos listos.',
+      title: 'Sensitive groups: total restriction',
+      description: 'If you\'re vulnerable, DO NOT go outside. Follow your doctor\'s recommendations and have medications ready.',
       severity: 'critical',
       category: 'health'
     })
@@ -295,8 +295,8 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
     recommendations.push({
       id: 'very-unhealthy-mask-required',
       icon: '😷',
-      title: 'Cubrebocas N95 obligatorio si sales',
-      description: 'Si absolutamente debes salir, usa cubrebocas N95 y minimiza el tiempo al aire libre.',
+      title: 'N95 mask mandatory if going out',
+      description: 'If you absolutely must go out, wear an N95 mask and minimize outdoor time.',
       severity: 'critical',
       category: 'safety'
     })
@@ -304,8 +304,8 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
     recommendations.push({
       id: 'very-unhealthy-air-filter',
       icon: '🌀',
-      title: 'Usa purificadores de aire',
-      description: 'Activa filtros de aire HEPA en tu hogar. Mantén recirculación de aire interior al mínimo.',
+      title: 'Use air purifiers',
+      description: 'Activate HEPA air filters in your home. Keep indoor air recirculation to a minimum.',
       severity: 'danger',
       category: 'general'
     })
@@ -313,22 +313,22 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
     recommendations.push({
       id: 'very-unhealthy-medical',
       icon: '🏥',
-      title: 'Monitorea síntomas',
-      description: 'Si experimentas dificultad para respirar, dolor de pecho o mareos, busca atención médica inmediatamente.',
+      title: 'Monitor symptoms',
+      description: 'If you experience breathing difficulty, chest pain, or dizziness, seek medical attention immediately.',
       severity: 'critical',
       category: 'health'
     })
   }
 
   // ==========================================
-  // AQI 301+: PELIGROSO
+  // AQI 301+: HAZARDOUS
   // ==========================================
   else {
     recommendations.push({
       id: 'hazardous-emergency',
       icon: '☠️',
-      title: 'EMERGENCIA DE SALUD PÚBLICA',
-      description: 'Condiciones de aire extremadamente peligrosas. Toda la población está en riesgo grave.',
+      title: 'PUBLIC HEALTH EMERGENCY',
+      description: 'Extremely dangerous air conditions. Entire population is at serious risk.',
       severity: 'critical',
       category: 'health'
     })
@@ -336,8 +336,8 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
     recommendations.push({
       id: 'hazardous-lockdown',
       icon: '🔒',
-      title: 'NO SALGAS bajo ninguna circunstancia',
-      description: 'Permanece en interiores con todas las ventanas y puertas selladas. No salgas a menos que sea una emergencia vital.',
+      title: 'DO NOT go outside under any circumstances',
+      description: 'Stay indoors with all windows and doors sealed. Don\'t go out unless it\'s a life-threatening emergency.',
       severity: 'critical',
       category: 'safety'
     })
@@ -345,8 +345,8 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
     recommendations.push({
       id: 'hazardous-evacuation',
       icon: '🚨',
-      title: 'Considera evacuación si es posible',
-      description: 'Si hay opciones de ir a un área con mejor calidad del aire, considera evacuarte con tu familia.',
+      title: 'Consider evacuation if possible',
+      description: 'If there are options to go to an area with better air quality, consider evacuating with your family.',
       severity: 'critical',
       category: 'safety'
     })
@@ -354,8 +354,8 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
     recommendations.push({
       id: 'hazardous-medical-ready',
       icon: '🏥',
-      title: 'Preparación médica',
-      description: 'Ten líneas de emergencia a mano. Si tienes condiciones pre-existentes, contacta a tu médico inmediatamente.',
+      title: 'Medical preparedness',
+      description: 'Have emergency lines on hand. If you have pre-existing conditions, contact your doctor immediately.',
       severity: 'critical',
       category: 'health'
     })
@@ -363,8 +363,8 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
     recommendations.push({
       id: 'hazardous-air-tight',
       icon: '🪟',
-      title: 'Sella tu hogar completamente',
-      description: 'Tapa ventanas y puertas. Usa toallas húmedas para sellar grietas. Activa todos los purificadores disponibles.',
+      title: 'Seal your home completely',
+      description: 'Cover windows and doors. Use damp towels to seal cracks. Activate all available purifiers.',
       severity: 'critical',
       category: 'general'
     })
@@ -372,15 +372,15 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
     recommendations.push({
       id: 'hazardous-authorities',
       icon: '📢',
-      title: 'Sigue instrucciones de autoridades',
-      description: 'Mantente informado por canales oficiales. Pueden haber órdenes de evacuación o refugio.',
+      title: 'Follow authorities\' instructions',
+      description: 'Stay informed through official channels. There may be evacuation or shelter orders.',
       severity: 'critical',
       category: 'safety'
     })
   }
 
   // ==========================================
-  // RECOMENDACIONES ESPECÍFICAS POR CONTAMINANTE
+  // POLLUTANT-SPECIFIC RECOMMENDATIONS
   // ==========================================
   if (dominantPollutant) {
     if (dominantPollutant.toUpperCase().includes('O3') || dominantPollutant.toUpperCase().includes('OZONE')) {
@@ -388,8 +388,8 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
         recommendations.push({
           id: 'ozone-specific',
           icon: '☀️',
-          title: 'Ozono (O3) es el contaminante principal',
-          description: 'El ozono es peor durante tardes soleadas. Si debes salir, hazlo temprano en la mañana o al anochecer.',
+          title: 'Ozone (O3) is the main pollutant',
+          description: 'Ozone is worse during sunny afternoons. If you must go out, do it early morning or at dusk.',
           severity: aqi > 150 ? 'danger' : 'warning',
           category: 'general'
         })
@@ -401,8 +401,8 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
         recommendations.push({
           id: 'pm25-specific',
           icon: '💨',
-          title: 'Material particulado (PM2.5) es el problema',
-          description: 'Las partículas finas pueden penetrar profundo en los pulmones. Un cubrebocas N95 es altamente recomendado si sales.',
+          title: 'Particulate matter (PM2.5) is the issue',
+          description: 'Fine particles can penetrate deep into lungs. An N95 mask is highly recommended if going out.',
           severity: aqi > 150 ? 'danger' : 'warning',
           category: 'safety'
         })
@@ -414,8 +414,8 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
         recommendations.push({
           id: 'no2-specific',
           icon: '🚗',
-          title: 'Dióxido de nitrógeno (NO2) elevado',
-          description: 'El NO2 proviene principalmente de vehículos. Evita áreas con tráfico pesado.',
+          title: 'Nitrogen dioxide (NO2) elevated',
+          description: 'NO2 comes mainly from vehicles. Avoid areas with heavy traffic.',
           severity: aqi > 150 ? 'danger' : 'warning',
           category: 'general'
         })
@@ -427,7 +427,7 @@ export function getRecommendations(aqi: number, dominantPollutant?: string): Rec
 }
 
 /**
- * Obtiene el color del badge según severidad
+ * Get badge color based on severity
  */
 export function getSeverityColor(severity: Recommendation['severity']): string {
   const colors = {
@@ -441,7 +441,7 @@ export function getSeverityColor(severity: Recommendation['severity']): string {
 }
 
 /**
- * Obtiene recomendaciones categorizadas
+ * Get categorized recommendations
  */
 export function getCategorizedRecommendations(aqi: number, dominantPollutant?: string) {
   const all = getRecommendations(aqi, dominantPollutant)

@@ -1,11 +1,11 @@
 "use client"
 
 import Link from "next/link"
-import { Users, FlaskConical } from "lucide-react"
+import { Users, FlaskConical, Github } from "lucide-react"
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 flex items-center justify-center p-4 relative">
       <div className="w-full max-w-6xl">
         {/* Header */}
         <div className="text-center mb-12">
@@ -92,12 +92,36 @@ export default function HomePage() {
         </div>
 
         {/* Footer note */}
-        <div className="text-center mt-12">
+        <div className="text-center mt-12 space-y-4">
           <p className="text-sm text-muted-foreground">
             Powered by NASA TEMPO satellite data
           </p>
+
+          {/* GitHub Link */}
+          <a
+            href="https://github.com/TextC0de/nasa-hackathon-tempo"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+          >
+            <Github className="w-5 h-5 group-hover:scale-110 transition-transform" />
+            <span className="underline-offset-4 group-hover:underline">
+              View on GitHub
+            </span>
+          </a>
         </div>
       </div>
+
+      {/* GitHub Corner Badge (optional) */}
+      <a
+        href="https://github.com/TextC0de/nasa-hackathon-tempo"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute top-0 right-0 p-4 text-muted-foreground hover:text-foreground transition-colors"
+        aria-label="View source on GitHub"
+      >
+        <Github className="w-8 h-8 md:w-10 md:h-10" />
+      </a>
     </div>
   )
 }
